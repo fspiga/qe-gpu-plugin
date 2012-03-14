@@ -1,0 +1,35 @@
+#
+# Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
+#
+# This file is distributed under the terms of the
+# GNU General Public License. See the file `License'
+# in the root directory of the present package,
+# or http://www.gnu.org/copyleft/gpl.txt .
+#
+ 
+PHIGEMM_TOP = .
+
+AR          = @ar@
+ARFLAGS     = @arflags@
+
+CC          = @cc@
+FC          = @f90@
+LD          = @cc@
+
+CFLAGS          = @phigemm_ccflags@
+LD_FLAGS        = @phigemm_ldflags@
+LD_SHARED_FLAGS = @phigemm_ldsharedflag@
+
+CPP         = cpp
+CPPFLAGS    =  -P -traditional
+
+NVCC        = @nvcc@
+NVCC_FLAGS  = @phigemm_nvccflags@
+
+EXT_INC     = @phigemm_include@ @cuda_include@
+CUDA_LIB    = @cuda_libs@
+LD_LIB      = @blas_libs@ @ld_libs@
+
+CUDA_PATH   = @cuda_path@
+
+GEMM_OPT    = @phigemm_opts@ $(MANUAL_DFLAGS)
