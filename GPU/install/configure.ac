@@ -599,7 +599,7 @@ echo setting CC... $cc
 AC_CHECK_SIZEOF([int *])
 SIZEOF_INT_P=$ac_cv_sizeof_int_p
 AC_SUBST(SIZEOF_INT_P)
-AC_CONFIG_FILES([../include/fft_defs.h:../include/fft_defs.h.in])
+AC_CONFIG_FILES([include/fft_defs.h:include/fft_defs.h.in])
 
 # check if the structure mallinfo is present in malloc.h
 AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
@@ -2035,7 +2035,9 @@ then
         phigemm_include="-I$topdir/phiGEMM/include"
         phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
 
-
+		f90rule="python $topdir/install/addPhigemmSymbsSingle.py \$< ; \\
+	$f90rule"
+	
         # NVCC HOST-side compiler options
         case "$arch:$f90_version" in
 		*:ifort* )
@@ -2329,8 +2331,8 @@ AC_SUBST(phigemm_ldsharedflag)
 AC_SUBST(magma_switch)
 AC_SUBST(magma_gpu_target)
 
-AC_CONFIG_HEADERS([../include/c_defs.h:../include/c_defs.h.in])
-AC_CONFIG_FILES(install/make.sys)
+AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
+AC_CONFIG_FILES(make.sys)
 AC_CONFIG_FILES(configure.msg)
 
 AC_CONFIG_FILES(install/make_wannier90.sys)
@@ -2339,8 +2341,8 @@ AC_CONFIG_FILES(install/make_blas.inc)
 AC_CONFIG_FILES(install/make_lapack.inc)
 
 # Third-part CUDA-enabled libraries
-AC_CONFIG_FILES(install/make_phiGEMM.inc)
-AC_CONFIG_FILES(install/make_magma.inc)
+AC_CONFIG_FILES(GPU/install/make_phiGEMM.inc)
+AC_CONFIG_FILES(GPU/install/make_magma.inc)
 
 AC_OUTPUT
 

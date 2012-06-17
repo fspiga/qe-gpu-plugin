@@ -4872,7 +4872,7 @@ _ACEOF
 
 SIZEOF_INT_P=$ac_cv_sizeof_int_p
 
-ac_config_files="$ac_config_files ../include/fft_defs.h:../include/fft_defs.h.in"
+ac_config_files="$ac_config_files include/fft_defs.h:include/fft_defs.h.in"
 
 
 # check if the structure mallinfo is present in malloc.h
@@ -9081,6 +9081,8 @@ then
         phigemm_include="-I$topdir/phiGEMM/include"
         phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "
 
+		f90rule="python $topdir/install/addPhigemmSymbsSingle.py \$< ; \\
+	$f90rule"
 
         # NVCC HOST-side compiler options
         case "$arch:$f90_version" in
@@ -9736,9 +9738,9 @@ fi
 
 
 
-ac_config_headers="$ac_config_headers ../include/c_defs.h:../include/c_defs.h.in"
+ac_config_headers="$ac_config_headers include/c_defs.h:include/c_defs.h.in"
 
-ac_config_files="$ac_config_files install/make.sys"
+ac_config_files="$ac_config_files make.sys"
 
 ac_config_files="$ac_config_files configure.msg"
 
@@ -9752,9 +9754,9 @@ ac_config_files="$ac_config_files install/make_lapack.inc"
 
 
 # Third-part CUDA-enabled libraries
-ac_config_files="$ac_config_files install/make_phiGEMM.inc"
+ac_config_files="$ac_config_files GPU/install/make_phiGEMM.inc"
 
-ac_config_files="$ac_config_files install/make_magma.inc"
+ac_config_files="$ac_config_files GPU/install/make_magma.inc"
 
 
 cat >confcache <<\_ACEOF
@@ -10439,15 +10441,15 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "../include/fft_defs.h") CONFIG_FILES="$CONFIG_FILES ../include/fft_defs.h:../include/fft_defs.h.in" ;;
-    "../include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS ../include/c_defs.h:../include/c_defs.h.in" ;;
-    "install/make.sys") CONFIG_FILES="$CONFIG_FILES install/make.sys" ;;
+    "include/fft_defs.h") CONFIG_FILES="$CONFIG_FILES include/fft_defs.h:include/fft_defs.h.in" ;;
+    "include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS include/c_defs.h:include/c_defs.h.in" ;;
+    "make.sys") CONFIG_FILES="$CONFIG_FILES make.sys" ;;
     "configure.msg") CONFIG_FILES="$CONFIG_FILES configure.msg" ;;
     "install/make_wannier90.sys") CONFIG_FILES="$CONFIG_FILES install/make_wannier90.sys" ;;
     "install/make_blas.inc") CONFIG_FILES="$CONFIG_FILES install/make_blas.inc" ;;
     "install/make_lapack.inc") CONFIG_FILES="$CONFIG_FILES install/make_lapack.inc" ;;
-    "install/make_phiGEMM.inc") CONFIG_FILES="$CONFIG_FILES install/make_phiGEMM.inc" ;;
-    "install/make_magma.inc") CONFIG_FILES="$CONFIG_FILES install/make_magma.inc" ;;
+    "GPU/install/make_phiGEMM.inc") CONFIG_FILES="$CONFIG_FILES GPU/install/make_phiGEMM.inc" ;;
+    "GPU/install/make_magma.inc") CONFIG_FILES="$CONFIG_FILES GPU/install/make_magma.inc" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
