@@ -12,27 +12,27 @@ include ../../make.sys
 
 PHIGEMM_TOP = .
 
-AR          = @ar@
-ARFLAGS     = @arflags@
+AR          = ar
+ARFLAGS     = ruv
 
-CC          = @phigemm_cc@
-FC          = @phigemm_fc@
-LD          = @phigemm_cc@
+CC          = 
+FC          = 
+LD          = 
 
-CFLAGS          = @phigemm_ccflags@
-LD_FLAGS        = @phigemm_ldflags@
-LD_SHARED_FLAGS = @phigemm_ldsharedflag@
+CFLAGS          = 
+LD_FLAGS        = 
+LD_SHARED_FLAGS = 
 
 CPP         = cpp
 CPPFLAGS    =  -P -traditional
 
-NVCC        = @nvcc@
+NVCC        = 
 NVCC_FLAGS  = -ccbin gcc -O3 --compiler-options '-fPIC -fopenmp'
 
-EXT_INC     = @phigemm_include@ @cuda_include@
-CUDA_LIB    = @cuda_libs@
-LD_LIB      = @blas_libs@ @ld_libs@
+EXT_INC     =  
+CUDA_LIB    = 
+LD_LIB      =   -lmkl_intel_lp64  -lmkl_intel_thread -lmkl_core 
 
-CUDA_PATH   = @cuda_path@
+CUDA_PATH   = /usr/local/cuda/
 
-GEMM_OPT    = @phigemm_opts@ $(MANUAL_DFLAGS)
+GEMM_OPT    =  $(MANUAL_DFLAGS)

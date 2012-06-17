@@ -11,27 +11,27 @@
 #      0: Tesla family
 #      1: Fermi Family
 #
-GPU_TARGET = @magma_gpu_target@
+GPU_TARGET = 
 
 CC        = gcc
-NVCC      = @nvcc@
+NVCC      = 
 FORT      = gfortran
 
-ARCH      = @ar@
+ARCH      = ar
 ARCHFLAGS = cr
-RANLIB    = @ranlib@
+RANLIB    = ranlib
 
 OPTS      = -O3 -DADD_
 FOPTS     = -O3 -DADD_ -x f95-cpp-input
 NVOPTS    = --compiler-options -fno-strict-aliasing -DUNIX -O3 -DADD_
 LDOPTS    = -fPIC -Xlinker -zmuldefs
 
-LIB      = @ld_libs@
+LIB      = 
 
-CUDADIR   = @cuda_path@
+CUDADIR   = /usr/local/cuda/
 
 LIBDIR    = 
-INC       = @cuda_include@
+INC       = 
 
 #LIBMAGMA     = ../lib/libmagma.a
 #LIBMAGMABLAS = ../lib/libmagmablas.a
