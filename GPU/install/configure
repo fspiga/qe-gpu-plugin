@@ -2913,6 +2913,8 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
+        # workaround for IOTK
+        try_dflags="-D__IOTK_WORKAROUND1"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -8216,6 +8218,66 @@ fi
                 then
                    try_dflags="$try_dflags $try_dflags_fft_para"
                 fi
+                ;;
+        x86_64 | crayxt* )
+                # check for acml
+                case $f90_version in
+                pgf* | path* )
+                        if test "$have_acml" -ne 0
+                        then
+                                unset ac_cv_search_zfft1mx # clear cached value
+                                FFLAGS="$test_fflags"
+                                LDFLAGS="$test_ldflags"
+                                LIBS="$fft_libs"
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zfft1mx" >&5
+$as_echo_n "checking for library containing zfft1mx... " >&6; }
+if test "${ac_cv_search_zfft1mx+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call zfft1mx
+      end
+_ACEOF
+for ac_lib in '' acml; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_f77_try_link "$LINENO"; then :
+  ac_cv_search_zfft1mx=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_zfft1mx+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_zfft1mx+set}" = set; then :
+
+else
+  ac_cv_search_zfft1mx=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_zfft1mx" >&5
+$as_echo "$ac_cv_search_zfft1mx" >&6; }
+ac_res=$ac_cv_search_zfft1mx
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_fft=1
+                                        fft_libs="$LIBS"
+                                        try_dflags="$try_dflags -D__ACML"
+fi
+
+
+                        fi
+                ;;
+                esac
                 ;;
         esac
 

@@ -322,6 +322,8 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
+        # workaround for IOTK
+        try_dflags="-D__IOTK_WORKAROUND1"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -1712,6 +1714,24 @@ then
                 then
                    try_dflags="$try_dflags $try_dflags_fft_para"
                 fi
+                ;;
+        x86_64 | crayxt* )
+                # check for acml
+                case $f90_version in
+                pgf* | path* )
+                        if test "$have_acml" -ne 0
+                        then
+                                unset ac_cv_search_zfft1mx # clear cached value
+                                FFLAGS="$test_fflags"
+                                LDFLAGS="$test_ldflags"
+                                LIBS="$fft_libs"
+                                AC_SEARCH_LIBS(zfft1mx, acml, have_fft=1
+                                        fft_libs="$LIBS"
+                                        try_dflags="$try_dflags -D__ACML" )
+
+                        fi
+                ;;
+                esac
                 ;;
         esac
 
