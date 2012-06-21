@@ -2010,17 +2010,17 @@ then
                     
     # GPU architecture
     if test "$cuda_arch" = "30" ; then
-        nvccflags="-O3 -arch sm_30 -gencode arch=compute_30,code=compute_30"
+        nvccflags="-m64 -O3 -arch sm_30 -gencode arch=compute_30,code=compute_30"
         try_dflags="$try_dflags -D__GPU_NVIDIA_30"
         magma_gpu_target=1
     fi   
     if  test "$cuda_arch" = "20" ; then
-        nvccflags="-O3 -arch sm_20 -gencode arch=compute_20,code=compute_20"
+        nvccflags="-m64 -O3 -arch sm_20 -gencode arch=compute_20,code=compute_20"
         try_dflags="$try_dflags -D__GPU_NVIDIA_20"
         magma_gpu_target=1
     fi
     if test "$cuda_arch" = "13" ; then
-        nvccflags="-O3 -arch sm_13 -gencode arch=compute_13,code=compute_13"
+        nvccflags="-m64 -O3 -arch sm_13 -gencode arch=compute_13,code=compute_13"
         try_dflags="$try_dflags -D__GPU_NVIDIA_13"
         magma_gpu_target=0
     fi
