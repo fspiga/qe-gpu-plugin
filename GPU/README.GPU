@@ -1,0 +1,141 @@
+/*
+ * Copyright (C) 2010-2012 Irish Centre for High-End Computing (ICHEC)
+ * Copyright (C) 2001-2012 Quantum ESPRESSO group
+ *
+ * This file is distributed under the terms of the
+ * GNU General Public License. See the file `License'
+ * in the root directory of the present distribution,
+ * or http://www.gnu.org/copyleft/gpl.txt .
+ *
+ */
+
+
+*** Last update: June 27, 2012 (Filippo Spiga) ***
+
+This work is supported by the PRACE 1st Implementation Phase project, WP 7.5e
+"Programming Techniques for High-Performance Applications - Accelerator". The 
+Irish Centre for High-End Computing (ICHEC) has been directly responsible to 
+extend the  Quantum ESPRESSO suite in order to support GPU calculation using 
+the NVIDIA CUDA environment.
+
+For additional informations or bug reports please contact
+- Filippo Spiga, spiga.filippo@gmail.com
+- Ivan Girotto, igirotto@ictp.it
+
+Any suggestion or improvement is welcome.
+              
+
+# (strongly suggested) Requirements               
+
+- Intel compiler (versions above 11) or PGI compiler (tested only 12.2)
+- NVIDIA cards (compute capability >= 1.3)
+- CUDA 4.0, 4.1 and CUDA 5.x-pre
+- MKL (version >=10.x) or ACML (>= 4.4.x, >= 5.x)
+- GCC/GFORTRAN (any version compatible with CUDA)
+- [NEW] python >= 2.4.x
+
+
+# How to compile 
+
+GPU-oriented options of the configure
+
+--enable-cuda           : turn on the GPU support
+
+--with-cuda-dir=<path>  : specify the path where CUDA is installed (mandatory)
+
+--with-gpu-arch=<arch>  : it can be '13' for GPU with 1.3 capability or '20' for
+                          GPUs with 2.0 capability or '30' for new KEPLER GPU. By default is '20'
+
+--enable-phigemm        : enable BLAS Level 3 GPU acceleration using phiGEMM 
+				  (default: yes)
+				  
+--enable-magma		: enable GPU LAPACK acceleration based on MAGMA 1.1.0
+                          Good for serial, less for parallel run (default: no)
+                          
+--enable-data-preload   : turn on data preload strategy to put on GPU memory 
+                          persistent data structures. If coupled with the
+                          option "--enable-pinned-mem" the H2D transfer is
+                          performed asynchronously (default: no)
+                                             
+--enable-profiling      : turn on the phiGEMM call-per-call profile
+                          (default: no)
+
+--enable-multi-gpu      : enable multi-GPU support for serial calculation
+                          (experimental)
+
+--enable-debug-cuda     : turn on verbose debug messages on the stdout
+
+
+Here an example:
+
+$ ./configure --enable-parallel --enable-openmp \
+  --enable-cuda --with-gpu-arch=20 \
+  --with-cuda-dir=/ichec/packages/cuda/4.0/cuda --enable-magma
+
+IMPORTANT NOTE: remember to have CUDA nvcc and CUDA libs properly set in the 
+                environment
+
+IMPORTANT NOTE: sometimes is not possible to link "-lcuda" because the file 
+                'libcuda.so' is not in the system. Usually this file is present 
+                if the card and the nVidia driver (not the SDK, the driver) are 
+                installed. In such case, the configure add automatically the 
+                flag "-D__CUDA_GET_MEM_HACK" and the part of the code 
+                responsible to detect the GPU memory is skipped. In this case, 
+                you MUST edit the file "include/cuda_env.h" and manually change 
+                the value of "__GPU_MEM_AMOUNT_HACK__". See the notes in the 
+                file for more info.
+
+
+# How to run
+
+Nothing has changed. If the support to the GPU is enables you MUST remember to 
+specify few additional environmental variables required by the phiGEMM library 
+used by Quantum EPSRESSO.
+
+There are 4 recognized variables, one for each *GEMM routine implemented. This 
+factor, a value strictly between 0 and 1, tells to the library how much of the 
+calculation has to be performed on the CPU and how much on the GPU. In detail, 
+if PHI_DGEMM_SPLIT is 0.9 it means that the 95% of the computation will be 
+performed by the GPU, the 5% by the CPU.
+
+Here an example:
+
+export PHI_SGEMM_SPLIT=0.95
+export PHI_CGEMM_SPLIT=0.875
+export PHI_DGEMM_SPLIT=0.9
+export PHI_ZGEMM_SPLIT=0.925
+
+IMPORTANT NOTE: suggested values are between 0.875 and 0.95
+
+IMPORTANT NOTE: some system are equipped with different cards. For example, you 
+                may have 2 Tesla Cxxxx and another card, that you use for the 
+                video output. The video card may have not enough CUDA 
+                capabilities for computation (below 1.3) or different technical
+                specs. There is a way to hide a specific GPU card, using the
+                environmental variable "CUDA_VISIBLE_DEVICES".
+                
+IMPORTANT NOTE: the library auto-tune the split factor at runtime. You just have to declare a
+                initial good guess. If you are not sure about the guess value leave the default.         
+
+
+# Trouble-makers. inconsistencies, etc: 
+
+- if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
+   ignore MPI C++ bindings.
+
+
+# In case of CUDA/GPU code errors...
+        
+It may happen that some ported routines fail. If this happen you can easily
+decide to run the code skipping that specific "GPU" part that produce some 
+issues. To do that it is possible to compile the code with few additional
+flags that exclude the GPU code related to ADDUSDENS, NEWD or VLOC_PSI. 
+
+These flags are: 
+-D__DISABLE_CUDA_ADDUSDENS, -D__DISABLE_CUDA_VLOCPSI, 
+-D__DISABLE_CUDA_NEWD, -D__PHIGEMM_DISABLE_SPECIALK
+
+Without editing the make.sys, you can run make in this way:
+$ make MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw
+
+You can also specify more of these flags together.
