@@ -1877,6 +1877,80 @@ then
 fi
 echo setting MPI_LIBS... $mpi_libs
 
+# final check on availability of parallel environment
+parallel=0
+for dummy in x # to allow simple 'break' 
+do 
+    test "$use_parallel" -eq 0 && break
+
+    F77=$mpif90
+    LIBS="$mpi_libs"
+    AC_SEARCH_LIBS(mpi_init, "", parallel=1
+                   try_dflags="$try_dflags -D__MPI -D__PARA")
+# look for scalapack if required
+    test "$parallel" -eq 0 && break
+    test "$with_scalapack" -eq 0 && break
+    if test "$scalapack_libs" = "" ; then
+# no additional libraries needed
+       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
+                   try_dflags="$try_dflags -D__SCALAPACK")
+       test "$have_scalapack" -eq 1 && break
+
+# Intel MKL blacs&scalapack - Norbert Nemec 2010/08/20
+# 
+# Carlo Cavazzoni writes
+#      If you want to use the version of scalapack distributed with MKL
+#      you should be careful about:
+#      1) the size of the integer variable when calling MKL subroutine,
+#      QE (up to now) uses integer*4, so you should link version with
+#       the suffix: lp64 and NOT ilp64 .
+#      2) you should link the appropriate blacs for your MPI library:
+#      INTEL MPI   -> libmkl_blacs_intelmpi_lp64.a
+#      OpenMPI -> libmkl_blacs_openmpi_lp64.a
+#      SGI MPI -> libmkl_blacs_sgimpt_lp64.a
+#
+#      if you are in doubt or if you have another version of MPI
+#      you can always build BLACS by yourself.
+#
+if test "$have_mkl" -eq 1
+   then
+      unset ac_cv_search_pdgemr2d # clear cached value
+      LIBS="-lmkl_blacs_lp64 $mpi_libs $blas_libs"
+      AC_SEARCH_LIBS(pdgemr2d, "mkl_scalapack_lp64" , have_scalapack=1
+                     try_dflags="$try_dflags -D__SCALAPACK"
+                     scalapack_libs="-lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64" )
+      test "$have_scalapack" -eq 1 && break
+fi
+#
+# sci libraries (e.g. cray xt)
+       unset ac_cv_search_pdgemr2d # clear cached value
+       scalapack_libs="-lsci"
+       LIBS="$mpi_libs $scalapack_libs"
+       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
+                      try_dflags="$try_dflags -D__SCALAPACK")
+       test "$have_scalapack" -eq 1 && break
+# scalapack + blacs, no -L options
+       unset ac_cv_search_pdgemr2d # clear cached value
+       blacs_libs="-lblacs -lblacsF77init -lblacs"
+       scalapack_libs="-lscalapack $blacs_libs"
+       LIBS="$mpi_libs $scalapack_libs"
+       LDFLAGS=""
+       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
+                   try_dflags="$try_dflags -D__SCALAPACK")
+       test "$have_scalapack" -eq 1 && break
+# scalapack + blacs with -L options
+       unset ac_cv_search_pdgemr2d # clear cached value
+       if test "$scalapack_dir" = ""; then scalapack_dir="/bgsys/local/scalapack/lib"; fi
+       if test "$blacs_dir" = ""; then blacs_dir="/bgsys/local/blacs/lib"; fi
+       blacs_libs="-L$blacs_dir -lblacs -lblacsF77init -lblacs"
+       scalapack_libs="-L$scalapack_dir -lscalapack $blacs_libs"
+       LIBS="$mpi_libs $scalapack_libs"
+       LDFLAGS=""
+       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
+                   try_dflags="$try_dflags -D__SCALAPACK")
+    fi
+done
+
 # CUDA
 if test "$use_cuda" -eq 1 
 then 
@@ -1961,28 +2035,12 @@ then
                           
             cuda_libs="$try_loption $cuda_libs"
             
-            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && 
-                test "$ac_cv_search_cublasInit" != "no" && 
+            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && \
+                test "$ac_cv_search_cublasInit" != "no" && \
                 test "$ac_cv_search_cufftPlan1d" != "no"
             then                 
                 
-                   try_dflags="$try_dflags -D__CUDA"
-                    
-                # Only MAGMA still need the CUDA driver linked 
-                if test "$use_magma" -eq 1 ;
-                then
-                    LDFLAGS=""
-                    LIBS=""
-                    AC_SEARCH_LIBS(cuMemGetInfo_v2,cuda, 
-                          cuda_libs="$cuda_libs $LIBS",,)
-                          
-                    if test "$ac_cv_search_cuMemGetInfo_v2" == "no" 
-                    then
-                        #try_dflags="$try_dflags -D__CUDA_GET_MEM_HACK"
-                        use_magma=0
-                        AC_MSG_WARN([MAGMA disabled, MAGMA requires CUDA driver (here missing) as linking dependency.])
-                    fi
-                fi
+                try_dflags="$try_dflags -D__CUDA"
                 have_cuda=1
                 break
             fi
@@ -2012,17 +2070,17 @@ then
     if test "$cuda_arch" = "30" ; then
         nvccflags="-m64 -O3 -arch sm_30 -gencode arch=compute_30,code=compute_30"
         try_dflags="$try_dflags -D__GPU_NVIDIA_30"
-        magma_gpu_target=1
+        magma_gpu_target="Fermi"
     fi   
     if  test "$cuda_arch" = "20" ; then
         nvccflags="-m64 -O3 -arch sm_20 -gencode arch=compute_20,code=compute_20"
         try_dflags="$try_dflags -D__GPU_NVIDIA_20"
-        magma_gpu_target=1
+        magma_gpu_target="Fermi"
     fi
     if test "$cuda_arch" = "13" ; then
         nvccflags="-m64 -O3 -arch sm_13 -gencode arch=compute_13,code=compute_13"
         try_dflags="$try_dflags -D__GPU_NVIDIA_13"
-        magma_gpu_target=0
+        magma_gpu_target="Tesla"
     fi
         
     cuda_include="-I$cuda_path/include"
@@ -2125,82 +2183,6 @@ fi
 
 # Always show CUDA timing (if CUDA is not enable, only GEMM are tracked)    
 try_dflags="$try_dflags -D__CUDA_QE_TIMING"
-
-
-
-# final check on availability of parallel environment
-parallel=0
-for dummy in x # to allow simple 'break' 
-do 
-    test "$use_parallel" -eq 0 && break
-
-    F77=$mpif90
-    LIBS="$mpi_libs"
-    AC_SEARCH_LIBS(mpi_init, "", parallel=1
-                   try_dflags="$try_dflags -D__MPI -D__PARA")
-# look for scalapack if required
-    test "$parallel" -eq 0 && break
-    test "$with_scalapack" -eq 0 && break
-    if test "$scalapack_libs" = "" ; then
-# no additional libraries needed
-       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
-                   try_dflags="$try_dflags -D__SCALAPACK")
-       test "$have_scalapack" -eq 1 && break
-
-# Intel MKL blacs&scalapack - Norbert Nemec 2010/08/20
-# 
-# Carlo Cavazzoni writes
-#      If you want to use the version of scalapack distributed with MKL
-#      you should be careful about:
-#      1) the size of the integer variable when calling MKL subroutine,
-#      QE (up to now) uses integer*4, so you should link version with
-#       the suffix: lp64 and NOT ilp64 .
-#      2) you should link the appropriate blacs for your MPI library:
-#      INTEL MPI   -> libmkl_blacs_intelmpi_lp64.a
-#      OpenMPI -> libmkl_blacs_openmpi_lp64.a
-#      SGI MPI -> libmkl_blacs_sgimpt_lp64.a
-#
-#      if you are in doubt or if you have another version of MPI
-#      you can always build BLACS by yourself.
-#
-if test "$have_mkl" -eq 1
-   then
-      unset ac_cv_search_pdgemr2d # clear cached value
-      LIBS="-lmkl_blacs_lp64 $mpi_libs $blas_libs"
-      AC_SEARCH_LIBS(pdgemr2d, "mkl_scalapack_lp64" , have_scalapack=1
-                     try_dflags="$try_dflags -D__SCALAPACK"
-                     scalapack_libs="-lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64" )
-      test "$have_scalapack" -eq 1 && break
-fi
-#
-# sci libraries (e.g. cray xt)
-       unset ac_cv_search_pdgemr2d # clear cached value
-       scalapack_libs="-lsci"
-       LIBS="$mpi_libs $scalapack_libs"
-       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
-                      try_dflags="$try_dflags -D__SCALAPACK")
-       test "$have_scalapack" -eq 1 && break
-# scalapack + blacs, no -L options
-       unset ac_cv_search_pdgemr2d # clear cached value
-       blacs_libs="-lblacs -lblacsF77init -lblacs"
-       scalapack_libs="-lscalapack $blacs_libs"
-       LIBS="$mpi_libs $scalapack_libs"
-       LDFLAGS=""
-       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
-                   try_dflags="$try_dflags -D__SCALAPACK")
-       test "$have_scalapack" -eq 1 && break
-# scalapack + blacs with -L options
-       unset ac_cv_search_pdgemr2d # clear cached value
-       if test "$scalapack_dir" = ""; then scalapack_dir="/bgsys/local/scalapack/lib"; fi
-       if test "$blacs_dir" = ""; then blacs_dir="/bgsys/local/blacs/lib"; fi
-       blacs_libs="-L$blacs_dir -lblacs -lblacsF77init -lblacs"
-       scalapack_libs="-L$scalapack_dir -lscalapack $blacs_libs"
-       LIBS="$mpi_libs $scalapack_libs"
-       LDFLAGS=""
-       AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
-                   try_dflags="$try_dflags -D__SCALAPACK")
-    fi
-done
 
 # preprocessing flag for openmp (experimental)
 if test "$use_openmp" -eq 1 ; then try_dflags="$try_dflags -D__OPENMP" ; fi
