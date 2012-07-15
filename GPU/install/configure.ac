@@ -241,7 +241,7 @@ extlib_flags=$EXTLIB_FLAGS # Flags for internal copies of lapack and blas
 nvcc=$NVCC	 		# NVIDIA CUDA compiler 
 nvccflags=$NVCCFLAGS	 		# Flags for NVIDIA CUDA compiler
 # configure for current directory by default
-if test "$topdir" = "" ; then topdir="`pwd`" ; fi
+if test "$topdir" = "" ; then topdir="`pwd`/../" ; fi
 
 # check system type (no cross-compilation for now)
 AC_CANONICAL_BUILD

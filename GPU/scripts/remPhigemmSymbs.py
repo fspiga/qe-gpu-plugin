@@ -32,3 +32,4 @@ while s.strip()!='':
 		s=raw_input()
 	except:
 		exit()
+exit()

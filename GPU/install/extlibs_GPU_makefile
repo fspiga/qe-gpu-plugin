@@ -1,0 +1,53 @@
+
+#===============================
+# espresso
+#===============================
+#
+include ../../make.sys
+
+#
+# MAIN target
+#
+all:
+ifdef NVCC
+	$(MAKE) libphiGEMM
+	$(MAKE) libMAGMA
+endif
+	
+# Third-part CUDA-enabled libraries
+libphiGEMM:
+ifeq ($(PHIGEMM_ENABLED),1) 
+	if test ! -d ../../phiGEMM ; then \
+	( gzip -dc ../archive/phiGEMM-1.9.tar.gz | (cd ../../; tar -xvf ./GPU/archive/phiGEMM-1.9.tar.gz )); fi
+	cp make_phiGEMM.inc ../../phiGEMM/make.inc;
+	cd ../../phiGEMM; $(MAKE) all;
+endif
+
+#MAGMA
+libMAGMA:
+ifeq ($(MAGMA_ENABLED),1) 
+	if test ! -d ../../magma ; then \
+	( gzip -dc ../archive/magma_1.2.1.Y.tar.gz | (cd ../../; tar -xvf ./GPU/archive/magma_1.2.1.Y.tar.gz )); fi
+	cp make_magma.inc ../../magma/make.inc;
+	cd ../../magma; $(MAKE) lib;
+endif
+
+###################################
+# cleaning
+###################################
+# each lib independently
+
+libphiGEMM_clean:
+	if test -d ../../phiGEMM; then (cd ../../phiGEMM; $(MAKE) clean); fi
+libphiGEMM_veryclean:
+	if test -d ../../phiGEMM; then (rm -R -f ../../phiGEMM); fi
+	rm -f make_phiGEMM.inc
+libMAGMA_clean:
+	if test -d ../../magma; then (cd ../../magma; $(MAKE) clean); fi
+libMAGMA_veryclean:
+	if test -d ../../magma; then (rm -R -f ../../magma); fi
+	rm -f make_magma.inc
+
+# general cleaning
+clean: libphiGEMM_clean libMAGMA_clean
+veryclean: libphiGEMM_veryclean libMAGMA_veryclean

@@ -63,7 +63,7 @@ test -e configure.msg     && mv configure.msg $root/install/
 #
 # copy the Makefile
 #
-test -e $root/install/Makefile.in && cp $root/install/Makefile.in Makefile 
+test -e $root/install/Makefile.in && cp $root/install/Makefile.in ../Makefile 
 #
 
 exit 0

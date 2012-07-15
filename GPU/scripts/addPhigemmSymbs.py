@@ -5,8 +5,8 @@
 # or http://www.gnu.org/copyleft/gpl.txt .
 #
 # Author: Filippo Spiga (spiga.filippo@gmail.com)
-# Date: June 14, 2012
-# Version: 1.1
+# Date: July 8, 2012
+# Version: 1.2
 
 import os
 import os.path
@@ -36,7 +36,6 @@ while s.strip()!='':
 		f = open(tmp_file, 'w') 
 		f.write("""
 #if defined(__CUDA) && defined(__PHIGEMM) 
-
 #if defined(__PHIGEMM_PROFILE)
 #define _STRING_LINE_(s) #s
 #define _STRING_LINE2_(s) _STRING_LINE_(s)
