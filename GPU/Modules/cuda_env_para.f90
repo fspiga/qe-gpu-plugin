@@ -1,6 +1,6 @@
 !
+! Copyright (C) 2001-2012 Quantum ESPRESSO group
 ! Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
-! Copyright (C) 2001-2011 Quantum ESPRESSO group
 !
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
@@ -8,35 +8,17 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 
-#if defined(__PARA)
+#if defined(__MPI)
 subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
 	USE parallel_include
 
+#if defined(__PGI) || defined(__INTEL)
 	interface
-
-#if defined(__PGI)
-		subroutine quicksort(base, nmemb, elemsize, compar)  bind(C, name='qsort')
-			use iso_c_binding
-			implicit none
-             !pgi$ ignore_tkr base, nmemb, elemsize
-			type(C_PTR), value :: base
-			integer(C_SIZE_T), value :: nmemb , elemsize
-			type(C_FUNPTR), value :: compar
-		end subroutine quicksort
-
-		integer function strcmp(a,b) bind(C, name='strcmp')
-			use iso_c_binding
-			implicit none
-             !pgi$ ignore_tkr a, b
-			type(C_PTR), value :: a, b
-		end function strcmp
-#endif
-
-#if defined(__INTEL)
         subroutine quicksort(base, nmemb, elemsize, compar)  bind(C, name='qsort')
             use iso_c_binding
             implicit none
+!pgi$ ignore_tkr base, nmemb, elemsize, compar
 !DEC$ ATTRIBUTES NO_ARG_CHECK :: base, nmemb, elemsize, compar
             type(C_PTR), value :: base
             integer(C_SIZE_T), value :: nmemb , elemsize
@@ -47,34 +29,41 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
             use iso_c_binding
             implicit none
 !DEC$ ATTRIBUTES NO_ARG_CHECK :: a, b
+!pgi$ ignore_tkr a, b
             type(C_PTR), value :: a, b
         end function strcmp
-#endif
 	end interface
+#endif
 
     INTEGER, INTENT(INOUT)  :: lRank, lRankThisNode, lSizeThisNode
 	integer :: dev
 	character (len=MPI_MAX_PROCESSOR_NAME), allocatable :: hosts(:)
 	character (len=MPI_MAX_PROCESSOR_NAME) :: hostname
 	integer :: namelength , color , i
-	integer :: nProcs , newComm , newRank , ierr, myrank
+	integer :: nProcs , newComm , newRank , ierr
+#if !defined(__PGI) && !defined(__INTEL)
+    integer, allocatable :: marked_hosts(:)
+    integer :: lWorldGroup, lThisNodeGroup
+#endif
 
-	call MPI_COMM_SIZE(MPI_COMM_WORLD , nProcs ,  ierr)
-	call MPI_COMM_RANK(MPI_COMM_WORLD , lRank , ierr)
+    call mpi_comm_size(mpi_comm_world , nProcs ,  ierr)
+    call mpi_comm_rank(mpi_comm_world , lRank , ierr)
 
 	! allocate array of hostnames
 	allocate( hosts(0:nProcs -1) )
 
 	! Every process collects the hostname of all the nodes
-	call MPI_GET_PROCESSOR_NAME(hostname , namelength , ierr)
+	call mpi_get_processor_name(hostname , namelength , ierr)
 
-    hosts(myrank)=hostname(1:namelength)
+    hosts(lRank)=hostname(1:namelength)
 
     do i=0, nProcs -1
-        call MPI_BCAST(hosts(i),MPI_MAX_PROCESSOR_NAME ,MPI_CHARACTER ,i, MPI_COMM_WORLD ,ierr)
+        call mpi_bcast(hosts(i),MPI_MAX_PROCESSOR_NAME ,mpi_character ,i, mpi_comm_world ,ierr)
     enddo
 
-    call quicksort(hosts, nProcs, MPI_MAX_PROCESSOR_NAME, strcmp)
+#if defined(__PGI) || defined(__INTEL)
+
+    call quicksort(hosts, nProcs, mpi_max_processor_name, strcmp)
 
     color=0
 	do i=0, nProcs -1
@@ -85,10 +74,34 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 		if (lle( hostname ,hosts(i) ) .and. lge( hostname ,hosts(i) ) )  exit
 	end do
 
-	call MPI_COMM_SPLIT(MPI_COMM_WORLD ,color ,0,newComm ,ierr)
+	call mpi_comm_split(mpi_comm_world ,color ,0, newComm ,ierr)
 
-	call MPI_COMM_SIZE(newComm , lSizeThisNode ,  ierr)
-	call MPI_COMM_RANK(newComm , lRankThisNode , ierr)
+#else
+
+    ! For GNU (or other compilers) we do in a old-fashion way because
+    ! they might not support "ignoring TKR" features through compiler
+    ! directives (NdFilippo)
+
+    allocate( marked_hosts(0:nProcs -1) )
+
+    dev = 0
+    do i=0, nProcs -1
+        if ( lle(hosts(lRank) ,hosts(i)) .and. lge(hosts(lRank) ,hosts(i)) ) then
+            marked_hosts(dev)=i
+            dev = dev + 1
+        end if
+    end do
+
+    ! Create a communicator consisting of the ranks running on this node.
+    call mpi_comm_group(mpi_comm_world, lWorldGroup, ierr)
+    call mpi_group_incl(lWorldGroup, dev, marked_hosts, lThisNodeGroup, ierr)
+    call mpi_comm_create(mpi_comm_world, lThisNodeGroup, newComm, ierr)
+
+    deallocate(marked_hosts)
+#endif
+
+	call mpi_comm_size(newComm , lSizeThisNode ,  ierr)
+	call mpi_comm_rank(newComm , lRankThisNode , ierr)
 
 	deallocate(hosts)
 	! destroy MPI communicator
@@ -96,8 +109,10 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 end subroutine
 
 subroutine myBarrier()
-	USE mpi
+
+	USE parallel_include
+
 	integer :: ierr
-	CALL  MPI_BARRIER(MPI_COMM_WORLD , ierr)
+	CALL  mpi_barrier(mpi_comm_world , ierr)
 end subroutine
 #endif

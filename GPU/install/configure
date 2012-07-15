@@ -596,6 +596,7 @@ magma_gpu_target
 magma_switch
 phigemm_ldsharedflag
 phigemm_ldflags
+phigemm_fflags
 phigemm_ccflags
 phigemm_switch
 phigemm_libs
@@ -732,7 +733,6 @@ with_internal_lapack
 enable_environment
 enable_cuda
 enable_debug_cuda
-enable_multi_gpu
 enable_pinned_mem
 enable_magma
 enable_phigemm
@@ -1379,9 +1379,7 @@ Optional Features:
   --enable-environment    compile solvent-related stuff (default: no)
   --enable-cuda           enable CUDA (default: no)
   --enable-debug-cuda     enable CUDA debug (default: no)
-  --enable-multi-gpu      enable multi GPU support (default: no)
-  --enable-pinned-mem     enable the non-pageable memory allocations (default:
-                          no)
+  --enable-pinned-mem     enable non-pageable memory allocations (default: no)
   --enable-magma          enable MAGMA (default: no)
   --enable-phigemm        enable phiGEMM (default: yes)
   --enable-profiling      enable the profiling of phiGEMM calls (default: no)
@@ -2668,18 +2666,6 @@ else
 fi
 
 
-# Check whether --enable-multi_gpu was given.
-if test "${enable_multi_gpu+set}" = set; then :
-  enableval=$enable_multi_gpu; if  test "$enableval" = "yes" ; then
-      use_multigpu=1
-   else
-      use_multigpu=0
-   fi
-else
-  use_multigpu=0
-fi
-
-
 # Check whether --enable-pinned_mem was given.
 if test "${enable_pinned_mem+set}" = set; then :
   enableval=$enable_pinned_mem; if   test "$enableval" = "yes" ; then
@@ -2913,8 +2899,6 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
-        # workaround for IOTK
-        try_dflags="-D__IOTK_WORKAROUND1"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -4874,7 +4858,7 @@ _ACEOF
 
 SIZEOF_INT_P=$ac_cv_sizeof_int_p
 
-ac_config_files="$ac_config_files include/fft_defs.h:include/fft_defs.h.in"
+ac_config_files="$ac_config_files ../include/fft_defs.h:../include/fft_defs.h.in"
 
 
 # check if the structure mallinfo is present in malloc.h
@@ -5182,6 +5166,7 @@ ia32:path* | ia64:path* | x86_64:path* )
         try_f90flags="\$(FFLAGS) -x f95-cpp-input"
         try_fflags_noopt="-O0 -g"
         try_ldflags="-g"
+		try_ldflags_openmp="-fopenmp"
         try_dflags="$try_dflags -D__GFORTRAN -D__STD_F95"
         try_ldflags_static="-static"
         ;;
@@ -8219,66 +8204,6 @@ fi
                    try_dflags="$try_dflags $try_dflags_fft_para"
                 fi
                 ;;
-        x86_64 | crayxt* )
-                # check for acml
-                case $f90_version in
-                pgf* | path* )
-                        if test "$have_acml" -ne 0
-                        then
-                                unset ac_cv_search_zfft1mx # clear cached value
-                                FFLAGS="$test_fflags"
-                                LDFLAGS="$test_ldflags"
-                                LIBS="$fft_libs"
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zfft1mx" >&5
-$as_echo_n "checking for library containing zfft1mx... " >&6; }
-if test "${ac_cv_search_zfft1mx+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call zfft1mx
-      end
-_ACEOF
-for ac_lib in '' acml; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_f77_try_link "$LINENO"; then :
-  ac_cv_search_zfft1mx=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_zfft1mx+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_zfft1mx+set}" = set; then :
-
-else
-  ac_cv_search_zfft1mx=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_zfft1mx" >&5
-$as_echo "$ac_cv_search_zfft1mx" >&6; }
-ac_res=$ac_cv_search_zfft1mx
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  have_fft=1
-                                        fft_libs="$LIBS"
-                                        try_dflags="$try_dflags -D__ACML"
-fi
-
-
-                        fi
-                ;;
-                esac
-                ;;
         esac
 
 fi
@@ -8436,8 +8361,7 @@ if test "$ac_res" != no; then :
 
 fi
 
-                        if test "$ac_cv_search_vexp" = "-lmassvp4" \
-                                -o "$ac_cv_search_vexp" = "-lmassv"
+                        if test "$ac_cv_search_vexp" = "-lmassvp4" -o "$ac_cv_search_vexp" = "-lmassv"
                         then mass_libs="$try_loption $ac_cv_search_vexp -lmass"
                         fi
                         if test "$ac_cv_search_vexp" != "no" ; then break ; fi
@@ -9065,9 +8989,7 @@ fi
         have_valid_cuda_header=1
     fi
 
-    if test "$have_valid_cuda_header" == 1  &&
-        test "$have_valid_cuda_compiler" == 1
-    then
+    if test "$have_valid_cuda_header" == 1  && test "$have_valid_cuda_compiler" == 1 ; then
         # check for CUDA libs
         ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -9076,16 +8998,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         nvcc=$NVCC
-
-        # val="`egrep "CUDA_VERSION 40" $cuda_path/include/cuda.h`"
-        # if test -z "$val";  then
-        #    cudamajor=3
-        #    AC_MSG_NOTICE([CUDA 3.x detected.])
-        #    try_dflags="$try_dflags -D__CUDA_3"
-        # else
-        #    AC_MSG_NOTICE([CUDA 4.x detected.])
-        #    cudamajor=4
-        # fi
 
         try_libdirs="$cuda_path/lib64 /usr/lib64/nvidia /usr/local/cuda/lib64"
         try_libdirs="$try_libdirs $libdirs $ld_library_path"
@@ -9308,9 +9220,7 @@ fi
 
             cuda_libs="$try_loption $cuda_libs"
 
-            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && \
-                test "$ac_cv_search_cublasInit" != "no" && \
-                test "$ac_cv_search_cufftPlan1d" != "no"
+            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && test "$ac_cv_search_cublasInit" != "no" && test "$ac_cv_search_cufftPlan1d" != "no"
             then
 
                 try_dflags="$try_dflags -D__CUDA"
@@ -9343,21 +9253,28 @@ then
     magma_switch=0
     phigemm_switch=0
 
+    if test "$use_debug" -eq 1; then
+       nvccflags="-O0 -g"
+    else
+       nvccflags="-O3"
+    fi
+
     # GPU architecture
+    # This is for GeForce GTX6xx and TESLA K10/K20 cards
     if test "$cuda_arch" = "30" ; then
-        nvccflags="-m64 -O3 -arch sm_30 -gencode arch=compute_30,code=compute_30"
+        nvccflags="$nvccflags -m64 -arch sm_30 -gencode arch=compute_30,code=compute_30"
         try_dflags="$try_dflags -D__GPU_NVIDIA_30"
-        magma_gpu_target="Fermi"
+        magma_gpu_target=Fermi
     fi
     if  test "$cuda_arch" = "20" ; then
-        nvccflags="-m64 -O3 -arch sm_20 -gencode arch=compute_20,code=compute_20"
+        nvccflags="$nvccflags -m64 -arch sm_20 -gencode arch=compute_20,code=compute_20"
         try_dflags="$try_dflags -D__GPU_NVIDIA_20"
-        magma_gpu_target="Fermi"
+        magma_gpu_target=Fermi
     fi
     if test "$cuda_arch" = "13" ; then
-        nvccflags="-m64 -O3 -arch sm_13 -gencode arch=compute_13,code=compute_13"
+        nvccflags="$nvccflags -m64 -arch sm_13 -gencode arch=compute_13,code=compute_13"
         try_dflags="$try_dflags -D__GPU_NVIDIA_13"
-        magma_gpu_target="Tesla"
+        magma_gpu_target=Tesla
     fi
 
     cuda_include="-I$cuda_path/include"
@@ -9390,24 +9307,29 @@ then
         phigemm_include="-I$topdir/phiGEMM/include"
         phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "
 
-		f90rule="python $topdir/install/addPhigemmSymbsSingle.py \$< ; \\
-	$f90rule"
+		phigemm_cc=$cc
+		phigemm_fc=$f90
+		if test "$use_debug" -eq 1; then
+		    phigemm_ccflags="-g -O0 $try_fflags_openmp -fPIC"
+	        phigemm_ldflags="-g -O0 $try_fflags_openmp -fPIC"
+        else
+		    phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
+	        phigemm_ldflags="-O3 $try_fflags_openmp -fPIC"
+        fi
 
         # NVCC HOST-side compiler options
         case "$arch:$f90_version" in
 		*:ifort* )
-			phigemm_cc="icc"
-			phigemm_fc="ifort"
-			phigemm_ccflags="-O3 -openmp -fPIC"
-	        	phigemm_ldflags="-O3 -openmp -fPIC"
-	        	phigemm_ldsharedflag="--shared"
+	        phigemm_ldsharedflag="--shared"
+            phigemm_fflags="-module ../include/"
 		;;
 		*:pgf90 | cray*:pgf )
-			phigemm_cc="pgcc"
-			phigemm_fc="pgf90"
-			phigemm_ccflags="-O3 -mp -fPIC"
-	        	phigemm_ldflags="-O3 -mp -fPIC"
-	        	phigemm_ldsharedflag="-shared"
+	        phigemm_ldsharedflag="-shared"
+	        phigemm_fflags="-module ../include/"
+	        ;;
+	    *:gfortran )
+	        phigemm_ldsharedflag="-shared"
+	        phigemm_fflags="-J../include/"
 	        ;;
 		esac
 
@@ -9415,11 +9337,6 @@ then
             phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
             try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
            fi
-    fi
-
-    if test "$use_multigpu" -eq 1
-    then
-       try_dflags="$try_dflags -D__MULTI_GPU"
     fi
 
     # By default show all CUDA timing
@@ -9719,7 +9636,8 @@ fi
 
 
 
-ac_config_headers="$ac_config_headers include/c_defs.h:include/c_defs.h.in"
+
+ac_config_headers="$ac_config_headers ../include/c_defs.h:../include/c_defs.h.in"
 
 ac_config_files="$ac_config_files make.sys"
 
@@ -9735,9 +9653,9 @@ ac_config_files="$ac_config_files install/make_lapack.inc"
 
 
 # Third-part CUDA-enabled libraries
-ac_config_files="$ac_config_files GPU/install/make_phiGEMM.inc"
+ac_config_files="$ac_config_files install/make_phiGEMM.inc"
 
-ac_config_files="$ac_config_files GPU/install/make_magma.inc"
+ac_config_files="$ac_config_files install/make_magma.inc"
 
 
 cat >confcache <<\_ACEOF
@@ -10422,15 +10340,15 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "include/fft_defs.h") CONFIG_FILES="$CONFIG_FILES include/fft_defs.h:include/fft_defs.h.in" ;;
-    "include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS include/c_defs.h:include/c_defs.h.in" ;;
+    "../include/fft_defs.h") CONFIG_FILES="$CONFIG_FILES ../include/fft_defs.h:../include/fft_defs.h.in" ;;
+    "../include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS ../include/c_defs.h:../include/c_defs.h.in" ;;
     "make.sys") CONFIG_FILES="$CONFIG_FILES make.sys" ;;
     "configure.msg") CONFIG_FILES="$CONFIG_FILES configure.msg" ;;
     "install/make_wannier90.sys") CONFIG_FILES="$CONFIG_FILES install/make_wannier90.sys" ;;
     "install/make_blas.inc") CONFIG_FILES="$CONFIG_FILES install/make_blas.inc" ;;
     "install/make_lapack.inc") CONFIG_FILES="$CONFIG_FILES install/make_lapack.inc" ;;
-    "GPU/install/make_phiGEMM.inc") CONFIG_FILES="$CONFIG_FILES GPU/install/make_phiGEMM.inc" ;;
-    "GPU/install/make_magma.inc") CONFIG_FILES="$CONFIG_FILES GPU/install/make_magma.inc" ;;
+    "install/make_phiGEMM.inc") CONFIG_FILES="$CONFIG_FILES install/make_phiGEMM.inc" ;;
+    "install/make_magma.inc") CONFIG_FILES="$CONFIG_FILES install/make_magma.inc" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
