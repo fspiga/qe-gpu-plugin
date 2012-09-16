@@ -36,15 +36,21 @@ default :
 ###########################################################
 # Main targets
 ###########################################################
-pw : bindir libphiGEMM libMAGMA mods liblapack libblas libs libiotk libenviron
+pw : bindir mods liblapack libblas libs libiotk libenviron
 	if test -d PW ; then \
 	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-pw-gpu : libphiGEMM libMAGMA gpu-mods
+pw-gpu : libphiGEMM libMAGMA gpu-mods pw
+	if test -d PW ; then \
+	(cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
+	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl GEMM ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	if test -d GPU ; then \
-	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) $@; \
+	else $(MAKE) $(MFLAGS) ; fi ) ; fi ; \
 	
 cp : bindir mods liblapack libblas libs libiotk
 	if test -d CPV ; then \
@@ -102,10 +108,7 @@ all   : pwall cp ld1 upf tddfpt
 # Auxiliary targets used by main targets:
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
-mods : libiotk libphiGEMM libMAGMA
-ifeq ($(PHIGEMM_ENABLED),1) 
-	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
-endif
+mods : libiotk
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 libs : mods
@@ -113,6 +116,10 @@ libs : mods
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 	( cd flib ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; fi )
+
+gpu-mods : mods
+	( cd GPU/Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 
 libenviron :  mods
 	( if test -d Environ ; then cd Environ ; if test "$(MAKE)" = "" ;  \
@@ -204,7 +211,11 @@ links : bindir
 # remove object files and executables
 clean :
 	touch make.sys
-ifeq ($(PHIGEMM_ENABLED),1) 
+	if test -d GPU ; then \
+	(cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
+	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
+ifeq ($(PHIGEMM_ENABLED),1)
+	grep -rl GEMM PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif   
 	for dir in \

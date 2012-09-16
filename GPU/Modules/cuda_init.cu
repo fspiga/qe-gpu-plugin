@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #endif
 
-#include "cuda_init.h"
+#include "cuda_env.h"
 
 #if defined(__PHIGEMM)
 #include "phigemm.h"
@@ -199,7 +199,7 @@ extern "C" void preallocatedevicememory_(int lRank){
 	for (i = 0; i < ngpus_per_process; i++) {
 #endif
 
-		// see cuda_init.h for a description of the hack
+		// see cuda_env.h for a description of the hack
 		// this does *NOT* work if everything is not performed at the beginning...
 #if defined(__CUDA_GET_MEM_HACK)
 		free = (size_t)  __GPU_MEM_AMOUNT_HACK__;

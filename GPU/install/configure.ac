@@ -190,15 +190,16 @@ AC_ARG_ENABLE(profiling,
    fi],
    [use_phigemmprofile=0])
    
-AC_ARG_ENABLE(data_preload,
-   [AS_HELP_STRING([--enable-data-preload],
-       [enable the pre-loading of data structures on GPU memory (default: no)])],
-   [if   test "$enableval" = "yes" ; then
-      use_preloadgpu=1
-   else
-      use_preloadgpu=0
-   fi],
-   [use_preloadgpu=0])
+# DISABLED
+#AC_ARG_ENABLE(data_preload,
+#   [AS_HELP_STRING([--enable-data-preload],
+#       [enable the pre-loading of data structures on GPU memory (default: no)])],
+#   [if   test "$enableval" = "yes" ; then
+#      use_preloadgpu=1
+#   else
+#      use_preloadgpu=0
+#   fi],
+#   [use_preloadgpu=0])
 
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
@@ -2052,21 +2053,22 @@ then
         try_dflags="$try_dflags -D__CUDA_DEBUG"
     fi
     
-    if test "$use_preloadgpu" -eq 1; then
-    
-        try_dflags="$try_dflags -D__CUDA_PRELD"
-        
-        if test "$use_pinnedmem" -eq 1  ; then
-            # If "--enable-pinned-mem" and "--enable-preload-gpu" are used together, pinned 
-            # memory is ONLY for pre-loading (and MAGMA if present). 
-            try_dflags="$try_dflags -D__CUDA_PRELD_PINNED"
-        fi
-    else
+# PARTIALLY DISABLED    
+#    if test "$use_preloadgpu" -eq 1; then
+#    
+#        try_dflags="$try_dflags -D__CUDA_PRELD"
+#        
+#        if test "$use_pinnedmem" -eq 1  ; then
+#            # If "--enable-pinned-mem" and "--enable-preload-gpu" are used together, pinned 
+#            # memory is ONLY for pre-loading (and MAGMA if present). 
+#            try_dflags="$try_dflags -D__CUDA_PRELD_PINNED"
+#        fi
+#    else
         if test "$use_pinnedmem" -eq 1  ; then
             # PINNED everywhere (not a great idea but still possible...
             try_dflags="$try_dflags -D__CUDA_PINNED"
         fi                
-    fi
+#    fi
 
     # phiGEMM 
     if test "$use_phigemm" -eq 1  ; then 
