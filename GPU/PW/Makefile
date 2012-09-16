@@ -14,9 +14,6 @@ h_psi.o \
 rdiaghg.o \
 struct_fact.o
 
-PWMAINOBJS = \
-../../PW/src/pwscf.o 
-
 PWOBJS = \
 ../../PW/src/a2fmod.o \
 ../../PW/src/add_bfield.o \
@@ -236,15 +233,15 @@ gk_sort_cuda.o
 
 QEMODS=../Modules/libqemodgpu.a
 
-TLDEPS=bindir mods libs liblapack libblas libenviron
+TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviron
 
 LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
-all : tldeps pw-gpu.x generate_vdW_kernel_table.x
+all : tldeps pw-gpu.x generate_vdW_kernel_table-gpu.x
 
-pw-gpu.x : libpwgpu.a $(LIBOBJS) $(QEMODS)
+pw-gpu.x : pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
-	   $(PWMAINOBJS) $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	   pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
@@ -257,9 +254,9 @@ tldeps:
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
 
-generate_vdW_kernel_table-gpu.x : libpwgpu.a 
+generate_vdW_kernel_table-gpu.x : generate_vdW_kernel_table.o libpwgpu.a 
 	$(LD) $(LDFLAGS) -o $@ \
-		../../PW/src/generate_vdW_kernel_table.o $(QEMODS) libpwgpu.a $(LIBOBJS) $(LIBS)
+		generate_vdW_kernel_table.o $(QEMODS) libpwgpu.a $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 #include make.depend
