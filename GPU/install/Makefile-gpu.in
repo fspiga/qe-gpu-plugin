@@ -48,6 +48,9 @@ pw-gpu : libphiGEMM libMAGMA gpu-mods pw
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl GEMM ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
+	if test -d PW ; then \
+	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 	if test -d GPU ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) $@; \
 	else $(MAKE) $(MFLAGS) ; fi ) ; fi ; \
