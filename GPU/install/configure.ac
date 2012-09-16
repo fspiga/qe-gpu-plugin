@@ -201,6 +201,16 @@ AC_ARG_ENABLE(profiling,
 #   fi],
 #   [use_preloadgpu=0])
 
+AC_ARG_ENABLE(openacc,
+   [AS_HELP_STRING([--enable-openacc],
+       [enable OpenACC directives - PGI only (default: no)])],
+   [if   test "$enableval" = "yes" ; then
+      use_openacc=1
+   else
+      use_openacc=0
+   fi],
+   [use_openacc=0])
+
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
 # If set, they take precedence over configure internal choice.
@@ -2135,6 +2145,20 @@ then
             ;;
         esac
     fi
+    
+	# Enable Open ACC (now only for card with compute capaility 2.x)
+	if test "$use_openacc" -eq 1 ; then
+	    case "$arch:$f90_version" in
+	    *:pgf90 | cray*:pgf )            
+	        if  test "$cuda_arch" = "20" ; then
+	            try_dflags="$try_dflags -D__OPENACC"
+	            fflags="$fflags -ta=host,nvidia:cc20 -Minfo"
+	            f90flags="$f90flags -ta=host,nvidia:cc20 -Minfo"
+	            ldflags="$ldflags -ta=host,nvidia:cc20 -Minfo"
+	        fi      
+	        ;;
+	    esac
+	fi  
     
     try_iflags="$try_iflags $magma_include $phigemm_include $cuda_include"
     

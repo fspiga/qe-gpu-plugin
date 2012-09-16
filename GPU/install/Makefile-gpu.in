@@ -41,19 +41,16 @@ pw : bindir mods liblapack libblas libs libiotk libenviron
 	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-pw-gpu : libphiGEMM libMAGMA gpu-mods pw
-	if test -d PW ; then \
-	(cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
-	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
+pw-gpu : libphiGEMM libMAGMA pw gpu-mods
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl GEMM ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
-	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libpw.a ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libpw.a ; fi ) ; fi
+	if test -d GPU/PW ; then \
+	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
-	if test -d GPU ; then \
-	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) $@; \
-	else $(MAKE) $(MFLAGS) ; fi ) ; fi ; \
 	
 cp : bindir mods liblapack libblas libs libiotk
 	if test -d CPV ; then \
@@ -214,13 +211,14 @@ links : bindir
 # remove object files and executables
 clean :
 	touch make.sys
-	if test -d GPU ; then \
-	(cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
-	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
 ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl GEMM PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
-endif   
+endif  
+	if test -d GPU/PW ; then \
+	(cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
+	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
+ 
 	for dir in \
 		CPV Modules PP PW \
 		ACFDT \
