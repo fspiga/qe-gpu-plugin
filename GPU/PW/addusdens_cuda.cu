@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2001-2012 Quantum ESPRESSO group
  * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
- * Copyright (C) 2001-2011 Quantum ESPRESSO group
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -107,7 +107,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	int nspin = (* ptr_nspin);
 	int first_becsum = (* ptr_first_becsum );
 
-	size_t buffer_size = 0L;
+//	size_t buffer_size = 0L;
 
 	ijh = 0;
 
@@ -117,22 +117,28 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	fflush(stdout);
 #endif
 
-#if defined(__CUDA_PRELOADING_DATA)
-	buffer_size =  sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-			sizeof( double ) * ( first_becsum * nat * nspin ) +
-			sizeof( int ) * nat;
-#else
-	buffer_size =  sizeof( int ) * ngm * 3 +
-			sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-			sizeof( double ) * ( first_becsum * nat * nspin ) +
-			sizeof( int ) * nat;
-#endif
+//#if defined(__CUDA_PRELOADING_DATA)
+//	buffer_size =  sizeof( double ) * ( ngm * nspin_mag * 2 ) +
+//			sizeof( double ) * ( first_becsum * nat * nspin ) +
+//			sizeof( int ) * nat;
+//#else
+//	buffer_size =  sizeof( int ) * ngm * 3 +
+//			sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
+//			sizeof( double ) * ( first_becsum * nat * nspin ) +
+//			sizeof( int ) * nat;
+//#endif
+//
+//	if ( buffer_size > cuda_memory_unused[0] ) {
+//		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
+//		return 1;
+//	}
 
-	if ( buffer_size > cuda_memory_unused[0] ) {
-		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
+	int number_of_block = (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__;
+	if ( number_of_block > 65535) {
+		fprintf( stderr, "\n[NEWD] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", number_of_block );
 		return 1;
 	}
 
@@ -146,7 +152,9 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	qgm_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ngm * 2 )*sizeof(double);
 	ityp_D = (char*) dev_scratch_QE[0] + shift;
+	shift += ( (nat%2==0 ? nat : nat+1) )*sizeof( int );
 #if defined(__CUDA_PRELOADING_DATA)
+	// now	shift contains the amount of byte required on the GPU to compute
 	local_eigts1_D = (void *) preloaded_eigts1_D;
 	local_eigts2_D = (void *) preloaded_eigts2_D;
 	local_eigts3_D = (void *) preloaded_eigts3_D;
@@ -154,7 +162,6 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	local_ig2_D = (void *) preloaded_ig2_D;
 	local_ig3_D = (void *) preloaded_ig3_D;	shift += ( (nat%2==0 ? nat : nat+1) )*sizeof( int );
 #else
-	shift += ( (nat%2==0 ? nat : nat+1) )*sizeof( int );
 	local_eigts1_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ( ( nr1 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
 	local_eigts2_D = (char*) dev_scratch_QE[0] + shift;
@@ -166,7 +173,14 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	local_ig2_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 	local_ig3_D = (char*) dev_scratch_QE[0] + shift;
+	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 #endif
+	// 	shift contains the amount of byte required on the GPU to compute
+
+	if ( shift > cuda_memory_unused[0] ) {
+		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", shift, cuda_memory_allocated[0] );
+		return 1;
+	}
 
 	// Before do anything force sync to terminate async data transfer
 #if defined(__CUDA_PRELOADING_DATA) && defined(__CUDA_PRELOAD_PINNED)
@@ -187,8 +201,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 	dim3 threads2(1, __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__);
 	dim3 grid2( nspin_mag / 1 ? nspin_mag / 1 : 1,
-	 (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ ?
-	 (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ : 1);
+			number_of_block ? number_of_block : 1);
 
 	qecudaSafeCall( cudaFuncSetCacheConfig(kernel_compute_aux, cudaFuncCachePreferShared) );
 

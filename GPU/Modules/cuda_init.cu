@@ -143,8 +143,7 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 #endif
 
 	for (i = 0; i < ngpus_per_process; i++) {
-		/* Bond devices
-		 * NOTE: qe_gpu_bonded[0] is ALWAYS the main device for non multi-GPU
+		/* NOTE: qe_gpu_bonded[0] is ALWAYS the main device for non multi-GPU
 		 *       kernels.
 		 */
 		qe_gpu_bonded[i] = i;
@@ -159,7 +158,12 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 #if defined(__PHIGEMM)
 extern "C" void initphigemm_(int lRank){
 	/* Compatibility with CUDA 4.x (latest phiGEMM): */
+
+#if defined(__PHIGEMM_NOALLOC)
+	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&cuda_memory_allocated, (int *)qe_gpu_bonded, lRank);
+#else
 	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&dev_scratch_QE, (qeCudaMemSizes*)&cuda_memory_allocated, (int *)qe_gpu_bonded, lRank);
+#endif
 }
 #endif
 
@@ -219,11 +223,16 @@ extern "C" void preallocatedevicememory_(int lRank){
 		cuda_memory_unused[i] = cuda_memory_allocated[i];
 #endif
 
+
+		// Temporary hack...
+#if !defined(__PHIGEMM_NOALLOC)
+		/* Do real allocation */
 		ierr = cudaMalloc ( (void**) &(dev_scratch_QE[i]), (size_t) cuda_memory_allocated[i] );
 		if ( ierr != cudaSuccess) {
 			fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
 			exit(EXIT_FAILURE);
 		}
+#endif
 
 #if defined(__PARA)
 	}

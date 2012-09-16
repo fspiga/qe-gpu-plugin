@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2001-2012 Quantum ESPRESSO group
  * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
- * Copyright (C) 2001-2011 Quantum ESPRESSO group
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -12,13 +12,7 @@
 #include <cuda.h>
 #include <cufft.h>
 #include <cuda_runtime.h>
-#include "cublas_api.h"
 #include "cublas_v2.h"
-
-
-#if defined(__PARA)
-#include <mpi.h>
-#endif
 
 #ifndef __QE_CUDA_ENVIRONMENT_H
 #define __QE_CUDA_ENVIRONMENT_H
@@ -31,17 +25,36 @@
 #define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
 #define __CUDA_TxB_VLOCPSI_PROD__ __CUDA_THREADPERBLOCK__
 #define __CUDA_TxB_VLOCPSI_HPSI__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
 
 #elif defined __GPU_NVIDIA_20
 
 #define __CUDA_THREADPERBLOCK__ 512
 #define __NUM_FFT_MULTIPLAN__ 4
 // TxB ADDUSDENS_COMPUTE_AUX = 1024 is OK for CUDA 4.0 but NOT for CUDA 4.1
-// TxB ADDUSDENS_COMPUTE_AUX = 896 is OK for CUDA 4.1 too
-#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 896
+// TxB ADDUSDENS_COMPUTE_AUX = 896 is OK for CUDA 4.1 too but not for CUDA 5.0
+// TxB ADDUSDENS_COMPUTE_AUX = 768 is OK for CUDA 5.0 and all the other versions...
+#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 768
 #define __CUDA_TxB_VLOCPSI_PSIC__ 64
 #define __CUDA_TxB_VLOCPSI_PROD__ 128
 #define __CUDA_TxB_VLOCPSI_HPSI__ 448
+#define __CUDA_TxB_NEWD_QGM__ 512
+#define __CUDA_TxB_NEWD_DEEPQ__ 512
+
+
+#elif defined __GPU_NVIDIA_30
+
+// SMX multi-processors have much more registers (check the CUDA Occupancy spreadsheet)
+// Tested using CUDA 4.2 on GPU K10 (Kepler v1)
+#define __CUDA_THREADPERBLOCK__ 512
+#define __NUM_FFT_MULTIPLAN__ 4
+#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 128
+#define __CUDA_TxB_VLOCPSI_PSIC__ 256
+#define __CUDA_TxB_VLOCPSI_PROD__ 512
+#define __CUDA_TxB_VLOCPSI_HPSI__ 256
+#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
 
 #else
 
@@ -86,17 +99,14 @@ extern void * preloaded_ig1_D, * preloaded_ig2_D, * preloaded_ig3_D;
 extern void * preloaded_nlsm_D, * preloaded_nls_D, * preloaded_igk_D;;
 extern short int preloaded_igk_flag;
 
-extern int ngpus_detected;
-extern int ngpus_used;
-extern int ngpus_per_process;
+extern long ngpus_detected;
+extern long ngpus_used;
+extern long ngpus_per_process;
 
-size_t initCudaEnv();
-void closeCudaEnv();
-void preallocateDeviceMemory();
-void initPhigemm();
-
-extern char lNodeName[];
-extern int lRank;
+extern "C" size_t initCudaEnv();
+extern "C" void closeCudaEnv();
+extern "C" void preallocateDeviceMemory(int);
+extern "C" void initPhigemm(int);
 
 /* These routines are exactly the same in "cutil_inline_runtime.h" but,
  * replicating them here, we remove the annoying dependency to CUTIL & SDK (Filippo)
@@ -112,13 +122,9 @@ extern int lRank;
 inline void __qecudaSafeCall( cudaError_t err, const char *file, const int line )
 {
     if( cudaSuccess != err) {
-    	printf("%s(%i) : cudaSafeCall() Runtime API error : %s.\n",
-                file, line, cudaGetErrorString( err) ); fflush(stdout);
-#if defined(__PARA)
-		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-#else
+		printf("%s(%i) : cudaSafeCall() Runtime API error : %s.\n",
+					file, line, cudaGetErrorString( err) ); fflush(stdout);
 		exit(EXIT_FAILURE);
-#endif
     }
 }
 
@@ -127,20 +133,15 @@ inline void __qecudaGetLastError(const char *errorMessage, const char *file, con
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err) {
-    	printf("%s(%i) : qecudaGetLastError() error : %s : %s.\n",
-                file, line, errorMessage, cudaGetErrorString( err) ); fflush(stdout);
-#if defined(__PARA)
-		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-#else
+		printf("%s(%i) : qecudaGetLastError() error : %s : %s.\n",
+				file, line, errorMessage, cudaGetErrorString( err) ); fflush(stdout);
 		exit(EXIT_FAILURE);
-#endif
     }
 }
 
 
 inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, const int line )
 {
-
 	switch ( cufft_err ) {
 
 	case CUFFT_INVALID_PLAN :
@@ -180,11 +181,7 @@ inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, cons
 	}
 
 	if (cufft_err != CUFFT_SUCCESS) {
-#if defined(__PARA)
-		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-#else
 		exit(EXIT_FAILURE);
-#endif
 	}
 }
 

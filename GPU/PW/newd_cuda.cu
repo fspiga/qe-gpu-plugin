@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2001-2012 Quantum ESPRESSO group
  * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
- * Copyright (C) 2001-2011 Quantum ESPRESSO group
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -96,9 +96,9 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
-	size_t buffer_size = 0L;
+//	size_t buffer_size = 0L;
 
-	int threadsPerBlock, blocksPerGrid;
+	int blocksPerGrid;
 
 	double * qgm;
 
@@ -106,21 +106,26 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
     void * local_eigts1_D, * local_eigts2_D, * local_eigts3_D;
     void * local_ig1_D, * local_ig2_D, * local_ig3_D;
 
-#if defined(__CUDA_PRELOADING_DATA)
-	buffer_size =  sizeof(double) + ngm * 5 +
-			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-			sizeof( double ) * ( nhm * nhm * nat * nspin );
-#else
-	buffer_size =  sizeof(double) + ngm * 5 +
-			sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ) +
-			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-			sizeof( double ) * ( nhm * nhm * nat * nspin );
-#endif
+//#if defined(__CUDA_PRELOADING_DATA)
+//	buffer_size =  sizeof(double) + ngm * 5 +
+//			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
+//			sizeof( double ) * ( nhm * nhm * nat * nspin );
+//#else
+//	buffer_size =  sizeof(double) + ngm * 5 +
+//			sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ) +
+//			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
+//			sizeof( double ) * ( nhm * nhm * nat * nspin );
+//#endif
+//
+//	if ( buffer_size > cuda_memory_unused[0] ) {
+//		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
+//		return 1;
+//	}
 
-	if ( buffer_size > cuda_memory_unused[0] ) {
-		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
+	if ( ((nspin_mag * ngm) / __CUDA_TxB_NEWD_QGM__) > 65535) {
+		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", (nspin_mag * ngm * 2 / __CUDA_TxB_NEWD_QGM__) );
 		return 1;
 	}
 
@@ -131,21 +136,13 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	if ( cublasCreate( &vlocHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
 		printf("\n*** CUDA NEWD *** ERROR *** cublasInit() for device %d failed!",0);
 		fflush(stdout);
-#if defined(__PARA)
-		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-#else
 		exit(EXIT_FAILURE);
-#endif
 	}
 
 	if( cudaStreamCreate( &vlocStreams[ 0 ] ) != cudaSuccess ) {
 		printf("\n*** CUDA NEWD *** ERROR *** creating stream for device %d failed!", 0);
 		fflush(stdout);
-#if defined(__PARA)
-		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-#else
 		exit(EXIT_FAILURE);
-#endif
 	}
 
 	size_t shift = 0;
@@ -158,7 +155,9 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	qgm_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ngm * 2 )*sizeof(double);
 	deeq_D = (char*) dev_scratch_QE[0] + shift;
+	shift += ( nhm * nhm * nat * nspin )*sizeof( double );
 #if defined(__CUDA_PRELOADING_DATA)
+	// now	shift contains the amount of byte required on the GPU to compute
 	local_eigts1_D = (void *) preloaded_eigts1_D;
 	local_eigts2_D = (void *) preloaded_eigts2_D;
 	local_eigts3_D = (void *) preloaded_eigts3_D;
@@ -178,7 +177,14 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	local_ig2_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 	local_ig3_D = (char*) dev_scratch_QE[0] + shift;
+	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 #endif
+	// now	shift contains the amount of byte required on the GPU to compute
+
+	if ( shift > cuda_memory_unused[0] ) {
+		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, cuda_memory_allocated[0] );
+		return 1;
+	}
 
 	qecudaSafeCall( cudaHostAlloc( (void**) &qgm,  ngm * 2 * sizeof(double), cudaHostAllocDefault ) );
 
@@ -216,19 +222,24 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 				if( ityp[na] == nt ) {
 
-					threadsPerBlock = __CUDA_THREADPERBLOCK__;
-					blocksPerGrid = ( (nspin_mag * ngm * 2 ) + threadsPerBlock - 1) / threadsPerBlock;
-					kernel_compute_qgm_na<<<blocksPerGrid, threadsPerBlock>>>( (double *) local_eigts1_D, (double *) local_eigts2_D, (double *) local_eigts3_D, (int *) local_ig1_D, (int *) local_ig2_D, (int *) local_ig3_D, (double *) qgm_D, nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
-					qecudaGetLastError("kernel launch failure");
+#if defined(__CUDA_DEBUG)
+					printf("\n[DEBUG] kernel_compute_qgm_na= ih:%d, jh:%d, na:%d, ngm:%d\n", ih, jh, na, ngm);fflush(stdout);
+#endif
+					blocksPerGrid = ( (nspin_mag * ngm ) + __CUDA_TxB_NEWD_QGM__ - 1) / __CUDA_TxB_NEWD_QGM__;
+					kernel_compute_qgm_na<<<blocksPerGrid, __CUDA_TxB_NEWD_QGM__>>>( (double *) local_eigts1_D, (double *) local_eigts2_D, (double *) local_eigts3_D, (int *) local_ig1_D, (int *) local_ig2_D, (int *) local_ig3_D, (double *) qgm_D, nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
+					qecudaGetLastError("kernel kernel_compute_qgm_na launch failure");
 
 					for( is = 0; is < nspin_mag; is++ ){
 						cublasDdot(vlocHandles[ 0 ] , ngm * 2, (double *) aux_D + (is * ngm * 2), 1, (double *) qgm_na_D, 1, (double *) dtmp_D + is );
 					}
 
-					threadsPerBlock = __CUDA_THREADPERBLOCK__;
-					blocksPerGrid = ( (nspin_mag) + threadsPerBlock - 1) / threadsPerBlock;
-					kernel_compute_deeq<<<blocksPerGrid, threadsPerBlock>>>( (double *) qgm_D, (double *) deeq_D, (double *) aux_D, na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact, (double *) qgm_na_D, (double *) dtmp_D );
-					qecudaGetLastError("kernel launch failure");
+#if defined(__CUDA_DEBUG)
+					printf("\n[DEBUG] kernel_compute_deeq= ih:%d, jh:%d, na:%d, ngm:%d\n", ih, jh, na, ngm);fflush(stdout);
+#endif
+
+					blocksPerGrid = ( (nspin_mag) + __CUDA_TxB_NEWD_DEEPQ__ - 1) / __CUDA_TxB_NEWD_DEEPQ__;
+					kernel_compute_deeq<<<blocksPerGrid, __CUDA_TxB_NEWD_DEEPQ__>>>( (double *) qgm_D, (double *) deeq_D, (double *) aux_D, na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact, (double *) qgm_na_D, (double *) dtmp_D );
+					qecudaGetLastError("kernel kernel_compute_deeq launch failure");
 				}
 			}
 		}
