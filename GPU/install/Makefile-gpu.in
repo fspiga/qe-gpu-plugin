@@ -6,9 +6,11 @@ default :
 	@echo '  make target'
 	@echo 'where target is one of the following:'
 	@echo '  pw           basic code for scf, structure optimization, MD'
+	@echo '  pw-gpu       basic code for scf, structure optimization, MD - GPU accelerated'
 	@echo '  ph           phonon code, Gamma-only version and third-order derivatives'
 	@echo '  pwcond       ballistic conductance'
 	@echo '  neb          code for Nudged Elastic Band method'
+	@echo '  neb-gpu      code for Nudged Elastic Band method - GPU accelerated'
 	@echo '  pp           postprocessing programs'
 	@echo '  cp           CP code: CP MD with ultrasoft pseudopotentials'
 	@echo '  ld1          utilities for pseudopotential generation'
@@ -39,6 +41,11 @@ pw : bindir libphiGEMM libMAGMA mods liblapack libblas libs libiotk libenviron
 	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
+pw-gpu : libphiGEMM libMAGMA gpu-mods
+	if test -d GPU ; then \
+	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+	
 cp : bindir mods liblapack libblas libs libiotk
 	if test -d CPV ; then \
 	( cd CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
