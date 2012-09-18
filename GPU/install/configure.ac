@@ -202,7 +202,7 @@ AC_ARG_ENABLE(profiling,
 #   [use_preloadgpu=0])
 
 AC_ARG_ENABLE(openacc,
-   [AS_HELP_STRING([--enable-openacc],
+	[AS_HELP_STRING([--enable-openacc],
        [enable OpenACC directives - PGI only (default: no)])],
    [if   test "$enableval" = "yes" ; then
       use_openacc=1
@@ -2149,7 +2149,7 @@ then
 	# Enable Open ACC (now only for card with compute capaility 2.x)
 	if test "$use_openacc" -eq 1 ; then
 	    case "$arch:$f90_version" in
-	    *:pgf90 | cray*:pgf )            
+	    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )            
 	        if  test "$cuda_arch" = "20" ; then
 	            try_dflags="$try_dflags -D__OPENACC"
 	            fflags="$fflags -ta=host,nvidia:cc20 -Minfo"

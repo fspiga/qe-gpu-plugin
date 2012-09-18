@@ -39,7 +39,7 @@ default :
 #	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 #	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-pw-gpu : bindir mods gpu-mods liblapack libphiGEMM libMAGMA libblas libs libiotk libenviron  
+pw-gpu : bindir mods libphiGEMM libMAGMA gpu-mods liblapack  libblas libs libiotk libenviron  
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl GEMM ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
@@ -214,12 +214,8 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl GEMM PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif  
-	if test -d GPU/PW ; then \
-	(cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) clean ; \
-	else $(MAKE) $(MFLAGS) clean ; fi ) ; fi
- 
 	for dir in \
-		CPV Modules PP PW \
+		GPU/PW GPU/Modules CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools iotk \
 		dev-tools extlibs Environ \

@@ -270,10 +270,11 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 	printf("\n"); fflush(stdout);
 	printf("     *******************************************************************\n\n"); fflush(stdout);
-	printf("       GPU-accelerated Quantum ESPRESSO (v 5.0, build 8)     \n\n"); fflush(stdout);
 #if defined(__PHIGEMM_HACK_CPUONLY)
 	printf("       CPU-version plus call-by-call GEMM profiling"); fflush(stdout);
 #else
+
+	printf("       GPU-accelerated Quantum ESPRESSO \n\n"); fflush(stdout);
 
 #if defined(__PARA)
 	printf("       parallel      : yes (GPUs per node = %d, GPUs per process = %d)  \n", ngpus_detected, ngpus_per_process); fflush(stdout);
@@ -281,45 +282,49 @@ extern "C" void preallocatedevicememory_(int lRank){
 	printf("       parallel      : no (GPUs detected = %d, GPUs used = %d)  \n", ngpus_detected, ngpus_used); fflush(stdout);
 #endif
 
+#if defined(__OPENACC)
+	printf("       OpenACC       : yes \n"); fflush(stdout);
+#endif
+
 #if defined(__CUDA_PINNED)
-        printf("       pinned memory : yes \n"); fflush(stdout);
+    printf("       pinned memory : yes \n"); fflush(stdout);
 #else
-        printf("       pinned memory : no \n"); fflush(stdout);
+	printf("       pinned memory : no \n"); fflush(stdout);
 #endif
 
 #if defined(__MAGMA)
-        printf("       MAGMA         : yes \n"); fflush(stdout);
+	printf("       MAGMA         : yes \n"); fflush(stdout);
 #else
-        printf("       MAGMA         : no \n"); fflush(stdout);
+	printf("       MAGMA         : no \n"); fflush(stdout);
 #endif
 
 #if defined(__PARA) && defined(__USE_3D_FFT)
-        printf("       USE_3D_FFT    : yes (check size(pool)=1) \n"); fflush(stdout);
+	printf("       USE_3D_FFT    : yes (check size(pool)=1) \n"); fflush(stdout);
 #else
-        printf("       USE_3D_FFT    : no \n"); fflush(stdout);
+	printf("       USE_3D_FFT    : no \n"); fflush(stdout);
 #endif
 
 #if defined(__DISABLE_CUDA_ADDUSDENS) || defined(__DISABLE_CUDA_VLOCPSI) || defined(__DISABLE_CUDA_NEWD) || defined(__PHIGEMM_DISABLE_SPECIALK)
-        printf("       # DEBUG MODE #\n");fflush(stdout);
+	printf("       # DEBUG MODE #\n");fflush(stdout);
 #if defined(__DISABLE_CUDA_ADDUSDENS)
-        printf("         CUDA addusdens    = disabled\n");fflush(stdout);
+	printf("         CUDA addusdens    = disabled\n");fflush(stdout);
 #else
-        printf("         CUDA addusdens    = enabled\n");fflush(stdout);
+	printf("         CUDA addusdens    = enabled\n");fflush(stdout);
 #endif
 #if defined(__DISABLE_CUDA_VLOCPSI)
-        printf("         CUDA vloc_psi     = disabled\n");fflush(stdout);
+	printf("         CUDA vloc_psi     = disabled\n");fflush(stdout);
 #else
-        printf("         CUDA vloc_psi     = enabled\n");fflush(stdout);
+	printf("         CUDA vloc_psi     = enabled\n");fflush(stdout);
 #endif
 #if defined(__DISABLE_CUDA_NEWD)
-        printf("         CUDA newd         = disabled\n");fflush(stdout);
+	printf("         CUDA newd         = disabled\n");fflush(stdout);
 #else
-        printf("         CUDA newd         = enabled\n");fflush(stdout);
+	printf("         CUDA newd         = enabled\n");fflush(stdout);
 #endif
 #if defined(__PHIGEMM_DISABLE_SPECIALK)
-        printf("         phiGEMM special-k = disabled\n");fflush(stdout);
+	printf("         phiGEMM special-k = disabled\n");fflush(stdout);
 #else
-        printf("         phiGEMM special-k = enabled\n");fflush(stdout);
+	printf("         phiGEMM special-k = enabled\n");fflush(stdout);
 #endif
 #endif
 
