@@ -16,7 +16,7 @@
 
 typedef double fftw_complex[2];
 
-__global__ void kernel_vec_prod_k( double *a, const double *b, int dimx )
+__global__ void kernel_vec_prod_k( double *a, const  double * __restrict b, int dimx )
 {	   
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	register double sup;
@@ -28,7 +28,7 @@ __global__ void kernel_vec_prod_k( double *a, const double *b, int dimx )
 	}
 }
 
-__global__ void kernel_init_psic_k( const int * nls, const int * igk, const double * psi, double *psic, const int n, const int lda, const int ibnd )
+__global__ void kernel_init_psic_k( const  int * __restrict nls, const  int * __restrict igk, const  double * __restrict psi, double *psic, const int n, const int lda, const int ibnd )
 {	   
 	int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	// int ix = blockIdx.x * blockDim.x + threadIdx.x;
@@ -41,7 +41,7 @@ __global__ void kernel_init_psic_k( const int * nls, const int * igk, const doub
 	}
 }
 
-__global__ void kernel_save_hpsi_k( const int * nls, const int * igk, double * hpsi, const double *psic, const int n, const int ibnd )
+__global__ void kernel_save_hpsi_k( const  int * __restrict nls, const  int * __restrict igk, double * hpsi, const  double * __restrict psic, const int n, const int ibnd )
 {	   
 	int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	int pos = ibnd * n;

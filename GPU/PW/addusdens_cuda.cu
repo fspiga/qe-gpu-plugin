@@ -19,10 +19,10 @@ extern "C" void start_clock_(char * label, unsigned int length_arg );
 extern "C" void stop_clock_(char * label, unsigned int length_arg );
 
 
-__global__ void kernel_compute_aux( const double * eigts1, const double * eigts2, const double * eigts3,
-		const int * ig1, const int * ig2, const int * ig3,  const int nr1, const int nr2, const int nr3,
-		const double * qgm, const double * becsum, double * aux, const int na, const int nspin_mag, const int ngm,
-		const int first_becsum, const int ijh, const int nat, const int * ityp, const int nt )
+__global__ void kernel_compute_aux( const double * __restrict eigts1, const double * __restrict eigts2, const double * __restrict eigts3,
+		const int * __restrict ig1, const int * __restrict ig2, const int * __restrict ig3,  const int nr1, const int nr2, const int nr3,
+		const double * __restrict qgm, const double * __restrict becsum, double * aux, const int na, const int nspin_mag, const int ngm,
+		const int first_becsum, const int ijh, const int nat, const int * __restrict ityp, const int nt )
 {
 	register int is = blockIdx.x * blockDim.x + threadIdx.x;
 	register int ig = blockIdx.y * blockDim.y + threadIdx.y;

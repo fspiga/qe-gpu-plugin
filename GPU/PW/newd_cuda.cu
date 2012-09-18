@@ -15,7 +15,7 @@
 
 extern "C" void qvan2_(int * ptr_ngm, int * iih, int * jjh, int * ptr_nt, double * qmod, double * qgm, double * ylmk0);
 
-__device__ inline void complex_by_complex_device( const double * A, const double * B, double * C)
+__device__ inline void complex_by_complex_device( const  double * __restrict A, const  double * __restrict B, double * C)
 {
 	double re_a = A[0], re_b = B[0];
 	double img_a = A[1], img_b = B[1];
@@ -24,8 +24,8 @@ __device__ inline void complex_by_complex_device( const double * A, const double
 	C[1] = (re_a * img_b) + (re_b * img_a);
 }
 
-__global__ void kernel_compute_qgm_na( const double * eigts1, const double * eigts2, const double * eigts3,
-		const int * ig1, const int * ig2, const int * ig3, const double * qgm, const int nr1,
+__global__ void kernel_compute_qgm_na( const  double * __restrict eigts1, const  double * __restrict eigts2, const  double * __restrict eigts3,
+		const  int * __restrict ig1, const  int * __restrict ig2, const  int * __restrict ig3, const  double * __restrict qgm, const int nr1,
 		const int nr2, const int nr3, const int na, const int ngm, double * qgm_na )
 {
 	int global_index = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
@@ -49,7 +49,7 @@ __global__ void kernel_compute_qgm_na( const double * eigts1, const double * eig
 __global__ void kernel_compute_deeq( const double * qgm, double * deeq, const double * aux,
 		const int na, const int nspin_mag, const int ngm, const int nat, const int flag,
 		const int ih, const int jh, const int nhm, const double omega, const double fact,
-		const double * qgm_na, double * dtmp )
+		const  double * __restrict qgm_na, double * dtmp )
 {
 	int global_index = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	double sup_prod_1[2];
