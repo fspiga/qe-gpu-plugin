@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010-2012 Irish Centre for High-End Computing (ICHEC)
  * Copyright (C) 2001-2012 Quantum ESPRESSO group
+ * Copyright (C) 2010-2012 Irish Centre for High-End Computing (ICHEC)
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -10,7 +10,7 @@
  */
 
 
-*** Last update: July 11, 2012 (Filippo Spiga) ***
+*** Last update: September 18, 2012 (Filippo Spiga) ***
 
 
 Authors:
@@ -22,13 +22,11 @@ Any suggestion or improvement is welcome.
 
 **************************  R E A D   T H I S  **************************
 
-This version is fully compatible with QE-5.0 but there are some 
-limitations/differences that will be addresses in a further rebuild of 
-this package. Stay tuned on the website. Thanks for your understanding.
+This version is fully compatible with QE-5.0.1
 
-Rebuild date: July 8, 2012
+Rebuild date: September 18, 2012
 Rebuild by: Filippo Spiga
-Rebuild version: 7
+Rebuild version: 1
 
 **************************************************************************
 
@@ -43,50 +41,60 @@ Rebuild version: 7
 
 # How to compile 
 
-GPU-oriented options of the configure
+
+(...after checkout the entire QE repository from SVN or 
+   untar QE-GPU.tar.gz in your working directory...)   
+  
+$ cd GPU
+$ ./configure --enable-parallel --enable-openmp \
+  --enable-cuda --with-gpu-arch=20 \
+  --with-cuda-dir=/ichec/packages/cuda/4.0/cuda --enable-magma
+$ cd ..
+$ make -f Makefile.gpu pw-gpu
+
+'pw-gpu.x' executable will be placed under bin/
+
+
+GPU-oriented options of the configure:
 
 --enable-cuda           : turn on the GPU support
 
 --with-cuda-dir=<path>  : specify the path where CUDA is installed (mandatory)
 
---with-gpu-arch=<arch>  : it can be '13' for GPU with 1.3 capability or '20' for
-                          GPUs with 2.0 capability or '30' for new KEPLER GPU. By default is '20'
+--with-gpu-arch=<arch>  : it can be '13' for cc1.3, '20' for cc20 or '30' for 
+                          new KEPLER GPU (cc30). By default is '20'
 
 --enable-phigemm        : enable BLAS Level 3 GPU acceleration using phiGEMM 
-				  (default: yes)
+				           (default: yes)
 				  
---enable-magma		: enable GPU LAPACK acceleration based on MAGMA 1.1.0
+--enable-magma		    : enable GPU LAPACK acceleration based on MAGMA 1.1.0
                           Good for serial, less for parallel run (default: no)
-                          
---enable-data-preload   : turn on data preload strategy to put on GPU memory 
-                          persistent data structures. If coupled with the
-                          option "--enable-pinned-mem" the H2D transfer is
-                          performed asynchronously (default: no)
                                              
 --enable-profiling      : turn on the phiGEMM call-per-call profile
                           (default: no)
 
 --enable-debug-cuda     : turn on verbose debug messages on the stdout
 
+--enable-openacc	    : enable OpenACC (PGI only)
 
-Here an example:
 
-$ ./configure --enable-parallel --enable-openmp \
-  --enable-cuda --with-gpu-arch=20 \
-  --with-cuda-dir=/ichec/packages/cuda/4.0/cuda --enable-magma
+IMPORTANT NOTE (1): run 'configure' in the root directory will produce a 
+                    make.sys for CPU-ONLY execution. Do this in a first 
+                    instance if you are going to build both CPU and CPU+GPU
+                    versions.
 
-IMPORTANT NOTE: remember to have CUDA nvcc and CUDA libs properly set in the 
-                environment
+IMPORTANT NOTE (2): remember to have CUDA nvcc and CUDA libs properly set in 
+                    the environment
 
-IMPORTANT NOTE: sometimes is not possible to link "-lcuda" because the file 
-                'libcuda.so' is not in the system. Usually this file is present 
-                if the card and the nVidia driver (not the SDK, the driver) are 
-                installed. In such case, the configure add automatically the 
-                flag "-D__CUDA_GET_MEM_HACK" and the part of the code 
-                responsible to detect the GPU memory is skipped. In this case, 
-                you MUST edit the file "include/cuda_env.h" and manually change 
-                the value of "__GPU_MEM_AMOUNT_HACK__". See the notes in the 
-                file for more info.
+IMPORTANT NOTE (3): sometimes is not possible to link "-lcuda" because the file 
+                    'libcuda.so' is not in the system. Usually this file is present 
+                    if the card and the nVidia driver (not the SDK, the driver) are 
+                    installed. In such case, the configure add automatically the 
+                    flag "-D__CUDA_GET_MEM_HACK" and the part of the code 
+                    responsible to detect the GPU memory is skipped. In this case, 
+                    you MUST edit the file "include/cuda_env.h" and manually change 
+                    the value of "__GPU_MEM_AMOUNT_HACK__". See the notes in the 
+                    file for more info.
 
 
 # Suggested configurations/compiler flags (by Filippo)
@@ -194,7 +202,7 @@ export PHI_ZGEMM_SPLIT=0.${SPLIT_COEFF}
 export PHI_CGEMM_SPLIT=0.${SPLIT_COEFF}
 export PHI_SGEMM_SPLIT=0.${SPLIT_COEFF}
 
-mpirun -v -np 16 -npernode 4  -bysocket -bind-to-socket -display-map -report-bindings -tag-output ./pw.x -input <your_input>
+mpirun -v -np 16 -npernode 4  -bysocket -bind-to-socket -display-map -report-bindings -tag-output ./pw-gpu.x -input <your_input>
   
   this is a good way to run PWscf with GPU in parallel on 4 nodes (each node 
   has 2 six-core Intel processor and 2 NVIDIA GPU) by placing 4 MPI process
