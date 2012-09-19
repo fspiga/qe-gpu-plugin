@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2001-2011 Quantum ESPRESSO group
+! Copyright (C) 2001-2012 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -36,15 +36,15 @@ PROGRAM pwscf
   !
   CHARACTER(len=256) :: dirname
   !
-#ifdef __MPI
-  !
   CALL mp_startup ( )
   ! reset IO nodes
   ! (do this to make each "image head node" an ionode)
   ! Has to be used ONLY to run nimage copies of pwscf
   !
+#ifdef __MPI
   IF ( nimage > 1 ) CALL io_image_start( )
 #endif
+
   CALL environment_start ( 'PWSCF' )
   !
   IF ( ionode ) WRITE( unit = stdout, FMT = 9010 ) &
