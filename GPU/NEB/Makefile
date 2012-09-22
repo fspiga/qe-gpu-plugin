@@ -59,9 +59,6 @@ tldeps:
 	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
 
 clean :
-ifeq ($(PHIGEMM_ENABLED),1)
-	grep -rl GEMM ./*.f90 | python ../scripts/remPhigemmSymbs.py
-endif  
 	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
 	- /bin/rm -f ../../bin/neb-gpu.x
 
