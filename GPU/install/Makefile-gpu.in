@@ -58,8 +58,18 @@ cp : bindir mods liblapack libblas libs libiotk
 ph : bindir mods libs pw
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
 
-neb : bindir mods libs pw
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#neb : bindir mods libs pw
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+
+neb-gpu : bindir mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
+	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-neb
+	if test -d NEB ; then \
+	( cd NEB/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libneb.a ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libneb.a ; fi ) ; fi
+	if test -d GPU/NEB ; then \
+	( cd GPU/NEB ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
+	
 
 tddfpt : bindir mods libs pw ph
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
@@ -215,7 +225,7 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif  
 	for dir in \
-		GPU/PW GPU/Modules CPV Modules PP PW \
+		GPU/NEB GPU/PW GPU/Modules CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools iotk \
 		dev-tools extlibs Environ \
