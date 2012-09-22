@@ -183,10 +183,6 @@ PROGRAM neb
   !
   CALL stop_run_path( conv_path )
   !
-#if defined(__CUDA) || defined(__PHIGEMM )
-  CALL CloseCudaEnv()
-#endif
-  !
   STOP
   !
 END PROGRAM neb
