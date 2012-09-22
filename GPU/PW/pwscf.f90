@@ -45,7 +45,7 @@ PROGRAM pwscf
   IF ( nimage > 1 ) CALL io_image_start( )
 #endif
 
-  CALL environment_start ( 'PWSCF-GPU' )
+  CALL environment_start ( 'PWSCF' )
   !
   IF ( ionode ) WRITE( unit = stdout, FMT = 9010 ) &
          ntypx, npk, lmaxx

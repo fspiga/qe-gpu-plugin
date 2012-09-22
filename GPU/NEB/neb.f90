@@ -75,7 +75,7 @@ PROGRAM neb
   CALL mp_image_startup (root,neb_comm)
   CALL engine_mp_start()
 #endif
-  CALL environment_start ( 'NEB-GPU' )
+  CALL environment_start ( 'NEB' )
   !
   !
   ! INPUT RELATED
