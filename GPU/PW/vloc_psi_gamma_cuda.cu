@@ -285,7 +285,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	return 0;
 }
 
-
+#if defined(__CUDA_MULTIPLAN_FFT)
 extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, int * ptr_nr2s, int * ptr_nr3s, int * ptr_n, int * ptr_m, void * psi, double * v, void * hpsi, int * igk, int * nls, int * nlsm, int * ptr_ngms, int * ptr_ngm)
 {
 	cufftHandle p_global;
@@ -485,3 +485,4 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 	cudaStreamDestroy( vlocStreams[ 0 ] );
 	cublasDestroy( vlocHandles[ 0 ]);
 }
+#endif
