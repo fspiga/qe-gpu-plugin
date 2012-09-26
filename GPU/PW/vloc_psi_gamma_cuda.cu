@@ -189,6 +189,15 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		return 1;
 	}
 
+#if defined(__PHIGEMM_NOALLOC)
+	/* Do real allocation */
+	int ierr = cudaMalloc ( (void**) &(dev_scratch_QE[0]), (size_t) cuda_memory_allocated[0] );
+	if ( ierr != cudaSuccess) {
+		fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
+		exit(EXIT_FAILURE);
+	}
+#endif
+
 	size_t shift = 0;
 	psic_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( size_psic )*sizeof( cufftDoubleComplex );
@@ -215,7 +224,15 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	if ( shift > cuda_memory_unused[0] ) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, cuda_memory_allocated[0] );
-        return 1;
+#if defined(__PHIGEMM_NOALLOC)
+		/* Deallocating... */
+		ierr = cudaFree ( dev_scratch_QE[0] );
+		if(ierr != cudaSuccess) {
+			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+			exit(EXIT_FAILURE);
+		}
+#endif
+		return 1;
 	}
 
 	// Before do anything force sync to terminate async data transfer
@@ -275,8 +292,19 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	qecheck_cufft_call( cufftDestroy(p_global) );
 
+#if defined(__PHIGEMM_NOALLOC)
+	/* Deallocating... */
+	ierr = cudaFree ( dev_scratch_QE[0] );
+	if(ierr != cudaSuccess) {
+		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+		exit(EXIT_FAILURE);
+	}
+#else
+
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( dev_scratch_QE[0], 0, (size_t) cuda_memory_unused[0] ) );
+#endif
+
 #endif
 
 	cudaStreamDestroy( vlocStreams[ 0 ] );

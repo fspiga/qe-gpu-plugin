@@ -369,6 +369,11 @@ void deallocatedevicememory_(){
 
 	ierr = cudaFree ( dev_scratch_QE[0] );
 
+	if(ierr != cudaSuccess) {
+		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+		exit(EXIT_FAILURE);
+	}
+
 #if defined(__CUDA_DEBUG)
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
 		for (i = 0; i < ngpus_per_process; i++) {
@@ -376,16 +381,13 @@ void deallocatedevicememory_(){
 		}
 #endif
 
-	if(ierr != cudaSuccess) {
-		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
-		exit(EXIT_FAILURE);
-	}
-
 }
 
 extern "C" void closecudaenv_()
 {
+#if !defined(__PHIGEMM_NOALLOC)
 	deallocatedevicememory_();
+#endif
 
 #if defined(__PHIGEMM)
 	phiGemmShutdown();

@@ -144,6 +144,15 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 	cudaSetDevice(qe_gpu_bonded[0]);
 
+#if defined(__PHIGEMM_NOALLOC)
+	/* Do real allocation */
+	int ierr = cudaMalloc ( (void**) &(dev_scratch_QE[0]), (size_t) cuda_memory_allocated[0] );
+	if ( ierr != cudaSuccess) {
+		fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
+		exit(EXIT_FAILURE);
+	}
+#endif
+
 	size_t shift = 0;
 	aux_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ngm * nspin_mag * 2 )*sizeof(double);
@@ -179,6 +188,14 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 	if ( shift > cuda_memory_unused[0] ) {
 		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", shift, cuda_memory_allocated[0] );
+#if defined(__PHIGEMM_NOALLOC)
+		/* Deallocating... */
+		ierr = cudaFree ( dev_scratch_QE[0] );
+		if(ierr != cudaSuccess) {
+			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+			exit(EXIT_FAILURE);
+		}
+#endif
 		return 1;
 	}
 
@@ -238,9 +255,20 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 //	qecudaSafeCall( cudaFuncSetCacheConfig(kernel_compute_aux, cudaFuncCachePreferNone) );
 
+#if defined(__PHIGEMM_NOALLOC)
+	/* Deallocating... */
+	ierr = cudaFree ( dev_scratch_QE[0] );
+	if(ierr != cudaSuccess) {
+		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+		exit(EXIT_FAILURE);
+	}
+
+#else
+
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( dev_scratch_QE[0], 0, (size_t) cuda_memory_unused[0] ) );
 #endif
 
+#endif
 	return 0;
 }
