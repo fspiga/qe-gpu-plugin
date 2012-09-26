@@ -1,4 +1,5 @@
 #
+# Copyright (C) 2011-2012 Quantum ESPRESSO Foundation
 # Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
 #
 # This file is distributed under the terms of the
@@ -6,25 +7,41 @@
 # in the root directory of the present package,
 # or http://www.gnu.org/copyleft/gpl.txt .
 #
- 
-# From QE, required to retrieve $(MANUAL_DFLAGS)
-include ../../make.sys
+# Author: Filippo Spiga (spiga.filippo@gmail.com)
+
+.SUFFIXES :
+.SUFFIXES : .o .c
+
+# *** from Quantum ESPRESSO ***
+# most FORTRAN compilers can directly preprocess c-like directives: use
+# 	$(MPIF90) $(F90FLAGS) -c $<
+# if explicit preprocessing by the C preprocessor is needed, use:
+# 	$(CPP) $(CPPFLAGS) $< -o $*.F90 
+#	$(MPIF90) $(F90FLAGS) -c $*.F90 -o $*.o
+# remember the tabulator in the first column !!!
+
+.c.o:
+	$(NVCC) $(NVCC_FLAGS) $(GEMM_OPT) $(EXT_INC) -I../include/ -c $< -o $*.o 
 
 PHIGEMM_TOP = .
+
 
 AR          = @ar@
 ARFLAGS     = @arflags@
 
 CC          = @phigemm_cc@
-FC          = @phigemm_fc@
-LD          = @phigemm_cc@
+CFLAGS      = @phigemm_ccflags@
 
-CFLAGS          = @phigemm_ccflags@
+FC          = @phigemm_fc@
+FFLAGS      = @phigemm_fflags@
+
+CPP         = @cpp@
+CPPFLAGS    = @cppflags@
+
+LD              = @phigemm_cc@
 LD_FLAGS        = @phigemm_ldflags@
 LD_SHARED_FLAGS = @phigemm_ldsharedflag@
-
-CPP         = cpp
-CPPFLAGS    =  -P -traditional
+FC_PREPROC_FLAG = @phigemm_fflags@
 
 NVCC        = @nvcc@
 NVCC_FLAGS  = -ccbin gcc -O3 --compiler-options '-fPIC -fopenmp'
