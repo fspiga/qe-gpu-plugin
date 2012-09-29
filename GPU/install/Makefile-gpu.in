@@ -1,39 +1,31 @@
 include make.sys
 
 default :
-	@echo 'to install, type at the shell prompt:'
+	@echo '========================================================'
+	@echo '            GPU-Accelerated Quantum ESPRESSO '
+	@echo '========================================================'
+	@echo 'To install, type at the shell prompt:'
 	@echo '  ./configure'
 	@echo '  make target'
 	@echo 'where target is one of the following:'
-	@echo '  pw-gpu       basic code for scf, structure optimization, MD - GPU accelerated'
-	@echo '  ph           phonon code, Gamma-only version and third-order derivatives'
-	@echo '  pwcond       ballistic conductance'
-	@echo '  neb-gpu      code for Nudged Elastic Band method - GPU accelerated'
-	@echo '  pp           postprocessing programs'
-	@echo '  cp           CP code: CP MD with ultrasoft pseudopotentials'
-	@echo '  ld1          utilities for pseudopotential generation'
-	@echo '  upf          utilities for pseudopotential conversion'
+	@echo '  pw-gpu       basic code for scf, structure optimization'
+	@echo '  ph-gpu       phonon code, Gamma-only version and third-order derivatives'
+	@echo '  neb-gpu      code for Nudged Elastic Band method'
+	@echo '  cp-gpu       CP code: CP MD with ultrasoft pseudopotentials'
 	@echo '  tddfpt-gpu   time dependent dft code'
-	@echo '  gui          Graphical User Interface '
-	@echo '  pwall        same as "make pw-gpu ph pp pwcond neb"'
-	@echo '  all          same as "make pwall cp ld1 upf tddfpt"'
-	@echo '  xspectra     X-ray core-hole spectroscopy calculations '
-	@echo '  gipaw        NMR and EPR spectra'
-	@echo '  w90          Maximally localised Wannier Functions'
-	@echo '  want         Quantum Transport with Wannier functions'
-	@echo '  yambo        electronic excitations with plane waves'
-	@echo '  plumed       Metadynamics plugin for pw or cp'
+	@echo '  pwall-gpu    same as "make pw-gpu ph-gpu neb-gpu"'
+	@echo '  all-gpu      same as "make pwall-gpu cp-gpu tddfpt-gpu"'
 	@echo '  clean        remove executables and objects'
 	@echo '  veryclean    revert distribution to the original status'
 	@echo '  tar          create a tarball of the source tree'
-	@if test -d GUI/; then \
-	 echo '  tar-gui      create a standalone PWgui tarball from the GUI sources'; fi
 	@echo '  doc          build documentation'
 	@echo '  links        create links to all executables in bin/'
 
 ###########################################################
 # Main targets
 ###########################################################
+
+# Redirect to GPU build
 #pw : bindir mods liblapack libblas libs libiotk libenviron
 #	if test -d PW ; then \
 #	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
@@ -51,16 +43,32 @@ endif
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 	
+# Redirect to GPU build	
 cp : bindir mods liblapack libblas libs libiotk
 	if test -d CPV ; then \
 	( cd CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-ph : bindir mods libs pw-gpu
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
+# Redirect to GPU build
+#ph : bindir mods libs pw-gpu
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
+ph	: ph-gpu
 
+ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
+	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl GEMM ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
+	if test -d PHonon ; then \
+	( cd PHonon/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libs-ph ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libs-ph ; fi ) ; fi
+	if test -d GPU/PH ; then \
+	( cd GPU/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
+		
 #neb : bindir mods libs pw
 #	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+neb	: neb-gpu
 
 neb-gpu : bindir mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-neb
@@ -71,6 +79,9 @@ neb-gpu : bindir mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 	( cd GPU/NEB ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
 	
+# Redirect to GPU build
+#tddfpt : bindir mods libs pw ph
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
 tddfpt-gpu : bindir mods libs libphiGEMM libMAGMA gpu-mods libs pw-gpu ph
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-tddfpt
@@ -120,9 +131,12 @@ xspectra : bindir mods libs pw
 gui : touch-dummy
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-pwall : pw-gpu neb ph pp pwcond acfdt
+#pwall : pw-gpu neb ph pp pwcond acfdt
+pwall-gpu : pw-gpu neb-gpu ph-gpu
 
-all   : pwall cp ld1 upf tddfpt
+#all   : pwall cp ld1 upf tddfpt
+all-gpu   : pwall cp-gpu tddfpt-gpu
+
 
 ###########################################################
 # Auxiliary targets used by main targets:
@@ -233,11 +247,13 @@ clean :
 	touch make.sys
 ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl GEMM TDDFPT/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+	grep -rl GEMM PHonon/PH/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 	grep -rl GEMM PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif  
 	for dir in \
-		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules CPV Modules PP PW \
+		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH \ 
+		CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools iotk \
 		dev-tools extlibs Environ \
