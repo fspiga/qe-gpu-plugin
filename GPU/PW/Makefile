@@ -128,6 +128,7 @@ PWOBJS = \
 ../../PW/src/non_scf.o \
 ../../PW/src/offset_atom_wfc.o \
 ../../PW/src/openfil.o \
+../../PW/src/orbm_kubo.o \
 ../../PW/src/orthoatwfc.o \
 ../../PW/src/output_tau.o \
 ../../PW/src/para.o \
