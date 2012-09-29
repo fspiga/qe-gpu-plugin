@@ -34,7 +34,7 @@ pw	: pw-gpu
 
 pw-gpu : bindir mods libphiGEMM libMAGMA gpu-mods liblapack  libblas libs libiotk libenviron  
 ifeq ($(PHIGEMM_ENABLED),1) 
-	grep -rl GEMM ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
 	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libpw.a ; \
@@ -42,12 +42,21 @@ endif
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
-	
+
 # Redirect to GPU build	
-cp : bindir mods liblapack libblas libs libiotk
+cp	: cp-gpu
+
+cp-gpu : bindir mods libphiGEMM libMAGMA gpu-mods liblapack libblas libs libiotk
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	if test -d CPV ; then \
-	( cd CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+	( cd CPV/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libcp.a ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libcp.a ; fi ) ; fi
+	if test -d GPU/CPV ; then \
+	( cd GPU/CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+
 
 # Redirect to GPU build
 #ph : bindir mods libs pw-gpu
@@ -57,7 +66,7 @@ ph	: ph-gpu
 ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
 ifeq ($(PHIGEMM_ENABLED),1) 
-	grep -rl GEMM ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PHonon ; then \
 	( cd PHonon/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libs-ph ; \
@@ -86,7 +95,7 @@ neb-gpu : bindir mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 tddfpt-gpu : bindir mods libs libphiGEMM libMAGMA gpu-mods libs pw-gpu ph
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-tddfpt
 ifeq ($(PHIGEMM_ENABLED),1) 
-	grep -rl GEMM ./TDDFPT/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+	grep -rl -E 'gemm|GEMM' ./TDDFPT/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d TDDFPT ; then \
 	( cd TDDFPT/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libtddfpt.a ; \
@@ -135,7 +144,7 @@ gui : touch-dummy
 pwall-gpu : pw-gpu neb-gpu ph-gpu
 
 #all   : pwall cp ld1 upf tddfpt
-all-gpu   : pwall cp-gpu tddfpt-gpu
+all-gpu   : pwall-gpu cp-gpu tddfpt-gpu
 
 
 ###########################################################
@@ -246,13 +255,14 @@ links : bindir
 clean :
 	touch make.sys
 ifeq ($(PHIGEMM_ENABLED),1)
-	grep -rl GEMM TDDFPT/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
-	grep -rl GEMM PHonon/PH/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
-	grep -rl GEMM PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
-	grep -rl GEMM Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+	for dir in \
+		TDDFPT/src CPV/src PHonon/PH PW/src Modules \
+	; do \
+	    grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
+	done
 endif  
 	for dir in \
-		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH \
+		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
 		CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools iotk \
