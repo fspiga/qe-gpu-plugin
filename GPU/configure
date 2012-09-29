@@ -63,7 +63,7 @@ test -e configure.msg     && mv configure.msg $root/install/
 #
 # copy the Makefile
 #
-test -e $root/install/Makefile-gpu.in && cp $root/install/Makefile-gpu.in ../Makefile.gpu
+test -e $root/install/Makefile.gpu.in && cp $root/install/Makefile.gpu.in ../Makefile.gpu
 #
 
 exit 0
