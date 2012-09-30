@@ -8,9 +8,9 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 
-#if defined(__MPI)
 subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
+#if defined(__MPI)
 	USE parallel_include
 
     INTEGER, INTENT(INOUT)  :: lRank, lRankThisNode, lSizeThisNode
@@ -61,9 +61,11 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
 	deallocate(hosts)
 	! destroy MPI communicator
+#endif
 
 end subroutine
 
+#if defined(__MPI)
 subroutine myBarrier()
 
 	USE parallel_include
