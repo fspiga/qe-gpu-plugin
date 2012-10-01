@@ -110,7 +110,7 @@ cp-gpu : tldeps libcpgpu.a cp-gpu.x cppp-gpu.x wfdd-gpu.x
 cp-gpu.x : cprstart.o libcpgpu.a $(QEMODS) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o cp.x cprstart.o \
 		libcpgpu.a $(QEGPUMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/CPV/cp.x . )
+	- ( cd ../../bin ; ln -fs ../GPU/CPV/$@ . )
 
 libcpgpu.a : $(FOGPUBJS) $(LOGPUBJS) 
 	 $(AR) $(ARFLAGS) $@ $?
