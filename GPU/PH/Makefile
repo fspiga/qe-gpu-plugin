@@ -208,31 +208,31 @@ LIBOBJS        = ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../i
 
 TLDEPS= bindir mods libs pw
 
-all : tldeps libs-ph ph.x dynmat.x matdyn.x q2r.x lambda.x 
+all : tldeps libs-ph ph-gpu.x dynmat-gpu.x matdyn-gpu.x q2r-gpu.x lambda-gpu.x 
 
 libs-ph : libph.a libphaux.a
 
-ph.x : phonon.o libph.a $(PWOBJS) $(LIBOBJS)
+ph-gpu.x : phonon.o libph.a $(PWOBJS) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ phonon.o libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-dynmat.x : dynmat.o libphaux.a  libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+dynmat-gpu.x : dynmat.o libphaux.a  libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ dynmat.o libphaux.a libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-matdyn.x : matdyn.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+matdyn-gpu.x : matdyn.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ matdyn.o libphaux.a libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-q2r.x : q2r.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+q2r-gpu.x : q2r.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ libphaux.a libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-lambda.x : lambda.o $(PWOBJS) $(QEMODS) $(LIBOBJS)
+lambda-gpu.x : lambda.o $(PWOBJS) $(QEMODS) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ lambda.o \
                  $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
@@ -250,8 +250,8 @@ libphaux.a : $(PHGPUAUXOBJS)
 
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
-	- /bin/rm -rf ../../bin/ph.x ../../bin/dynmat.x ../../bin/matdyn.x \
-	../../bin/q2r.x ../../bin/lambda.x ../../bin/fqha.x
+	- /bin/rm -rf ../../bin/ph-gpu.x ../../bin/dynmat-gpu.x ../../bin/matdyn-gpu.x \
+	../../bin/q2r-gpu.x ../../bin/lambda-gpu.x ../../bin/fqha-gpu.x
 
 #include make.depend
 # DO NOT DELETE
