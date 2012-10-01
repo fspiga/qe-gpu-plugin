@@ -215,7 +215,7 @@ libs-ph : libph.a libphaux.a
 ph.x : phonon.o libph.a $(PWOBJS) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ phonon.o libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/PH/ph.x . )
+	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
 dynmat.x : dynmat.o libphaux.a  libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ dynmat.o libphaux.a libph.a \
