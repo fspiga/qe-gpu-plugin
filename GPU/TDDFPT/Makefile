@@ -68,6 +68,6 @@ tldeps:
 
 
 clean :
-	- /bin/rm -f ../bin/turbo_lanczos.x *.x *.o *~ *.d *.mod *.i work.pc *.a
+	- /bin/rm -f ../bin/turbo_lanczos.x *.x *.o *~ *.d *.mod *.i work.pc *.F90 *.a
 
 # DO NOT DELETE
