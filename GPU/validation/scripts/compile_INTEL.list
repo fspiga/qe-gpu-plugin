@@ -1,0 +1,116 @@
+declare -a makescript
+makescript_lenght=12
+QEDIR='/gpfs/scratch/userinternal/acv0/Filippo_scratch/espresso'
+QEVERSION='QE5-GPU-INTEL-CUDA_42'
+
+makescript[1]=$(cat <<EOF
+make distclean
+./configure --enable-openmp --disable-cuda --enable-parallel --without-scalapack
+make MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw
+cp bin/pw.x ${FINALDIR}/pw-mpi-omp.x
+EOF
+)
+
+makescript[2]=$(cat <<EOF
+make distclean
+./configure --enable-openmp --disable-cuda --enable-parallel --with-scalapack
+make MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw
+cp bin/pw.x ${FINALDIR}/pw-mpi-omp-scalapack.x
+EOF
+)
+
+makescript[3]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-parallel --enable-magma --enable-phigemm --enable-profiling --without-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-gpu-magma-profiling.x
+EOF
+)
+
+makescript[4]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-parallel --disable-magma --enable-phigemm --enable-profiling --with-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-gpu-scalapack-profiling.x
+EOF
+)
+
+makescript[5]=$(cat <<EOF
+make distclean
+cd GPU
+ ./configure --enable-openmp --enable-parallel --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-phigemm --enable-profiling --disable-magma --with-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_VLOCPSI -D__PHIGEMM_HACK_CPUONLY" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-profiling-scalapack.x
+EOF
+)
+
+makescript[6]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --enable-openmp --enable-parallel --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-phigemm --enable-profiling --disable-magma --without-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_VLOCPSI -D__PHIGEMM_HACK_CPUONLY -D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-profiling.x
+EOF
+)
+
+makescript[7]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-parallel --enable-magma --enable-phigemm --disable-profiling --without-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-gpu-magma.x
+EOF
+)
+
+makescript[8]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-parallel --disable-magma --enable-phigemm --disable-profiling --with-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-omp-gpu-scalapack.x
+EOF
+)
+
+makescript[9]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --disable-openmp --enable-parallel --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-phigemm --enable-profiling --disable-magma --with-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_VLOCPSI -D__PHIGEMM_HACK_CPUONLY" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-profiling-scalapack.x
+EOF
+)
+
+makescript[10]=$(cat <<EOF
+make distclean
+cd GPU
+./configure --disable-openmp --enable-parallel --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CUDA_HOME} --enable-phigemm --enable-profiling --disable-magma --without-scalapack
+cd -
+make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_VLOCPSI -D__PHIGEMM_HACK_CPUONLY -D__TRACK_PW_ELECTRON_STEP" pw-gpu
+cp bin/pw-gpu.x ${FINALDIR}/pw-mpi-profiling.x
+EOF
+)
+
+makescript[11]=$(cat <<EOF
+make distclean
+./configure --disable-openmp --disable-cuda --enable-parallel --without-scalapack
+make MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw
+cp bin/pw.x ${FINALDIR}/pw-mpi.x
+EOF
+)
+
+makescript[12]=$(cat <<EOF
+make distclean
+./configure --disable-openmp --disable-cuda --enable-parallel --with-scalapack
+make MANUAL_DFLAGS="-D__TRACK_PW_ELECTRON_STEP" pw
+cp bin/pw.x ${FINALDIR}/pw-mpi-scalapack.x
+EOF
+)
