@@ -19,7 +19,7 @@ FOGPUBJS = \
 ../../CPV/src/cp_emass.o \
 ../../CPV/src/cp_interfaces.o \
 ../../CPV/src/cp_restart.o \
-../../CPV/src/cplib.o \
+./cplib.o \
 ../../CPV/src/cpr_mod.o \
 ../../CPV/src/cpr.o \
 ../../CPV/src/dealloc.o \
@@ -46,7 +46,7 @@ FOGPUBJS = \
 ../../CPV/src/ions_nose.o \
 ../../CPV/src/ions_positions.o \
 ../../CPV/src/ksstates.o \
-../../CPV/src/ldaU.o \
+./ldaU.o \
 ../../CPV/src/ldaUpen.o \
 ../../CPV/src/mainvar.o \
 ../../CPV/src/cpr_loop.o \
