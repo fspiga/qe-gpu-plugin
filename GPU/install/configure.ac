@@ -1,6 +1,6 @@
-AC_INIT(ESPRESSO, 5.0.0, , espresso)
+AC_INIT(ESPRESSO, 5.0.1, , espresso)
 # ----------------------------
-# Non-standart precious variables
+# Non-standard precious variables
 # ----------------------------
 AC_ARG_VAR(EXTLIB_FLAGS, This variable controls the flags passed to internal BLAS and LAPACK libraries)
 # -----------------------------
@@ -92,10 +92,22 @@ AC_ARG_WITH(scalapack,
        [use scalapack if available (default: yes)])],
    [if  test "$withval" = "yes" ; then
       with_scalapack=1
+   elif  test "$withval" = "intel" ; then
+      with_scalapack=2
    else
       with_scalapack=0
    fi],
    [with_scalapack=1])
+
+AC_ARG_WITH(elpa,
+    [AS_HELP_STRING([--with-elpa],
+        [use elpa if available (default: no)])],
+    [if  test "$withval" = "yes" ; then
+       with_elpa=1
+    else
+       with_elpa=0
+    fi],
+    [with_elpa=0])
 
 AC_ARG_WITH(internal-blas,
    [AS_HELP_STRING([--with-internal-blas],
@@ -291,6 +303,7 @@ then
         test -d /proc/cray_xt && arch=crayxt
 	# workaround for IBM BG machines
         test -d /bgsys && arch=ppc64-bg
+        test -f /bgsys/drivers/ppcfloor/bin/runjob && arch=ppc64-bgq
 fi
 echo checking architecture... $arch
 
@@ -358,16 +371,19 @@ ppc64-mn )
         try_arflags="ruv"
         ;;
 # IBM BlueGene
-ppc64-bg )
+ppc64-bg | ppc64-bgq )
 	if test "$use_openmp" -eq 0 ; then
           try_mpif90="mpixlf90"
           try_f90="bgxlf90"
 	else
           try_mpif90="mpixlf90_r"
+          # Executable paths are usually consistent across several 
+          # IBM BG/P BG/Q machine deployed 
+          ld="/bgsys/drivers/ppcfloor/comm/xl.ndebug/bin/mpixlf90_r"
           try_f90="bgxlf90_r"
 	fi
         try_arflags="ruv"
-        try_dflags="-D__AIX -D__XLF"
+        try_dflags="-D__XLF"
         ;;
 * )
         AC_MSG_WARN($arch : unsupported architecture?)
@@ -420,7 +436,7 @@ case "$arch" in
         ia32 | ia64 | x86_64 | mac686 )
         echo $ECHO_N "checking version of $mpif90... $ECHO_C"
         ifort_version=`$mpif90 -V 2>&1 | grep "Intel(R)"`
-        sunf95_version=`$mpif90 -V 2>&1 | grep "^sunf95"`
+        sunf95_version=`$mpif90 -V 2>&1 | grep "Sun Fortran"`
         openf95_version=`$mpif90 -V 2>&1 | grep "^Open64"`
         pgf_version=`$mpif90 -V 2>&1 | grep "^pgf"`
         g95_version=`$mpif90 -v 2>&1 | grep "g95"`
@@ -508,7 +524,7 @@ f90 | fc | ftn )
 
     if $f90 -V 2>&1 | grep -q "Intel(R)" ; then
         f90_version=ifort
-    elif $f90 -V 2>&1 | grep -q "^sunf95" ; then
+    elif $f90 -V 2>&1 | grep -q "Sun Fortran" ; then
         f90_version=sunf95
     elif $f90 -V 2>&1 | grep -q "^Open64" ; then
         f90_version=openf95
@@ -573,11 +589,11 @@ cray*:* )
 necsx:* )
         try_cc="sxcc"
         ;;
-ppc64-bg:*xlf90_r )
+ppc64-bg*:*xlf90_r )
         try_cc="bgxlc_r"
         try_f77="bgxlf_r"
         ;;
-ppc64-bg:*xlf90 )
+ppc64-bg*:*xlf90 )
         try_cc="bgxlc"
         try_f77="bgxlf"
         ;;
@@ -810,7 +826,21 @@ ppc64-bg:*xlf* )
         try_f90flags="\$(FFLAGS) -qsuffix=cpp=f90"
         try_fflags_noopt="-q32 -O0"
         try_ldflags="-q32"
-        try_ldflags_openmp="-qsmp -qthreaded"
+        try_ldflags_openmp="-qsmp=omp -qthreaded"
+        pre_fdflags="-WF,"
+        xlf_flags=1
+        ;;
+ppc64-bgq:*xlf* )
+    if test "$use_debug" -eq 1; then
+        try_fflags="-qalias=noaryovrlp:nointptr -g -C -qdpc=e"
+    else
+        try_fflags="-qalias=noaryovrlp:nointptr -O3 -qstrict -qdpc=e -qarch=qp -qtune=qp"
+    fi
+        try_fflags_openmp="-qsmp=noauto:omp -qtm -qthreaded"
+        try_f90flags="\$(FFLAGS) -qsuffix=cpp=f90"
+        try_fflags_noopt="-O0"
+        try_ldflags=""
+        try_ldflags_openmp="-qstatic -qsmp=noauto:omp -qtm -qthreaded"
         pre_fdflags="-WF,"
         xlf_flags=1
         ;;
@@ -885,6 +915,9 @@ ppc64-mn:* )
         ;;
 ppc64-bg:* )
         try_cflags="-O3 -q32"
+        ;;
+ppc64-bgq:* )
+        try_cflags="-O3"
         ;;
 ppc64:xlc*)
         try_cflags="-O3 -q64 -qthreaded"
@@ -1635,7 +1668,7 @@ then
                 LIBS="$fft_libs"
                 AC_SEARCH_LIBS(dcft, essl, have_fft=1 fft_libs="$LIBS")
             ;;
-        ppc64-bg )
+        ppc64-bg | ppc64-bgq )
                 # check for esslbg
                 unset ac_cv_search_dcft # clear cached value
                 FFLAGS="$test_fflags"
@@ -1753,9 +1786,17 @@ fi
 echo setting FFT_LIBS... $fft_libs
 
 # if no valid FFT library was found, use the local copy
+# (This happens also if OpenMP is enabled...)
 if test "$have_fft" -eq 0
 then
-        try_dflags="$try_dflags -D__FFTW"
+        case "$arch" in
+        ppc64-bg | ppc64-bgq )
+            try_dflags="$try_dflags -D__LINUX_ESSL"
+            ;;
+        * )
+		    try_dflags="$try_dflags -D__FFTW"
+            ;;
+        esac
 fi
 
 F77=$f90
@@ -1771,7 +1812,7 @@ then
         case "$arch" in
         aix | ppc64-bg )
                 # check for mass (in several directories)
-                try_libdirs="/opt/ibmcmp/xlmass/bg/4.4/bglib /cineca/lib /cineca/lib/mass"
+                try_libdirs="/opt/ibmcmp/xlmass/bg/7.3/bglib64 /opt/ibmcmp/xlmass/bg/4.4/bglib /cineca/lib /cineca/lib/mass"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -1788,8 +1829,34 @@ then
                         LDFLAGS="$test_ldflags $try_loption"
                         LIBS=""
                         AC_SEARCH_LIBS(vexp, massvp4 massv, , , -lmass)
-                        if test "$ac_cv_search_vexp" = "-lmassvp4" -o "$ac_cv_search_vexp" = "-lmassv"
+                        if test "$ac_cv_search_vexp" = "-lmassvp4" \
+                                -o "$ac_cv_search_vexp" = "-lmassv"
                         then mass_libs="$try_loption $ac_cv_search_vexp -lmass"
+                        fi
+                        if test "$ac_cv_search_vexp" != "no" ; then break ; fi
+                done
+                ;;
+        ppc64-bgq )
+                # check for mass (in several directories)
+                try_libdirs="/opt/ibmcmp/xlmass/bg/7.3/bglib64"
+                try_libdirs="$libdirs $try_libdirs $ld_library_path"
+
+                for dir in none $try_libdirs
+                do
+                        unset ac_cv_search_vexp # clear cached value
+                        if test "$dir" = "none"
+                        then
+                                try_loption=
+                        else
+                                echo $ECHO_N "in $dir: " $ECHO_C
+                                try_loption="-L$dir"
+                        fi
+                        FFLAGS="$test_fflags"
+                        LDFLAGS="$test_ldflags $try_loption"
+                        LIBS=""
+                        AC_SEARCH_LIBS(vexp, massv, , , -lmass_simd)
+                        if test "$ac_cv_search_vexp" = "-lmassv"
+                        then mass_libs="$try_loption $ac_cv_search_vexp -lmass_simd"
                         fi
                         if test "$ac_cv_search_vexp" != "no" ; then break ; fi
                 done
@@ -1830,6 +1897,10 @@ if test "$mass_libs" != ""; then
    # BlueGene wants this when mass libs are loaded, SP6 doesn't want this!
      ldflags="$ldflags -Wl,--allow-multiple-definition"
    fi
+   if test "$arch" = "ppc64-bgq"; then
+   # BlueGene wants this when mass libs are loaded, SP6 doesn't want this!
+     ldflags="$ldflags -Wl,--allow-multiple-definition"
+   fi
 fi
 
 echo setting MASS_LIBS... $mass_libs
@@ -1857,6 +1928,7 @@ then
         fi
 fi
 echo setting MPI_LIBS... $mpi_libs
+
 
 # final check on availability of parallel environment
 parallel=0
@@ -1897,9 +1969,14 @@ if test "$have_mkl" -eq 1
    then
       unset ac_cv_search_pdgemr2d # clear cached value
       LIBS="-lmkl_blacs_lp64 $mpi_libs $blas_libs"
+      if test $with_scalapack -eq 1; then
+         scalapack_libs=-lmkl_blacs_openmpi_lp64
+      else
+         scalapack_libs=-lmkl_blacs_intelmpi_lp64
+      fi
       AC_SEARCH_LIBS(pdgemr2d, "mkl_scalapack_lp64" , have_scalapack=1
                      try_dflags="$try_dflags -D__SCALAPACK"
-                     scalapack_libs="-lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64" )
+                     scalapack_libs="-lmkl_scalapack_lp64 $scalapack_libs" )
       test "$have_scalapack" -eq 1 && break
 fi
 #
@@ -1929,8 +2006,20 @@ fi
        LDFLAGS=""
        AC_SEARCH_LIBS(pdgemr2d, "" , have_scalapack=1
                    try_dflags="$try_dflags -D__SCALAPACK")
-    fi
+    else
+        # scalapack provided in SCALAPACK_LIBS - not checked!
+        have_scalapack=1
+        try_dflags="$try_dflags -D__SCALAPACK"
+    fi   
 done
+
+# ELPA iff SCALAPACK
+if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then 
+    scalapack_libs="../../ELPA/libelpa.a $scalapack_libs"
+    try_dflags="$try_dflags -D__ELPA"
+fi
+    
+echo setting SCALAPACK_LIBS... $scalapack_libs
 
 # CUDA
 if test "$use_cuda" -eq 1 
@@ -2189,6 +2278,7 @@ if test "$extlib_flags" = "" ; then
        esac
 fi
 ##
+
 
 if test "$dflags" = "" ; then dflags="$try_dflags" ; fi
 echo setting DFLAGS... $dflags

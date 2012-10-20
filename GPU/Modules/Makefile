@@ -3,7 +3,7 @@
 include ../../make.sys
 
 # location of needed modules
-MODFLAGS= $(MOD_FLAG)../iotk/src $(MOD_FLAG)../../Modules $(MOD_FLAG).
+MODFLAGS= $(MOD_FLAG)../iotk/src $(MOD_FLAG)../../Modules $(MOD_FLAG)/../../ELPA/ $(MOD_FLAG).
 
 GPUMODULES = \
 mp.o
