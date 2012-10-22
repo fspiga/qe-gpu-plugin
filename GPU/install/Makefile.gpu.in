@@ -161,6 +161,10 @@ libs : mods
 	else $(MAKE) $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; fi )
 
 gpu-mods : mods
+#ifeq ($(PHIGEMM_ENABLED),1) 
+#	if test -d ELPA ; then \
+#	( grep -rl -E 'gemm|GEMM' ./ELPA/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py ; cd ELPA ; $(MAKE) ) ; fi
+#endif
 	( cd GPU/Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 
@@ -269,7 +273,7 @@ endif
 		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
 		CPV Modules PP PW \
 		ACFDT \
-		clib flib pwtools upftools iotk \
+		clib flib pwtools upftools \
 		dev-tools extlibs Environ \
 	; do \
 	    if test -d $$dir ; then \
@@ -279,6 +283,7 @@ endif
 	    fi \
 	done
 	- @(cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile clean)
+	- @(cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile clean)
 	- @(cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile clean)
 	- /bin/rm -rf bin/*.x tmp
 	- cd PW/tests; /bin/rm -rf CRASH *.out *.out? ; cd -
