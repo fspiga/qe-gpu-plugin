@@ -764,7 +764,8 @@ crayxt*:pgf* )
         try_f90flags="-O2 -Mcache_align -r8 -Mpreprocess"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-mp"
-        try_ldflags="-v"
+        # "-Wl,-z,muldefs" because of MAGMA
+        try_ldflags="-Wl,-z,muldefs -v"
         try_dflags="$try_dflags -D__PGI -D__IOTK_WORKAROUND1"
         have_cpp=1
         ;;
