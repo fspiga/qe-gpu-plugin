@@ -764,8 +764,7 @@ crayxt*:pgf* )
         try_f90flags="-O2 -Mcache_align -r8 -Mpreprocess"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-mp"
-        # "-Wl,-z,muldefs" because of MAGMA
-        try_ldflags="-Wl,-z,muldefs -v"
+        try_ldflags="-v"
         try_dflags="$try_dflags -D__PGI -D__IOTK_WORKAROUND1"
         have_cpp=1
         ;;
@@ -2122,6 +2121,7 @@ then
     phigemm_libs=""
     magma_switch=0
     phigemm_switch=0
+    cblas_switch=0
     
     if test "$use_debug" -eq 1; then
        nvccflags="-O0 -g" 
@@ -2130,8 +2130,8 @@ then
     fi
     
     # GPU architecture
-    # This is for GeForce GTX6xx and TESLA K10/K20 cards
     if test "$cuda_arch" = "30" ; then
+    	# This is for GeForce GTX6xx and TESLA K10/K20 cards
         nvccflags="$nvccflags -m64 -arch sm_30 -gencode arch=compute_30,code=compute_30"
         try_dflags="$try_dflags -D__GPU_NVIDIA_30"
         magma_gpu_target=Fermi
@@ -2227,6 +2227,11 @@ then
         ia32:pgf* | ia64:pgf* | x86_64:pgf* )
             ldflags="$ldflags -Wl,-z,muldefs"
             ;;
+        crayxt*:pgf* )
+            ldflags="$ldflags -Wl,-z,muldefs"
+            magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+            cblas_switch=1
+            ;;            
         *:g95 )
             # replace with the correct one # ldflags="$ldflags -zmuldefs"
             ;;
@@ -2411,6 +2416,7 @@ AC_SUBST(phigemm_ccflags)
 AC_SUBST(phigemm_fflags)
 AC_SUBST(phigemm_ldflags)
 AC_SUBST(phigemm_ldsharedflag)
+AC_SUBST(cblas_switch)
 AC_SUBST(magma_switch)
 AC_SUBST(magma_gpu_target)
 
@@ -2426,6 +2432,7 @@ AC_CONFIG_FILES(install/make_lapack.inc)
 # Third-part CUDA-enabled libraries
 AC_CONFIG_FILES(install/make_phiGEMM.inc)
 AC_CONFIG_FILES(install/make_magma.inc)
+AC_CONFIG_FILES(install/make_cblas.inc)
 
 AC_OUTPUT
 

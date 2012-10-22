@@ -1,7 +1,6 @@
-
-#===============================
-# espresso
-#===============================
+#===================================
+# Third-part CUDA-enabled libraries
+#===================================
 #
 include ../../make.sys
 
@@ -14,7 +13,7 @@ ifdef NVCC
 	$(MAKE) libMAGMA
 endif
 	
-# Third-part CUDA-enabled libraries
+# phiGEMM
 libphiGEMM:
 ifeq ($(PHIGEMM_ENABLED),1) 
 	if test ! -d ../../phiGEMM ; then \
@@ -23,8 +22,14 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	cd ../../phiGEMM; $(MAKE) phigemm;
 endif
 
-#MAGMA
+# MAGMA (+ CBLAS if necessary)
 libMAGMA:
+ifeq ($(CBLAS_ENABLED),1) 
+	if test ! -d ../../CBLAS ; then \
+	( gzip -dc ../archive/cblas.tar.gz | (cd ../../; tar -xvf ./GPU/archive/cblas.tar.gz )); fi
+	cp make_cblas.inc ../../CBLAS/Makefile.in;
+	cd ../../CBLAS; $(MAKE) alllib;
+endif
 ifeq ($(MAGMA_ENABLED),1) 
 	if test ! -d ../../magma ; then \
 	( gzip -dc ../archive/magma_1.2.1.Y.tar.gz | (cd ../../; tar -xvf ./GPU/archive/magma_1.2.1.Y.tar.gz )); fi
@@ -43,9 +48,12 @@ libphiGEMM_veryclean:
 	if test -d ../../phiGEMM; then (rm -R -f ../../phiGEMM); fi
 	rm -f make_phiGEMM.inc
 libMAGMA_clean:
+	if test -d ../../CBLAS; then (cd ../../CBLAS; $(MAKE) clean); fi
 	if test -d ../../magma; then (cd ../../magma; $(MAKE) clean); fi
 libMAGMA_veryclean:
+	if test -d ../../CBLAS; then (rm -R -f ../../CBLAS); fi
 	if test -d ../../magma; then (rm -R -f ../../magma); fi
+	rm -f make_cblas.inc
 	rm -f make_magma.inc
 
 # general cleaning

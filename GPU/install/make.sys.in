@@ -110,6 +110,8 @@ BLAS_LIBS_SWITCH = @blas_libs_switch@
 # For IBM machines with essl (-D__ESSL): load essl BEFORE lapack !
 # remember that LAPACK_LIBS precedes BLAS_LIBS in loading order
 
+CBLAS_ENABLED = @cblas_switch@
+
 LAPACK_LIBS    = @lapack_libs@
 LAPACK_LIBS_SWITCH = @lapack_libs_switch@
 
