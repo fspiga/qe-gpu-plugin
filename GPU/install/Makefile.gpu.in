@@ -161,10 +161,6 @@ libs : mods
 	else $(MAKE) $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; fi )
 
 gpu-mods : mods
-#ifeq ($(PHIGEMM_ENABLED),1) 
-#	if test -d ELPA ; then \
-#	( grep -rl -E 'gemm|GEMM' ./ELPA/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py ; cd ELPA ; $(MAKE) ) ; fi
-#endif
 	( cd GPU/Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 
@@ -184,8 +180,7 @@ libblas : touch-dummy
 liblapack: touch-dummy
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@
 
-libelpa : libelpa_internal
-libelpa_internal: touch-dummy
+libelpa: touch-dummy
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@
 	
 libiotk: touch-dummy

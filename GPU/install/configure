@@ -623,6 +623,7 @@ f90rule
 arflags
 ar
 scalapack_libs
+elpa_libs_switch
 mass_libs
 mpi_libs
 fft_libs
@@ -8980,9 +8981,11 @@ fi
 done
 
 # ELPA iff SCALAPACK
+elpa_libs_switch="disabled"
 if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then
     scalapack_libs="../../ELPA/libelpa.a $scalapack_libs"
     try_dflags="$try_dflags -D__ELPA"
+    elpa_libs_switch="enabled"
 fi
 
 echo setting SCALAPACK_LIBS... $scalapack_libs
@@ -9745,6 +9748,7 @@ else
 fi
 
 # export settings to generated files
+
 
 
 
