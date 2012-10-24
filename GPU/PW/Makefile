@@ -20,6 +20,7 @@ PWOBJS = \
 ../../PW/src/add_efield.o \
 ../../PW/src/add_vuspsi.o \
 ../../PW/src/add_paw_to_deeq.o \
+../../PW/src/add_vhub_to_deeq.o \
 ../../PW/src/addusforce.o \
 ../../PW/src/addusstress.o \
 ../../PW/src/allocate_fft.o \
@@ -99,6 +100,7 @@ PWOBJS = \
 ../../PW/src/hinit0.o \
 ../../PW/src/hinit1.o \
 ../../PW/src/init_ns.o \
+../../PW/src/init_q_aeps.o \
 ../../PW/src/init_run.o \
 ../../PW/src/init_us_1.o \
 ../../PW/src/init_us_2.o \
