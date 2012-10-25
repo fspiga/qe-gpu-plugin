@@ -2145,7 +2145,7 @@ then
     fi
     if test "$cuda_arch" = "13" ; then
         nvccflags="$nvccflags -m64 -arch sm_13 -gencode arch=compute_13,code=compute_13"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_13"
+        try_dflags="$try_dflags -D__GPU_NVIDIA_13 -D__DISABLE_CUDA_ADDUSDENS"
         magma_gpu_target=Tesla
     fi
         
