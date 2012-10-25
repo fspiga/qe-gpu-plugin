@@ -94,7 +94,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 //		return 1;
 //	}
 
-	blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
+	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 	if ( blocksPerGrid > 65535) {
 		fprintf( stderr, "\n[VLOC_PSI_K] kernel_init_psic_k cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
@@ -189,7 +189,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 		qecudaSafeCall( cudaMemset( psic_D, 0, size_psic * sizeof( cufftDoubleComplex ) ) );
 
-		blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
+		blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 		kernel_init_psic_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int *) local_nls_D, (int *) local_igk_D, (double *) psi_D, (double *) psic_D, n, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
