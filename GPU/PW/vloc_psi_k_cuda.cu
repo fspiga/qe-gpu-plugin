@@ -62,7 +62,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 	void * psic_D, * psi_D; // cufftDoubleComplex *
 	void * v_D; // double *
-	void * local_igk_D, * local_nls_D; // int*
+	void * igk_D, * nls_D; // int*
 
 	int j,  blocksPerGrid, ibnd;
 	double tscale;
@@ -136,16 +136,10 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	shift += ( lda * m )*sizeof( cufftDoubleComplex );
 	v_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( nrxxs )*sizeof( double );
-#if defined(__CUDA_PRELOADING_DATA)
-	// now	shift contains the amount of byte required on the GPU to compute
-	local_nls_D = (void *) preloaded_nls_D;
-	local_igk_D = (void *) preloaded_igk_D;
-#else
-	local_nls_D = (char*) dev_scratch_QE[0] + shift;
+	nls_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngms % 2 == 0)? ngms : ngms + 1 )*sizeof(int);
-	local_igk_D = (char*) dev_scratch_QE[0] + shift;
+	igk_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
-#endif
 	// now	shift contains the amount of byte required on the GPU to compute
 
 	if ( shift > cuda_memory_unused[0] ) {
@@ -161,17 +155,10 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		return 1;
 	}
 
-	// Before do anything force sync to terminate async data transfer
-#if defined(__CUDA_PRELOADING_DATA) && defined(__CUDA_PRELOAD_PINNED)
-	cudaDeviceSynchronize();
-#endif
-
 	qecudaSafeCall( cudaMemcpy( psi_D, psi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
-#if !defined(__CUDA_PRELOADING_DATA)
-	qecudaSafeCall( cudaMemcpy( local_nls_D, nls,  sizeof( int ) * ngms, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
-#endif
+	qecudaSafeCall( cudaMemcpy( nls_D, nls,  sizeof( int ) * ngms, cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
 
 	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
 
@@ -190,7 +177,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		qecudaSafeCall( cudaMemset( psic_D, 0, size_psic * sizeof( cufftDoubleComplex ) ) );
 
 		blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
-		kernel_init_psic_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int *) local_nls_D, (int *) local_igk_D, (double *) psi_D, (double *) psic_D, n, lda, ibnd );
+		kernel_init_psic_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int *) nls_D, (int *) igk_D, (double *) psi_D, (double *) psic_D, n, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );

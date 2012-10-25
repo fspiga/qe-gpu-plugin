@@ -41,12 +41,6 @@ long ngpus_used;
 long ngpus_per_process;
 long procs_per_gpu;
 
-// Pre-loaded data-structures
-void * preloaded_eigts1_D = 0, * preloaded_eigts2_D = 0, * preloaded_eigts3_D = 0;
-void * preloaded_ig1_D = 0, * preloaded_ig2_D = 0, * preloaded_ig3_D = 0;
-void * preloaded_nlsm_D = 0, * preloaded_nls_D = 0, * preloaded_igk_D = 0;
-short int preloaded_igk_flag;
-
 extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
 extern "C" void mybarrier_();
 
@@ -199,13 +193,7 @@ extern "C" void preallocatedevicememory_(int lRank){
 	for (i = 0; i < ngpus_per_process; i++) {
 #endif
 
-		// see cuda_env.h for a description of the hack
-		// this does *NOT* work if everything is not performed at the beginning...
-#if defined(__CUDA_GET_MEM_HACK)
-		free = (size_t)  __GPU_MEM_AMOUNT_HACK__;
-#else
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
-#endif
 
 #if defined(__CUDA_DEBUG)
 #if defined(__PARA)
@@ -244,12 +232,7 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 
 		/* It can be useful to track this information... */
-#if defined(__CUDA_GET_MEM_HACK)
-		free = __GPU_MEM_AMOUNT_HACK__ - cuda_memory_allocated[i];
-#else
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
-#endif
-
 		device_memory_left[i] = free;
 
 		dev_heap_QE[i] = (char * ) dev_scratch_QE[i] + (32*(cuda_memory_allocated[i]/32));
@@ -270,7 +253,7 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 	printf("\n"); fflush(stdout);
 	printf("     *******************************************************************\n\n"); fflush(stdout);
-#if defined(__PHIGEMM_HACK_CPUONLY)
+#if defined(__PHIGEMM_CPUONLY)
 	printf("       CPU-version plus call-by-call GEMM profiling"); fflush(stdout);
 #else
 

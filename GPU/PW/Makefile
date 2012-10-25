@@ -9,10 +9,9 @@ PWGPUOBJS = \
 addusdens.o \
 newd.o \
 cdiaghg.o \
-gk_sort.o \
 h_psi.o \
 rdiaghg.o \
-struct_fact.o
+
 
 PWOBJS = \
 ../../PW/src/a2fmod.o \
@@ -90,6 +89,7 @@ PWOBJS = \
 ../../PW/src/gen_us_dj.o \
 ../../PW/src/gen_us_dy.o \
 ../../PW/src/get_locals.o \
+../../PW/src/gk_sort.o \
 ../../PW/src/gradcorr.o \
 ../../PW/src/gweights.o \
 ../../PW/src/g2_kin.o \
@@ -192,6 +192,7 @@ PWOBJS = \
 ../../PW/src/stres_us.o \
 ../../PW/src/stres_nonloc_dft.o \
 ../../PW/src/stress.o \
+../../PW/src/struct_fact.o \
 ../../PW/src/sum_band.o \
 ../../PW/src/sumkg.o \
 ../../PW/src/sumkt.o \
@@ -230,9 +231,7 @@ CUGPUOBJS = \
 addusdens_cuda.o \
 vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
-newd_cuda.o \
-struct_fact_cuda.o \
-gk_sort_cuda.o
+newd_cuda.o
 
 QEMODS=../Modules/libqemodgpu.a
 
@@ -240,7 +239,7 @@ TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviro
 
 LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
-all : tldeps pw-gpu.x generate_vdW_kernel_table-gpu.x
+all : tldeps pw-gpu.x
 
 pw-gpu.x : pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
@@ -256,11 +255,6 @@ tldeps:
 
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
-
-generate_vdW_kernel_table-gpu.x : generate_vdW_kernel_table.o libpwgpu.a 
-	$(LD) $(LDFLAGS) -o $@ \
-		generate_vdW_kernel_table.o $(QEMODS) libpwgpu.a $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 #include make.depend
 
