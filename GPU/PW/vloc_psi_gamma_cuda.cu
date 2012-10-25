@@ -171,7 +171,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 //        return 1;
 //	}
 
-	blocksPerGrid = ( ( n * 2) + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
+	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
 	if ( blocksPerGrid > 65535) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_init_psic cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
@@ -183,7 +183,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		return 1;
 	}
 
-	blocksPerGrid = ( ( n * 2) + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
+	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
 	if ( blocksPerGrid > 65535) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_save_hpsi cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
@@ -267,7 +267,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	{
 		qecudaSafeCall( cudaMemset( psic_D , 0, size_psic * sizeof( cufftDoubleComplex ) ) );
 
-		blocksPerGrid = ( ( n * 2) + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
+		blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
 		kernel_init_psic<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PSIC__ >>>( (int *) local_nls_D, (int *) local_nlsm_D, (int *) local_igk_D, (double *) psi_D, (double *) psic_D, n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
@@ -282,7 +282,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		tscale = 1.0 / (double) ( size_psic );
 		cublasZdscal(vlocHandles[ 0 ] , size_psic, &tscale, (cufftDoubleComplex *) psic_D, 1);
 
-		blocksPerGrid = ( ( n * 2) + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
+		blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
 		kernel_save_hpsi<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_HPSI__ >>>( (int *) local_nls_D, (int *) local_nlsm_D, (int *) local_igk_D, (double *) hpsi_D, (double *) psic_D, n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
