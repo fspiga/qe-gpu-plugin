@@ -187,7 +187,6 @@ extern "C" void preallocatedevicememory_(int lRank){
 #if defined(__PARA)
 	}
 
-	// MPI_Barrier(MPI_COMM_WORLD);
 	mybarrier_();
 
 	for (i = 0; i < ngpus_per_process; i++) {
@@ -212,7 +211,6 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 
 
-		// Temporary hack...
 #if !defined(__PHIGEMM_NOALLOC)
 		/* Do real allocation */
 		ierr = cudaMalloc ( (void**) &(dev_scratch_QE[i]), (size_t) cuda_memory_allocated[i] );
@@ -225,7 +223,6 @@ extern "C" void preallocatedevicememory_(int lRank){
 #if defined(__PARA)
 	}
 
-	// MPI_Barrier(MPI_COMM_WORLD);
 	mybarrier_();
 
 	for (i = 0; i < ngpus_per_process; i++) {
@@ -240,20 +237,26 @@ extern "C" void preallocatedevicememory_(int lRank){
 
 #if defined(__CUDA_DEBUG)
 #if defined(__PARA)
-		printf("[GPU %d - rank: %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], lRank, (unsigned long)free, (unsigned long)total); fflush(stdout);
+		printf("[GPU %d - rank: %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], lRank, (unsigned long)free, (unsigned long)total);
+		fflush(stdout);
 #else
-		printf("[GPU %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], (unsigned long)free, (unsigned long)total); fflush(stdout);
+		printf("[GPU %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], (unsigned long)free, (unsigned long)total);
+		fflush(stdout);
 #endif
 #endif
 	}
 	
+#if defined(__PARA)
+	mybarrier_();
+#endif
+
 	// Print information on screen
 #if defined(__PARA)
 	if (lRank == 0) {	
 #endif
 	printf("\n"); fflush(stdout);
 	printf("     *******************************************************************\n\n"); fflush(stdout);
-#if defined(__PHIGEMM_CPUONLY)
+#if defined(__PHIGEMM_CPUONLY) && defined(__PHIGEMM_PROFILE)
 	printf("       CPU-version plus call-by-call GEMM profiling"); fflush(stdout);
 #else
 
@@ -282,12 +285,12 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 
 #if defined(__PARA) && defined(__USE_3D_FFT)
-	printf("       USE_3D_FFT    : yes (check size(pool)=1) \n"); fflush(stdout);
+	printf("       USE_3D_FFT    : yes ( assert(size(pool)=1) ) \n"); fflush(stdout);
 #else
 	printf("       USE_3D_FFT    : no \n"); fflush(stdout);
 #endif
 
-#if defined(__DISABLE_CUDA_ADDUSDENS) || defined(__DISABLE_CUDA_VLOCPSI) || defined(__DISABLE_CUDA_NEWD) || defined(__PHIGEMM_DISABLE_SPECIALK)
+#if defined(__DISABLE_CUDA_ADDUSDENS) || defined(__DISABLE_CUDA_VLOCPSI) || defined(__DISABLE_CUDA_NEWD) || defined(__PHIGEMM_ENABLE_SPECIALK)
 	printf("       # DEBUG MODE #\n");fflush(stdout);
 #if defined(__DISABLE_CUDA_ADDUSDENS)
 	printf("         CUDA addusdens    = disabled\n");fflush(stdout);
@@ -304,10 +307,10 @@ extern "C" void preallocatedevicememory_(int lRank){
 #else
 	printf("         CUDA newd         = enabled\n");fflush(stdout);
 #endif
-#if defined(__PHIGEMM_DISABLE_SPECIALK)
-	printf("         phiGEMM special-k = disabled\n");fflush(stdout);
-#else
+#if defined(__PHIGEMM_ENABLE_SPECIALK)
 	printf("         phiGEMM special-k = enabled\n");fflush(stdout);
+#else
+	printf("         phiGEMM special-k = disabled\n");fflush(stdout);
 #endif
 #endif
 
@@ -345,11 +348,7 @@ void deallocatedevicememory_(){
 
 	int ierr = 0;
 
-#if defined(__CUDA_DEBUG)
-	int i;
-	size_t free, total;
-#endif
-
+	// Assumed 1 GPU per process...
 	ierr = cudaFree ( dev_scratch_QE[0] );
 
 	if(ierr != cudaSuccess) {
@@ -357,13 +356,7 @@ void deallocatedevicememory_(){
 		exit(EXIT_FAILURE);
 	}
 
-#if defined(__CUDA_DEBUG)
-		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
-		for (i = 0; i < ngpus_per_process; i++) {
-			printf("[GPU %d] free: %lu (total: %lu)\n", qe_gpu_bonded[i], (unsigned long)free, (unsigned long)total); fflush(stdout);
-		}
-#endif
-
+	return;
 }
 
 extern "C" void closecudaenv_()
