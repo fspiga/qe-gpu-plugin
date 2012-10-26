@@ -94,8 +94,8 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	int ijh, ih, jh, na, iih, jjh;
 
 	void * ityp_D, * qgm_D, * becsum_D, * aux_D;
-    void * local_eigts1_D, * local_eigts2_D, * local_eigts3_D;
-    void * local_ig1_D, * local_ig2_D, * local_ig3_D;
+    void * eigts1_D, * eigts2_D, * eigts3_D;
+    void * ig1_D, * ig2_D, * ig3_D;
 
 	int nat = (* ptr_nat);
 	int nt = (* ptr_nt);
@@ -112,29 +112,9 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	ijh = 0;
 
 #if defined(__CUDA_DEBUG)
-	int tmp = 0;
-	printf("\n[CUDA_DEBUG - ADDUSDENS] ngm = %d, first_becsum = %d, nat = %d, nspin_mag = %d\n", ngm, first_becsum, nat, nspin_mag);
+	printf("\n[CUDA_DEBUG - ADDUSDENS]\n");
 	fflush(stdout);
 #endif
-
-//#if defined(__CUDA_PRELOADING_DATA)
-//	buffer_size =  sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-//			sizeof( double ) * ( first_becsum * nat * nspin ) +
-//			sizeof( int ) * nat;
-//#else
-//	buffer_size =  sizeof( int ) * ngm * 3 +
-//			sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ) +
-//			sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ) +
-//			sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ) +
-//			sizeof( double ) * ( ngm * nspin_mag * 2 ) +
-//			sizeof( double ) * ( first_becsum * nat * nspin ) +
-//			sizeof( int ) * nat;
-//#endif
-//
-//	if ( buffer_size > cuda_memory_unused[0] ) {
-//		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
-//		return 1;
-//	}
 
 	int number_of_block = (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__;
 	if ( number_of_block > 65535) {
@@ -162,28 +142,18 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	shift += ( ngm * 2 )*sizeof(double);
 	ityp_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (nat%2==0 ? nat : nat+1) )*sizeof( int );
-#if defined(__CUDA_PRELOADING_DATA)
-	// now	shift contains the amount of byte required on the GPU to compute
-	local_eigts1_D = (void *) preloaded_eigts1_D;
-	local_eigts2_D = (void *) preloaded_eigts2_D;
-	local_eigts3_D = (void *) preloaded_eigts3_D;
-	local_ig1_D = (void *) preloaded_ig1_D;
-	local_ig2_D = (void *) preloaded_ig2_D;
-	local_ig3_D = (void *) preloaded_ig3_D;	shift += ( (nat%2==0 ? nat : nat+1) )*sizeof( int );
-#else
-	local_eigts1_D = (char*) dev_scratch_QE[0] + shift;
+	eigts1_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ( ( nr1 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	local_eigts2_D = (char*) dev_scratch_QE[0] + shift;
+	eigts2_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ( ( nr2 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	local_eigts3_D = (char*) dev_scratch_QE[0] + shift;
+	eigts3_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( ( ( nr3 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	local_ig1_D = (char*) dev_scratch_QE[0] + shift;
+	ig1_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-	local_ig2_D = (char*) dev_scratch_QE[0] + shift;
+	ig2_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-	local_ig3_D = (char*) dev_scratch_QE[0] + shift;
+	ig3_D = (char*) dev_scratch_QE[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-#endif
 	// 	shift contains the amount of byte required on the GPU to compute
 
 	if ( shift > cuda_memory_unused[0] ) {
@@ -199,22 +169,15 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 		return 1;
 	}
 
-	// Before do anything force sync to terminate async data transfer
-#if defined(__CUDA_PRELOADING_DATA) && defined(__CUDA_PRELOAD_PINNED)
-	cudaDeviceSynchronize();
-#endif
-
 	qecudaSafeCall( cudaMemcpy( (double *) aux_D, aux,  sizeof( double ) * ( ngm * nspin_mag * 2 ), cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( (double *) becsum_D, becsum,  sizeof( double ) * ( first_becsum * nat * nspin ), cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( (int * ) ityp_D, ityp,  sizeof( int ) * nat, cudaMemcpyHostToDevice ) );
-#if !defined(__CUDA_PRELOAD_PINNED)
-	qecudaSafeCall( cudaMemcpy( local_ig1_D, ig1,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_ig2_D, ig2,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_ig3_D, ig3,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_eigts1_D, eigts1,  sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_eigts2_D, eigts2,  sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( local_eigts3_D, eigts3,  sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
-#endif
+	qecudaSafeCall( cudaMemcpy( ig1_D, ig1,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( ig2_D, ig2,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( ig3_D, ig3,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( eigts1_D, eigts1,  sizeof( double ) * ( ( ( nr1 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( eigts2_D, eigts2,  sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
+	qecudaSafeCall( cudaMemcpy( eigts3_D, eigts3,  sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
 
 	dim3 threads2(1, __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__);
 	dim3 grid2( nspin_mag / 1 ? nspin_mag / 1 : 1,
@@ -231,28 +194,19 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 			qecudaSafeCall( cudaMemcpy( (double *) qgm_D, qgm,  sizeof( double ) * ngm * 2, cudaMemcpyHostToDevice ) );
 
-			kernel_compute_aux<<<grid2, threads2>>>( (double *) local_eigts1_D,
-					(double *) local_eigts2_D, (double *) local_eigts3_D,
-					(int *)  local_ig1_D, (int *)  local_ig2_D,
-					(int *)  local_ig3_D, nr1, nr2, nr3, (double *) qgm_D,
+			kernel_compute_aux<<<grid2, threads2>>>( (double *) eigts1_D,
+					(double *) eigts2_D, (double *) eigts3_D,
+					(int *)  ig1_D, (int *)  ig2_D,
+					(int *)  ig3_D, nr1, nr2, nr3, (double *) qgm_D,
 					(double *) becsum_D, (double *) aux_D, na, nspin_mag, ngm,
 					first_becsum, ijh, nat, (int *) ityp_D, nt );
 			qecudaGetLastError("kernel launch failure");
 //			cudaDeviceSynchronize();
 
-#if defined(__CUDA_DEBUG)
-	        tmp = tmp + 1;
-#endif
 		}
 	}
 
-#if defined(__CUDA_DEBUG)
-	printf("\n[CUDA_DEBUG - ADDUSDENS] Loop iteration = %d\n", tmp);
-	fflush(stdout);
-#endif
-
 	qecudaSafeCall( cudaMemcpy( aux, (double *) aux_D, sizeof( double ) * ( ngm * nspin_mag * 2 ), cudaMemcpyDeviceToHost ) );
-
 //	qecudaSafeCall( cudaFuncSetCacheConfig(kernel_compute_aux, cudaFuncCachePreferNone) );
 
 #if defined(__PHIGEMM_NOALLOC)

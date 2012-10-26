@@ -17,7 +17,7 @@ extern "C" void start_clock_(char * label, unsigned int length_arg );
 extern "C" void stop_clock_(char * label, unsigned int length_arg );
 
 __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int dimx )
-{	   
+{
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	register double sup;
 	register int ii = ix / 2;
@@ -29,7 +29,7 @@ __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int di
 }
 
 __global__ void kernel_init_psic( const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, const  double * __restrict psi, double * psic, const int n, const int m, const int lda, const int ibnd )
-{	   
+{
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	register int pos = ibnd * lda;
 	register int pos_plus = (ibnd+1) * lda;
@@ -66,7 +66,7 @@ __global__ void kernel_init_psic( const  int * __restrict nls, const  int * __re
 }
 
 __global__ void kernel_save_hpsi( const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, double * hpsi, const  double * __restrict psic, const int n, const int m, const int lda, const int ibnd )
-{	   
+{
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	register int pos = ibnd * lda;
 	register int pos_plus = (ibnd+1) * lda;
