@@ -81,18 +81,9 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
-//	size_t buffer_size = 0L;
-
 #if defined(__CUDA_DEBUG)
 	printf("[CUDA DEBUG] VLOC_PSI_K\n"); fflush(stdout);
 #endif
-
-//	buffer_size = size_psic * sizeof( cufftDoubleComplex ) + sizeof( cufftDoubleComplex ) * lda * m + sizeof( int ) * ngms + sizeof( int ) * n + sizeof( double ) * nrxxs;
-//
-//	if ( buffer_size > cuda_memory_unused[0] ) {
-//		fprintf( stderr, "\n[VLOC_PSI_K] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
-//		return 1;
-//	}
 
 	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 	if ( blocksPerGrid > 65535) {

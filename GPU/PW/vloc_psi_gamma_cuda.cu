@@ -28,6 +28,7 @@ __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int di
 	}
 }
 
+
 __global__ void kernel_init_psic( const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, const  double * __restrict psi, double * psic, const int n, const int m, const int lda, const int ibnd )
 {
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
@@ -135,11 +136,8 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
-//	size_t buffer_size = 0L;
-
 #if defined(__CUDA_DEBUG)
-	printf("\n[CUDA_DEBUG - VLOC_PSI_GAMMA] m = %d, n = %d, nrxxs = %d, size_psic = %d\n", m, n, nrxxs, size_psic);
-	fflush(stdout);
+	printf("[CUDA_DEBUG - VLOC_PSI_GAMMA]\n");fflush(stdout);
 #endif
 
 	/* Padding -- really necessary?*/
@@ -161,15 +159,6 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		fflush(stdout);
 		exit(EXIT_FAILURE);
 	}
-
-	// qecudaSafeCall( cudaMemset( dev_scratch_QE[0], 0, (size_t) cuda_memory_allocated[0] ) );
-
-//	buffer_size = size_psic * sizeof( cufftDoubleComplex ) + sizeof( cufftDoubleComplex ) * lda * m_fake * 2 + sizeof( int ) * ngms + sizeof( int ) * ngm + sizeof( int ) * lda + sizeof( double ) * nrxxs;
-//
-//	if ( buffer_size > cuda_memory_unused[0] ) {
-//		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", buffer_size, cuda_memory_allocated[0] );
-//        return 1;
-//	}
 
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
 	if ( blocksPerGrid > 65535) {
