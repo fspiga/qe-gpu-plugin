@@ -2892,9 +2892,9 @@ then
 $as_echo "$as_me: WARNING: incorrect host name ?" >&2;}
         ;;
         esac
-	# workaround for Cray-XT machines
+	    # workaround for Cray-XT machines
         test -d /proc/cray_xt && arch=crayxt
-	# workaround for IBM BG machines
+	    # workaround for IBM BG machines
         test -d /bgsys && arch=ppc64-bg
         test -f /bgsys/drivers/ppcfloor/bin/runjob && arch=ppc64-bgq
 fi
@@ -5141,12 +5141,12 @@ xlf_flags=0
 echo using F90... $f90
 
 case "$arch:$f90_version" in
-ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort* | crayxt*:ifort* )
         try_fflags="-O2 -assume byterecl -g -traceback -par-report0 -vec-report0"
         if test "$use_debug" -eq 1; then
             try_fflags="$try_fflags -fpe0 -CB"
         fi
-	try_fflags_nomain="-nofor_main"
+	    try_fflags_nomain="-nofor_main"
         try_fflags_openmp="-openmp"
         try_f90flags="\$(FFLAGS) -nomodule"
         try_fflags_noopt="-O0 -assume byterecl -g -traceback"
@@ -5157,9 +5157,7 @@ ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
         pre_fdflags="-fpp "
         ;;
 ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-# in try_fflags we use -O3 instead of -O2 because some *.f files in Multigrid
-# confuse the optimizer when option -O2 is enabled
-	try_fflags_nomain="-Mnomain"
+# -O2 could be upgraded to -fast, it depends by the PGI version
         try_fflags="-O3 -r8"
         try_fflags_openmp="-mp"
         try_f90flags="-O2 -Mcache_align -r8"
@@ -5199,7 +5197,7 @@ ia32:path* | ia64:path* | x86_64:path* )
         try_f90flags="\$(FFLAGS) -x f95-cpp-input"
         try_fflags_noopt="-O0 -g"
         try_ldflags="-g"
-		try_ldflags_openmp="-fopenmp"
+	    try_ldflags_openmp="-fopenmp"
         try_dflags="$try_dflags -D__GFORTRAN -D__STD_F95"
         try_ldflags_static="-static"
         ;;
@@ -5208,7 +5206,7 @@ ia32:path* | ia64:path* | x86_64:path* )
         try_fflags_openmp="-openmp"
         try_f90flags="\$(FFLAGS) -fpp"
         try_fflags_noopt="-O0"
-        try_ldflags="-O2"
+        try_ldflags="-fast"
         try_ldflags_static="-Bstatic"
         imod="-M"
         ;;
@@ -5220,13 +5218,13 @@ ia32:path* | ia64:path* | x86_64:path* )
         imod="-I"
         ;;
 aix:*xlf* )
-    if test "$use_debug" -eq 1; then
-        try_fflags="-q64 -qalias=noaryovrlp -g -C \
+        if test "$use_debug" -eq 1; then
+            try_fflags="-q64 -qalias=noaryovrlp -g -C \
 -qarch=auto -qtune=auto -qdpc -Q -qalias=nointptr"
-    else
-        try_fflags="-q64 -qalias=noaryovrlp -O3 -qstrict \
+        else
+            try_fflags="-q64 -qalias=noaryovrlp -O3 -qstrict \
 -qarch=auto -qtune=auto -qdpc -Q -qalias=nointptr"
-    fi
+        fi
         try_fflags_openmp="-qsmp=omp"
         try_f90flags="\$(FFLAGS) -qsuffix=cpp=f90 -qfree=f90"
         try_fflags_noopt="-q64 -O0"
@@ -5237,14 +5235,14 @@ aix:*xlf* )
         xlf_flags=1
         ;;
 solaris:sunf95 )
-        try_fflags="-O2 -O2 -fpp"
+        try_fflags="-fast -O2 -fpp"
         try_f90flags="\$(FFLAGS)"
         try_fflags_noopt="-O0 "
         try_ldflags=""
         imod="-M"
         ;;
 sparc:f90 )
-        try_fflags="-O2 -O1 -nodepend -xvector=no -xchip=ultra3 \
+        try_fflags="-fast -O1 -nodepend -xvector=no -xchip=ultra3 \
 -xarch=v8plusb -xlic_lib=sunperf"
         try_f90flags="\$(FFLAGS)"
         try_fflags_noopt="-O0 -xlic_lib=sunperf"
@@ -5254,7 +5252,7 @@ sparc:f90 )
         ;;
 crayxt*:pgf* )
 # see comment above for pgf*
-	try_fflags_nomain="-Mnomain"
+	    try_fflags_nomain="-Mnomain"
         try_fflags_openmp="-mp"
         try_fflags="-O3 -r8"
         try_f90flags="-O2 -Mcache_align -r8 -Mpreprocess"
@@ -5380,6 +5378,7 @@ try_cpp="cpp"
 
 case "$arch:$cc" in
 *:pgcc )
+        # see comment above about PGF90
         try_cflags="-O2"
         ;;
 # pathcc -E seems to give problems when preprocessing iotk
@@ -5391,15 +5390,17 @@ aix:xlc* | aix:cc )
         c_ldflags="-q64"
         ;;
 *:suncc  )
-        try_cflags="-O2 -O"
+        try_cflags="-fast -O"
         ;;
 sparc:cc )
-        try_cflags="-O2 -dalign -xchip=ultra3 -xarch=v8plusb \
+        try_cflags="-fast -dalign -xchip=ultra3 -xarch=v8plusb \
 -xlic_lib=sunperf"
         try_cpp="fpp"
         ;;
 crayxt*:cc )
-        try_cflags="-O2"
+        # Actually we need something like is done for ftn to detect
+        # the proper compiler used (NdFilippo)
+        try_cflags="-O3"
         ;;
 necsx:* )
         #try_cflags="-D__SX6 \$(IFLAGS) \$(MODFLAGS)"
@@ -9411,22 +9412,37 @@ then
     fi
 
     # GPU architecture
-    if test "$cuda_arch" = "30" ; then
-    	# This is for GeForce GTX6xx and TESLA K10/K20 cards
+    case "$cuda_arch" in
+    35 )
+    	# This is for TESLA K20 cards (GK110)
+        nvccflags="$nvccflags -m64 -arch sm_35 -gencode arch=compute_35,code=compute_35"
+        try_dflags="$try_dflags -D__GPU_NVIDIA_30"
+        # magma_gpu_target=Kepler
+        magma_gpu_target=Fermi
+        ;;
+    30 )
+    	# This is for GeForce GTX6xx and TESLA K10 cards (GK104)
         nvccflags="$nvccflags -m64 -arch sm_30 -gencode arch=compute_30,code=compute_30"
         try_dflags="$try_dflags -D__GPU_NVIDIA_30"
+        # magma_gpu_target=Kepler
         magma_gpu_target=Fermi
-    fi
-    if  test "$cuda_arch" = "20" ; then
+        ;;
+    25 )
+        nvccflags="$nvccflags -m64 -arch sm_25 -gencode arch=compute_25,code=compute_25"
+        try_dflags="$try_dflags -D__GPU_NVIDIA_20"
+        magma_gpu_target=Fermi
+        ;;
+    20 )
         nvccflags="$nvccflags -m64 -arch sm_20 -gencode arch=compute_20,code=compute_20"
         try_dflags="$try_dflags -D__GPU_NVIDIA_20"
         magma_gpu_target=Fermi
-    fi
-    if test "$cuda_arch" = "13" ; then
+        ;;
+    13 )
         nvccflags="$nvccflags -m64 -arch sm_13 -gencode arch=compute_13,code=compute_13"
         try_dflags="$try_dflags -D__GPU_NVIDIA_13 -D__DISABLE_CUDA_ADDUSDENS"
         magma_gpu_target=Tesla
-    fi
+        ;;
+    esac
 
     cuda_include="-I$cuda_path/include"
 
