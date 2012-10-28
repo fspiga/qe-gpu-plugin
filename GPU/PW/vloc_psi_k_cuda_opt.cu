@@ -207,12 +207,14 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		// VERIFY OVERLAP
 
 		// schedule(static,chunk=64)
-#pragma omp for default(shared) private(j)
-		for ( j = 0; j <  n && ibnd > 0; j++ ) {
-			hpsi[ j + ( ( ibnd  - 1 ) * lda ) ][0] += psic[ nls [ igk[ j ] - 1  ] - 1 ][0];
-			hpsi[ j + ( ( ibnd  - 1 ) * lda ) ][1] += psic[ nls [ igk[ j ] - 1  ] - 1 ][1];
+		if (ibnd > 0) {
+#pragma omp for private(j)
+			for ( j = 0; j <  n; j++ ) {
+				hpsi[ j + ( ( ibnd  - 1 ) * lda ) ][0] += psic[ nls [ igk[ j ] - 1  ] - 1 ][0];
+				hpsi[ j + ( ( ibnd  - 1 ) * lda ) ][1] += psic[ nls [ igk[ j ] - 1  ] - 1 ][1];
+			}
 		}
-
+		
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *)psic_D, CUFFT_FORWARD ) );
 
 		tscale = 1.0 / (double) ( size_psic );
@@ -228,7 +230,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 	}
 
-#pragma omp for default(shared) private(j)
+#pragma omp for private(j)
 	for ( j = 0; j <  n; j++ ) {
 		hpsi[ j + ( ( m - 1 ) * lda ) ][0] += psic[ nls [ igk[ j ] - 1  ] - 1 ][0];
 		hpsi[ j + ( ( m - 1 ) * lda ) ][1] += psic[ nls [ igk[ j ] - 1  ] - 1 ][1];
