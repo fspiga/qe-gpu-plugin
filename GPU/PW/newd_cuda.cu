@@ -129,7 +129,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 #if defined(__PHIGEMM_NOALLOC)
 	/* Do real allocation */
-	int ierr = cudaMalloc ( (void**) &(dev_scratch_QE[0]), (size_t) cuda_memory_allocated[0] );
+	int ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_tot[0] );
 	if ( ierr != cudaSuccess) {
 		fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
 		exit(EXIT_FAILURE);
@@ -137,36 +137,36 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 #endif
 
 	size_t shift = 0;
-	dtmp_D = (char*) dev_scratch_QE[0] + shift;
+	dtmp_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( nspin_mag )*sizeof(double);
-	aux_D = (char*) dev_scratch_QE[0] + shift;
+	aux_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ( ngm * nspin_mag ) * 2  )*sizeof(double);
-	qgm_na_D = (char*) dev_scratch_QE[0] + shift;
+	qgm_na_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ngm * 2 )*sizeof(double);
-	qgm_D = (char*) dev_scratch_QE[0] + shift;
+	qgm_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ngm * 2 )*sizeof(double);
-	deeq_D = (char*) dev_scratch_QE[0] + shift;
+	deeq_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( nhm * nhm * nat * nspin )*sizeof( double );
 	shift += ( nhm * nhm * nat * nspin )*sizeof( double );
-	eigts1_D = (char*) dev_scratch_QE[0] + shift;
+	eigts1_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ( ( nr1 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	eigts2_D = (char*) dev_scratch_QE[0] + shift;
+	eigts2_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ( ( nr2 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	eigts3_D = (char*) dev_scratch_QE[0] + shift;
+	eigts3_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( ( ( nr3 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-	ig1_D = (char*) dev_scratch_QE[0] + shift;
+	ig1_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-	ig2_D = (char*) dev_scratch_QE[0] + shift;
+	ig2_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-	ig3_D = (char*) dev_scratch_QE[0] + shift;
+	ig3_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 	// now	shift contains the amount of byte required on the GPU to compute
 
-	if ( shift > cuda_memory_unused[0] ) {
-		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, cuda_memory_allocated[0] );
+	if ( shift > qe_gpu_mem_unused[0] ) {
+		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_tot[0] );
 #if defined(__PHIGEMM_NOALLOC)
 		/* Deallocating... */
-		ierr = cudaFree ( dev_scratch_QE[0] );
+		ierr = cudaFree ( qe_dev_scratch[0] );
 		if(ierr != cudaSuccess) {
 			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
 			exit(EXIT_FAILURE);
@@ -232,7 +232,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 #if defined(__PHIGEMM_NOALLOC)
 	/* Deallocating... */
-	ierr = cudaFree ( dev_scratch_QE[0] );
+	ierr = cudaFree ( qe_dev_scratch[0] );
 	if(ierr != cudaSuccess) {
 		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
 		exit(EXIT_FAILURE);
@@ -240,7 +240,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 #else
 
 #if defined(__CUDA_KERNEL_MEMSET)
-	qecudaSafeCall( cudaMemset( dev_scratch_QE[0], 0, (size_t) cuda_memory_unused[0] ) );
+	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
 
 #endif

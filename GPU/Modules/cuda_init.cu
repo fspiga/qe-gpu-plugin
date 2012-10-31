@@ -27,12 +27,9 @@
 #include "phigemm.h"
 #endif
 
-qeCudaMemDevPtr dev_scratch_QE;
-qeCudaMemDevPtr dev_heap_QE;
-qeCudaMemSizes cuda_memory_allocated;
-qeCudaMemSizes device_memory_left;
-qeCudaMemSizes device_memory_shift;
-qeCudaMemSizes cuda_memory_unused;
+qeCudaMemDevPtr qe_dev_scratch;
+qeCudaMemSizes qe_gpu_mem_tot;
+qeCudaMemSizes qe_gpu_mem_unused;
 qeCudaDevicesBond qe_gpu_bonded;
 
 // global useful information
@@ -154,9 +151,9 @@ extern "C" void initphigemm_(int lRank){
 	/* Compatibility with CUDA 4.x (latest phiGEMM): */
 
 #if defined(__PHIGEMM_NOALLOC)
-	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&cuda_memory_allocated, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
 #else
-	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&dev_scratch_QE, (qeCudaMemSizes*)&cuda_memory_allocated, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
 #endif
 }
 #endif
@@ -176,9 +173,9 @@ extern "C" void preallocatedevicememory_(int lRank){
 			exit(EXIT_FAILURE);
 		}
 
-		cuda_memory_allocated[i] = (size_t) 0;
+		qe_gpu_mem_tot[i] = (size_t) 0;
 
-		ierr = cudaMalloc ( (void**) &(dev_scratch_QE[i]), cuda_memory_allocated[i] );
+		ierr = cudaMalloc ( (void**) &(qe_dev_scratch[i]), qe_gpu_mem_tot[i] );
 		if ( ierr != cudaSuccess) {
 			fprintf( stderr, "\nError in (first zero) memory allocation , program will be terminated!!! Bye...\n\n");
 			exit(EXIT_FAILURE);
@@ -203,37 +200,32 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 
 #if defined(__PARA)
-		cuda_memory_allocated[i] = (size_t) ((((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0) / procs_per_gpu);
-		cuda_memory_unused[i] = cuda_memory_allocated[i];
+		qe_gpu_mem_tot[i] = (size_t) ((((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0) / procs_per_gpu);
+		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
 #else
-		cuda_memory_allocated[i] = (size_t) (((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0);
-		cuda_memory_unused[i] = cuda_memory_allocated[i];
+		qe_gpu_mem_tot[i] = (size_t) (((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0);
+		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
 #endif
 
 
 #if !defined(__PHIGEMM_NOALLOC)
 		/* Do real allocation */
-		ierr = cudaMalloc ( (void**) &(dev_scratch_QE[i]), (size_t) cuda_memory_allocated[i] );
+		ierr = cudaMalloc ( (void**) &(qe_dev_scratch[i]), (size_t) qe_gpu_mem_tot[i] );
 		if ( ierr != cudaSuccess) {
 			fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
 			exit(EXIT_FAILURE);
 		}
 #endif
+//
+//#if defined(__PARA)
+//	}
+//
+//	mybarrier_();
+//
+//	for (i = 0; i < ngpus_per_process; i++) {
+//#endif
 
-#if defined(__PARA)
-	}
-
-	mybarrier_();
-
-	for (i = 0; i < ngpus_per_process; i++) {
-#endif
-
-		/* It can be useful to track this information... */
-		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
-		device_memory_left[i] = free;
-
-		dev_heap_QE[i] = (char * ) dev_scratch_QE[i] + (32*(cuda_memory_allocated[i]/32));
-		device_memory_shift[i] = 0;
+//		dev_heap_QE[i] = (char * ) qe_dev_scratch[i] + (32*(qe_gpu_mem_tot[i]/32));
 
 #if defined(__CUDA_DEBUG)
 #if defined(__PARA)
@@ -349,7 +341,7 @@ void deallocatedevicememory_(){
 	int ierr = 0;
 
 	// Assumed 1 GPU per process...
-	ierr = cudaFree ( dev_scratch_QE[0] );
+	ierr = cudaFree ( qe_dev_scratch[0] );
 
 	if(ierr != cudaSuccess) {
 		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );

@@ -22,6 +22,7 @@
 #define __CUDA_THREADPERBLOCK__ 256
 #define __NUM_FFT_MULTIPLAN__ 4
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
 #define __CUDA_TxB_VLOCPSI_PROD__ __CUDA_THREADPERBLOCK__
 #define __CUDA_TxB_VLOCPSI_HPSI__ __CUDA_THREADPERBLOCK__
@@ -32,10 +33,8 @@
 
 #define __CUDA_THREADPERBLOCK__ 512
 #define __NUM_FFT_MULTIPLAN__ 4
-// TxB ADDUSDENS_COMPUTE_AUX = 1024 is OK for CUDA 4.0 but NOT for CUDA 4.1
-// TxB ADDUSDENS_COMPUTE_AUX = 896 is OK for CUDA 4.1 too but not for CUDA 5.0
-// TxB ADDUSDENS_COMPUTE_AUX = 768 is OK for CUDA 5.0 and all the other versions...
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 768
+#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ 64
 #define __CUDA_TxB_VLOCPSI_PROD__ 128
 #define __CUDA_TxB_VLOCPSI_HPSI__ 448
@@ -45,11 +44,10 @@
 
 #elif defined __GPU_NVIDIA_30
 
-// SMX multi-processors have much more registers (check the CUDA Occupancy spreadsheet)
-// Tested using CUDA 4.2 on GPU K10 (Kepler v1)
 #define __CUDA_THREADPERBLOCK__ 512
 #define __NUM_FFT_MULTIPLAN__ 4
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 128
+#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ 256
 #define __CUDA_TxB_VLOCPSI_PROD__ 512
 #define __CUDA_TxB_VLOCPSI_HPSI__ 256
@@ -61,16 +59,6 @@
 #define __CUDA_THREADPERBLOCK__ 256
 #define __NUM_FFT_MULTIPLAN__ 1
 
-#endif
-
-/* Sometimes it is not possible to use 'cuMemGetInfo()' to know the amount
- * of memory on the GPU card. For this reason this macro define a "fixed"
- * amount of memory to use in case this behavior happens. Use carefully
- * and edit the amount (in byte) accordingly to the real amount of memory
- * on the card minus ~500MB. [NdFilippo]
- */
-#if defined __CUDA_GET_MEM_HACK
-#define __GPU_MEM_AMOUNT_HACK__ 2400000000
 #endif
 
 #if defined __MAGMA
@@ -85,19 +73,13 @@ typedef void* qeCudaMemDevPtr[MAX_QE_GPUS];
 typedef size_t qeCudaMemSizes[MAX_QE_GPUS];
 typedef int qeCudaDevicesBond[MAX_QE_GPUS];
 
-extern qeCudaMemDevPtr dev_scratch_QE;
-extern qeCudaMemDevPtr dev_heap_QE;
-extern qeCudaMemSizes cuda_memory_allocated;
-extern qeCudaMemSizes device_memory_shift;
-extern qeCudaMemSizes cuda_memory_unused;
-extern qeCudaMemSizes device_memory_left;
+extern qeCudaMemDevPtr qe_dev_scratch;
+extern qeCudaMemSizes qe_gpu_mem_tot;
+extern qeCudaMemSizes qe_gpu_mem_unused;
 extern qeCudaDevicesBond qe_gpu_bonded;
 
 // Pre-loaded data-structure
-extern void * preloaded_eigts1_D, * preloaded_eigts2_D, * preloaded_eigts3_D;
-extern void * preloaded_ig1_D, * preloaded_ig2_D, * preloaded_ig3_D;
-extern void * preloaded_nlsm_D, * preloaded_nls_D, * preloaded_igk_D;;
-extern short int preloaded_igk_flag;
+extern void * preloaded_nlsm_D, * preloaded_nls_D;
 
 extern long ngpus_detected;
 extern long ngpus_used;
