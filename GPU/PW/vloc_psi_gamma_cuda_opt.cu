@@ -143,11 +143,9 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
-//	size_t buffer_size = 0L;
-
-//#if defined(__CUDA_DEBUG)
+#if defined(__CUDA_DEBUG)
 	printf("[CUDA DEBUG] VLOC_PSI_GAMMA] n=%d\n",n); fflush(stdout);
-//#endif
+#endif
 
 	/* Padding -- really necessary?*/
 	if (m%2 == 0)
@@ -220,7 +218,6 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
 
 	// now	shift contains the amount of byte required on the GPU to compute
-
 	if ( shift > qe_gpu_mem_unused[0] ) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_tot[0] );
 #if defined(__PHIGEMM_NOALLOC)
@@ -247,11 +244,9 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	qecudaGetLastError("kernel launch failure");
 
 	qecudaSafeCall( cudaMemcpy( psi_D, psi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
-	// ???
 //	if (m_fake > m) {
 //		qecudaSafeCall( cudaMemset( (psi_D + ( lda * m )) , 0, sizeof( cufftDoubleComplex ) * size_psic ) ); // Post-set of (m_fake) zeros
 //	}
-
 	qecudaSafeCall( cudaMemcpy( hpsi_D, hpsi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
 
