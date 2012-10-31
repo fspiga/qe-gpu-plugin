@@ -11,7 +11,8 @@ newd.o \
 cdiaghg.o \
 h_psi.o \
 rdiaghg.o \
-
+cegterg.o \
+regterg.o
 
 PWOBJS = \
 ../../PW/src/a2fmod.o \
@@ -41,7 +42,6 @@ PWOBJS = \
 ../../PW/src/c_phase_field.o \
 ../../PW/src/ccgdiagg.o \
 ../../PW/src/cdiagh.o \
-../../PW/src/cegterg.o \
 ../../PW/src/clean_pw.o \
 ../../PW/src/close_files.o \
 ../../PW/src/compute_becsum.o \
@@ -154,7 +154,6 @@ PWOBJS = \
 ../../PW/src/rdiagh.o \
 ../../PW/src/read_conf_from_file.o \
 ../../PW/src/read_file.o \
-../../PW/src/regterg.o \
 ../../PW/src/remove_atomic_rho.o \
 ../../PW/src/report_mag.o \
 ../../PW/src/restart_from_file.o \
@@ -227,10 +226,16 @@ PWOBJS = \
 ../../PW/src/wannier_occ.o \
 ../../PW/src/wannier_enrg.o
 
-CUGPUOBJS = \
+#CUGPUOBJS = \
 addusdens_cuda.o \
 vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
+newd_cuda.o
+
+CUGPUOBJS = \
+addusdens_cuda.o \
+vloc_psi_k_cuda_opt.o \
+vloc_psi_gamma_cuda_opt.o \
 newd_cuda.o
 
 QEMODS=../Modules/libqemodgpu.a
