@@ -1,5 +1,6 @@
-
-! Copyright (C) 2002-2009 Quantum ESPRESSO group
+!
+! Copyright (C) 2002-2013 Quantum ESPRESSO group
+!
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -25,7 +26,7 @@ SUBROUTINE h_psi( lda, n, m, psi, hpsi )
   USE bp,       ONLY : lelfield,l3dstring,gdir, efield, efield_cry
 
 #if (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA)) || (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && defined(__PARA) && defined(__USE_3D_FFT))
-  USE gvecs,				  ONLY : nls, nlsm, ngms
+  USE gvecs,   ONLY : nls, nlsm, ngms
   USE wvfct,   ONLY : igk, npwx
 #endif
 

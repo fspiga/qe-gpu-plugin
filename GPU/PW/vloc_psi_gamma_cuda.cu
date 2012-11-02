@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2001-2012 Quantum ESPRESSO group
- * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
+ * Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -178,7 +177,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		return 1;
 	}
 
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
 	int ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_tot[0] );
 	if ( ierr != cudaSuccess) {
@@ -206,7 +205,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	if ( shift > qe_gpu_mem_unused[0] ) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_tot[0] );
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 		/* Deallocating... */
 		ierr = cudaFree ( qe_dev_scratch[0] );
 		if(ierr != cudaSuccess) {
@@ -267,7 +266,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	qecheck_cufft_call( cufftDestroy(p_global) );
 
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 	/* Deallocating... */
 	ierr = cudaFree ( qe_dev_scratch[0] );
 	if(ierr != cudaSuccess) {

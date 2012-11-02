@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2001-2012 Quantum ESPRESSO group
- * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
+ * Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -122,7 +121,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 	cudaSetDevice(qe_gpu_bonded[0]);
 
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
 	int ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
 	if ( ierr != cudaSuccess) {
@@ -156,7 +155,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	// 	shift contains the amount of byte required on the GPU to compute
 	if ( shift > qe_gpu_mem_unused[0] ) {
 		fprintf( stderr, "\n[ADDUSDENS] Problem don't fit in GPU memory, requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 		/* Deallocating... */
 		ierr = cudaFree ( qe_dev_scratch[0] );
 		if(ierr != cudaSuccess) {
@@ -207,7 +206,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	qecudaSafeCall( cudaMemcpy( aux, (double *) aux_D, sizeof( double ) * ( ngm * nspin_mag * 2 ), cudaMemcpyDeviceToHost ) );
 //	qecudaSafeCall( cudaFuncSetCacheConfig(kernel_compute_aux, cudaFuncCachePreferNone) );
 
-#if defined(__PHIGEMM_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 	/* Deallocating... */
 	ierr = cudaFree ( qe_dev_scratch[0] );
 	if(ierr != cudaSuccess) {

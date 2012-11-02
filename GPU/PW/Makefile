@@ -1,4 +1,6 @@
-# Makefile for PW
+# Copyright (C) 2011-2013 Quantum ESPRESSO Foundation
+#
+# Makefile for PW-GPU (Filippo Spiga)
 
 include ../../make.sys
 
@@ -12,7 +14,8 @@ cdiaghg.o \
 h_psi.o \
 rdiaghg.o \
 cegterg.o \
-regterg.o
+regterg.o \
+c_bands.o
 
 PWOBJS = \
 ../../PW/src/a2fmod.o \
@@ -38,7 +41,6 @@ PWOBJS = \
 ../../PW/src/bp_qvan3.o \
 ../../PW/src/bp_strings.o \
 ../../PW/src/buffers.o \
-../../PW/src/c_bands.o \
 ../../PW/src/c_phase_field.o \
 ../../PW/src/ccgdiagg.o \
 ../../PW/src/cdiagh.o \
@@ -234,9 +236,10 @@ newd_cuda.o
 
 CUGPUOBJS = \
 addusdens_cuda.o \
-vloc_psi_k_cuda_opt.o \
+newd_cuda.o \
+vloc_psi_k_cuda_opt2.o \
 vloc_psi_gamma_cuda_opt.o \
-newd_cuda.o
+nls_precompute.o
 
 QEMODS=../Modules/libqemodgpu.a
 
