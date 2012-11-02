@@ -95,8 +95,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
-//	size_t buffer_size = 0L;
-
 	int blocksPerGrid;
 
 	double * qgm;
@@ -104,6 +102,10 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	void * qgm_D, * deeq_D, * aux_D, * dtmp_D, * qgm_na_D;
     void * eigts1_D, * eigts2_D, * eigts3_D;
     void * ig1_D, * ig2_D, * ig3_D;
+
+#if defined(__CUDA_DEBUG)
+	printf("\n[NEWD] Enter \n");fflush(stdout);
+#endif
 
 	if ( ((nspin_mag * ngm) / __CUDA_TxB_NEWD_QGM__) > 65535) {
 		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", (nspin_mag * ngm * 2 / __CUDA_TxB_NEWD_QGM__) );
@@ -128,7 +130,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 #if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
-	int ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_tot[0] );
+	int ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
 	if ( ierr != cudaSuccess) {
 		fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
 		exit(EXIT_FAILURE);
@@ -162,7 +164,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	// now	shift contains the amount of byte required on the GPU to compute
 
 	if ( shift > qe_gpu_mem_unused[0] ) {
-		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_tot[0] );
+		fprintf( stderr, "\n[NEWD] Problem don't fit in GPU memory, memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
 #if defined(__CUDA_NOALLOC)
 		/* Deallocating... */
 		ierr = cudaFree ( qe_dev_scratch[0] );

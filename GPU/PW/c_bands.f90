@@ -108,7 +108,7 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
 #endif
          !
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
-         ierr = nls_precompute_k ( npwx, npw, igk(1:), nls(1:), ngms)
+         ierr = nls_precompute_k ( npwx, npw, igk, nls, ngms)
 #endif
 #endif
      END IF

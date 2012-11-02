@@ -33,9 +33,13 @@ __global__ void build_psic_index(const  int * __restrict nls, const  int * __res
 
 	if ( ix < n ) {
 
-		// shared? igk[ix]~psic_index_nls*[ix]
+		// TODO: Fetch in shared memory igk[ ix ]
+		// TODO: In-place index calculation
 
 		psic_index_nls[ix] = ( nls[ igk[ ix ] - 1 ] - 1 ) * 2;
+
+		// TODO: Copy from shared to global memory
+
 	}
 }
 
@@ -92,7 +96,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
 #if defined(__CUDA_DEBUG)
-	printf("[CUDA DEBUG] VLOC_PSI_K] n=%d\n",n); fflush(stdout);
+	printf("[VLOC_PSI_K_OPT] Enter (n=%d, m=%d, ngms=%d)\n", n, m, ngms); fflush(stdout);
 #endif
 
 	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
@@ -174,6 +178,10 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	build_psic_index<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_BUILD_PSIC__ >>>( (int *) nls_D, (int *) igk_D, (int *) psic_index_nls_D, n );
 	qecudaGetLastError("kernel launch failure");
 
+#if defined(__CUDA_DEBUG)
+	printf("[VLOC_PSI_K_OPT] psic_index_nls_D pre-computed\n"); fflush(stdout);
+#endif
+
 	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
 
 	if( cufftSetStream(p_global,vlocStreams[ 0 ]) != CUFFT_SUCCESS ) {
@@ -247,6 +255,10 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
 
+#endif
+
+#if defined(__CUDA_DEBUG)
+	printf("[VLOC_PSI_K_OPT] Exit\n"); fflush(stdout);
 #endif
 
 	cudaStreamDestroy( vlocStreams[ 0 ] );

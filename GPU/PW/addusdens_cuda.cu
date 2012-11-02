@@ -109,8 +109,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	ijh = 0;
 
 #if defined(__CUDA_DEBUG)
-	printf("\n[CUDA_DEBUG - ADDUSDENS]\n");
-	fflush(stdout);
+	printf("\n[ADDUSDENS] Enter \n");fflush(stdout);
 #endif
 
 	int number_of_block = (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__;

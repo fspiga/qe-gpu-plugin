@@ -90,7 +90,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
 
 #if defined(__CUDA_DEBUG)
-	printf("[VLOC_PSI_K_OPT2] Enter (n=%d, ngms=%d)\n",n,ngms); fflush(stdout);
+	printf("[VLOC_PSI_K_OPT2] Enter (n=%d, m=%d, ngms=%d)\n", n, m, ngms); fflush(stdout);
 #endif
 
 	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;

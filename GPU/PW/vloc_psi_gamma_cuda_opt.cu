@@ -34,8 +34,15 @@ __global__ void build_psic_index(const  int * __restrict nls, const  int * __res
 	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 
 	if ( ix < n ) {
+
+		// TODO: Fetch in shared memory igk[ ix ]
+		// TODO: In-place index calculation
+
 		psic_index_nls[ix] = ( nls[ igk[ ix ] - 1 ] - 1 ) * 2;
 		psic_index_nlsm[ix] = ( nlsm[ igk[ ix ] - 1 ] - 1 ) * 2;
+
+		// TODO: Copy from shared to global memory
+
 	}
 }
 
