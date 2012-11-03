@@ -31,7 +31,7 @@ __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int di
 
 __global__ void build_psic_index(const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, int * psic_index_nls, int * psic_index_nlsm, const int n ){
 
-	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	register int ix = blockDim.x * blockIdx.x + threadIdx.x;
 
 	if ( ix < n ) {
 
@@ -238,8 +238,11 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	qecudaSafeCall( cudaMemcpy( nlsm_D, nlsm,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
 
+
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_BUILD_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_BUILD_PSIC__ ;
-	build_psic_index<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_BUILD_PSIC__ >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, n );
+	dim3 dimGrid(blocksPerGrid);
+	dim3 dimBlock(__CUDA_TxB_VLOCPSI_BUILD_PSIC__);
+	build_psic_index<<< dimGrid, dimBlock >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, n );
 	qecudaGetLastError("kernel launch failure");
 
 #if defined(__CUDA_DEBUG)

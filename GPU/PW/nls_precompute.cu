@@ -19,7 +19,7 @@
 
 __global__ void build_psic_gamma_index(const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, int * psic_index_nls, int * psic_index_nlsm, const int n ){
 
-	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	register int ix = blockDim.x * blockIdx.x + threadIdx.x;
 
 	// TODO: Fetch in shared memory igk[ ix ]
 	// TODO: In-place index calculation
@@ -34,7 +34,7 @@ __global__ void build_psic_gamma_index(const  int * __restrict nls, const  int *
 
 __global__ void build_psic_k_index(const  int * __restrict nls, const  int * __restrict igk, int * psic_index_nls, const int n ){
 
-	register int ix = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	register int ix = blockDim.x * blockIdx.x + threadIdx.x;
 
 	// TODO: Fetch in shared memory igk[ ix ]
 	// TODO: In-place index calculation
@@ -141,8 +141,11 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	qecudaSafeCall( cudaMemcpy( nls_D, nls,  sizeof( int ) * ngms, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
 
-	build_psic_k_index<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_BUILD_PSIC__ >>>( (int *) nls_D, (int *) igk_D, (int *) preloaded_nls_D, n );
+    dim3 dimGrid(blocksPerGrid);
+    dim3 dimBlock(__CUDA_TxB_VLOCPSI_BUILD_PSIC__);
+	build_psic_k_index<<<dimGrid,dimBlock >>>( (int *) nls_D, (int *) igk_D, (int *) preloaded_nls_D, n );
 	qecudaGetLastError("kernel launch failure");
+	// cudaThreadSynchronize();
 
 #if defined(__CUDA_DEBUG)
 	printf("[NLS_PRECOMPUTE_K] preloaded_nls_D populated\n"); fflush(stdout);
@@ -276,7 +279,9 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	qecudaSafeCall( cudaMemcpy( nlsm_D, nlsm,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
 
-	build_psic_gamma_index<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_BUILD_PSIC__ >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (int *) preloaded_nls_D, (int *) preloaded_nlsm_D, n );
+    dim3 dimGrid(blocksPerGrid);
+    dim3 dimBlock(__CUDA_TxB_VLOCPSI_BUILD_PSIC__);
+	build_psic_gamma_index<<<dimGrid,dimBlock >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (int *) preloaded_nls_D, (int *) preloaded_nlsm_D, n );
 	qecudaGetLastError("kernel launch failure");
 
 #if defined(__CUDA_DEBUG)
