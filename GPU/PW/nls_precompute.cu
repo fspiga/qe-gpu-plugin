@@ -112,16 +112,15 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
 
-#if defined(__CUDA_DEBUG)
-	printf("[NLS_PRECOMPUTE_K] qe_dev_scratch allocated (used = %lu byte)\n", shift); fflush(stdout);
-#endif
-
 	shift = 0;
 	nls_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (ngms % 2 == 0)? ngms : ngms + 1 )*sizeof(int);
 	igk_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
 
+#if defined(__CUDA_DEBUG)
+	printf("[NLS_PRECOMPUTE_K] qe_dev_scratch - space required %lu byte)\n", shift); fflush(stdout);
+#endif
 	if ( shift > qe_gpu_mem_unused[0] ) {
 
 		printf("\n[NLS_PRECOMPUTE_K] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
@@ -251,7 +250,7 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
 
 #if defined(__CUDA_DEBUG)
-	printf("[NLS_PRECOMPUTE_GAMMA] qe_dev_scratch allocated (used = %lu byte)\n", shift); fflush(stdout);
+	printf("[NLS_PRECOMPUTE_GAMMA] qe_dev_scratch - space required %lu byte)\n", shift); fflush(stdout);
 #endif
 
 	if ( shift > qe_gpu_mem_unused[0] ) {
