@@ -25,8 +25,9 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   USE uspp,                 ONLY : vkb, nkb
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
   USE gvecs,                ONLY : nls, nlsm, ngms
+  USE control_flags,        ONLY : gamma_only
 #endif
-  USE gvect,                ONLY : g
+  USE gvect,                ONLY : g, ngm
   USE wvfct,                ONLY : et, nbnd, npwx, igk, npw, current_k
   USE control_flags,        ONLY : ethr, isolve, io_level
   USE ldaU,                 ONLY : lda_plus_u, swfcatom, U_projection
@@ -56,6 +57,8 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
   INTEGER :: ierr
   !
+  INTEGER, EXTERNAL :: nls_precompute_gamma
+  INTEGER, EXTERNAL :: nls_precompute_gamma_cleanup
   INTEGER, EXTERNAL :: nls_precompute_k
   INTEGER, EXTERNAL :: nls_precompute_k_cleanup
 #endif
@@ -99,19 +102,21 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
      !
      ! ... Reads the list of indices k+G <-> G of this k point
      !
-     IF ( nks > 1 ) THEN
-         READ( iunigk ) igk
-         !
-#if defined(__CUDA)
+     IF ( nks > 1 ) READ( iunigk ) igk
+     !
+#if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
+     IF ( gamma_only ) THEN
+#if defined(__CUDA_DEBUG)
+         WRITE(*,*) "[CUDA_DEBUG] GAMMA-POINT, k = ", ik
+#endif
+         ierr = nls_precompute_gamma ( npw, igk(1:), nls(1:), nlsm(1:), ngms, ngm)
+     ELSE
 #if defined(__CUDA_DEBUG)
          WRITE(*,*) "[CUDA_DEBUG] k = ", ik
 #endif
-         !
-#if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
-         ierr = nls_precompute_k ( npwx, npw, igk, nls, ngms)
-#endif
-#endif
+         ierr = nls_precompute_k ( npw, igk(1:), nls(1:), ngms)
      END IF
+#endif
      !
      npw = ngk(ik)
      !
@@ -169,7 +174,11 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
        ethr, avg_iter
   !
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
-  ierr = nls_precompute_k_cleanup( )
+  IF ( gamma_only ) THEN
+       ierr = nls_precompute_gamma_cleanup( )
+  ELSE
+       ierr = nls_precompute_k_cleanup( )
+  ENDIF
 #endif
   CALL stop_clock( 'c_bands' )
   !
