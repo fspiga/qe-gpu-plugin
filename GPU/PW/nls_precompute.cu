@@ -75,7 +75,8 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	if (preloaded_nls_D != NULL){
 		/* Deallocating... */
 #if defined(__CUDA_DEBUG)
-	    printf("[NLS_PRECOMPUTE_K] Detected previous index computation, deallocate before recompute  \n"); fflush(stdout);
+	    printf("[NLS_PRECOMPUTE_K] Detected previous index computation, deallocate before recompute  \n");
+	    fflush(stdout);
 #endif
 		ierr = cudaFree ( preloaded_nls_D );
 		qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_K", "error in memory release");
@@ -93,7 +94,6 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	ierr = cudaMalloc ( (void**) &preloaded_nls_D, (size_t) n*sizeof(int) );
 	qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_K", "error in memory allocation (preload_nls_D)");
 
-
 #if defined(__CUDA_DEBUG)
 	printf("[NLS_PRECOMPUTE_K] preloaded_nls_D allocated (used = %lu byte)\n",(size_t) n*sizeof(int)); fflush(stdout);
 #endif
@@ -108,9 +108,12 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
 	qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_K", "error in memory allocation (qe_dev_scratch)");
 
-
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
+#endif
+
+#if defined(__CUDA_DEBUG)
+	printf("[NLS_PRECOMPUTE_K] qe_dev_scratch allocated (used = %lu byte)\n", shift); fflush(stdout);
 #endif
 
 	shift = 0;
@@ -119,13 +122,10 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	igk_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
 
-#if defined(__CUDA_DEBUG)
-	printf("[NLS_PRECOMPUTE_K] qe_dev_scratch allocated (used = %lu byte)\n", shift); fflush(stdout);
-#endif
-
 	if ( shift > qe_gpu_mem_unused[0] ) {
 
-		fprintf( stderr, "\n[NLS_PRECOMPUTE_K] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+		printf("\n[NLS_PRECOMPUTE_K] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+		fflush(stdout);
 
 		/* Deallocating... */
 		ierr = cudaFree ( preloaded_nls_D );
@@ -134,13 +134,14 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 		ierr = cudaFree ( qe_dev_scratch[0] );
 		qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_K", "error in memory release (qe_dev_scratch)");
 
+		qe_gpu_mem_unused[0] = qe_gpu_mem_tot[0];
+
 		return 1;
 	}
 
 	qecudaSafeCall( cudaMemcpy( nls_D, nls,  sizeof( int ) * ngms, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
 
-	// blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_BUILD_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_BUILD_PSIC__ ;
 	build_psic_k_index<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_BUILD_PSIC__ >>>( (int *) nls_D, (int *) igk_D, (int *) preloaded_nls_D, n );
 	qecudaGetLastError("kernel launch failure");
 
@@ -193,7 +194,8 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	// Have I already use preloaded_nls_D previously? Yes, then clean
 	if (preloaded_nls_D != NULL){
 #if defined(__CUDA_DEBUG)
-	    printf("[NLS_PRECOMPUTE_GAMMA] Detected previous index computation, deallocate before recompute  \n"); fflush(stdout);
+	    printf("[NLS_PRECOMPUTE_GAMMA] Detected previous index computation, deallocate before recompute  \n");
+	    fflush(stdout);
 #endif
 		ierr = cudaFree ( preloaded_nls_D );
 		qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_GAMMA", "error in memory release (preload_nls_D)");
@@ -254,7 +256,8 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 
 	if ( shift > qe_gpu_mem_unused[0] ) {
 
-		fprintf( stderr, "\n[NLS_PRECOMPUTE_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+		printf("\n[NLS_PRECOMPUTE_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+        fflush(stdout);
 
 		ierr = cudaFree ( preloaded_nls_D );
 		qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_GAMMA", "error in memory release (preload_nls_D)");
@@ -264,6 +267,8 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 
 		ierr = cudaFree ( qe_dev_scratch[0] );
 		qecudaGenericErr((cudaError_t) ierr, "NLS_PRECOMPUTE_GAMMA", "error in memory allocation (qe_de_scratch)");
+
+		qe_gpu_mem_unused[0] = qe_gpu_mem_tot[0];
 
 		return 1;
 	}
