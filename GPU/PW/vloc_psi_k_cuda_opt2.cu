@@ -19,8 +19,8 @@
 
 typedef double fftw_complex[2];
 
-extern "C" int nls_precompute_k_( int * ptr_lda, int * ptr_n, int * igk, int * nls, int * ptr_ngms);
-
+extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_ngms);
+extern "C" int nls_precompute_k_cleanup_();
 
 __global__ void kernel_vec_prod_k( double *a, const  double * __restrict b, int dimx )
 {	   
@@ -67,7 +67,6 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 	void * psic_D, * psi_D; // cufftDoubleComplex *
 	void * v_D; // double *
-	void * igk_D, * nls_D, * psic_index_nls_D; // int*
 
 	int j,  blocksPerGrid, ibnd;
 	double tscale;
@@ -94,13 +93,13 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 #endif
 
 	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_K_OPT2] kernel_init_psic_k cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( (nrxxs * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_K_OPT2] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
@@ -108,13 +107,13 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	cudaSetDevice(qe_gpu_bonded[0]);
 
 #if defined(__CUDA_NOALLOC)
-	// For some preloaded_nls_D is NULL, calculate them on-the-fly
+	// If preloaded_nls_D is NULL, calculate it on-the-fly
 	if (preloaded_nls_D == NULL){
-		precomp_psic_indexes = true;
-		ierr = nls_precompute_k_ ( ptr_lda, ptr_n, igk, nls, ptr_ngms);
 #if defined(__CUDA_DEBUG)
-		printf("[VLOC_PSI_K_OPT2] Building nls_precompute_k_ on the fly...\n");
+		printf("[VLOC_PSI_K_OPT2] Perform nls_precompute_k_ on the fly...\n");
 #endif
+		precomp_psic_indexes = true;
+		ierr = nls_precompute_k_ ( ptr_n, igk, nls, ptr_ngms);
 	}
 #endif
 
@@ -124,24 +123,17 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		exit(EXIT_FAILURE);
 	}
 
-	if( cudaStreamCreate( &vlocStreams[ 0 ] ) != cudaSuccess ) {
-		printf("\n*** CUDA VLOC_PSI_K_OPT2 *** ERROR *** creating stream for device %d failed!",qe_gpu_bonded[0]);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
+	ierr = cudaStreamCreate( &vlocStreams[ 0 ] );
+	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "failing during stream creation");
 
 #if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
 	ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
-	if ( ierr != cudaSuccess) {
-		fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
-		exit(EXIT_FAILURE);
-	}
+	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "error in memory allocation");
 
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
-
 #endif
 
 	size_t shift = 0;
@@ -156,28 +148,25 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	if ( shift > qe_gpu_mem_unused[0] ) {
 		fprintf( stderr, "[VLOC_PSI_K_OPT2] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
 #if defined(__CUDA_NOALLOC)
-		/* Deallocating... */
-		ierr = cudaFree ( qe_dev_scratch[0] );
-		if(ierr != cudaSuccess) {
-			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
-			exit(EXIT_FAILURE);
+		if (precomp_psic_indexes) {
+			ierr = nls_precompute_k_cleanup_();
+			precomp_psic_indexes = false;
 		}
+
+		ierr = cudaFree ( qe_dev_scratch[0] );
+		qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "error in memory release");
 #endif
 		return 1;
 	}
 
-	//	qecudaSafeCall( cudaMemset( psic_index_nls_D , 0, sizeof( int ) * n ) );
-
+#if defined(__CUDA_KERNEL_MEMSET)
+	qecudaSafeCall( cudaMemset( psic_index_nls_D , 0, sizeof( int ) * n ) );
+#endif
 	qecudaSafeCall( cudaMemcpy( psi_D, psi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
 
 	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
-
-	if( cufftSetStream(p_global,vlocStreams[ 0 ]) != CUFFT_SUCCESS ) {
-		printf("\n*** CUDA VLOC_PSI_K_OPT2 *** ERROR *** cufftSetStream for device %d failed!",qe_gpu_bonded[0]);
-		fflush(stdout);
-		exit( EXIT_FAILURE );
-	}
+	qecheck_cufft_call( cufftSetStream(p_global,vlocStreams[ 0 ]) );
 
 	qecudaSafeCall( cudaHostAlloc ( (void**) &psic, size_psic * sizeof( fftw_complex ), cudaHostAllocPortable ) );
 
@@ -197,9 +186,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		kernel_vec_prod_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (double *) psic_D, (double *) v_D , nrxxs );
 		qecudaGetLastError("kernel launch failure");
 
-		// VERIFY OVERLAP
-
-		// schedule(static,chunk=64)
+		// VERIFY OVERLAP ~ schedule(static,chunk=64)
 		if (ibnd > 0) {
 #pragma omp for private(j)
 			for ( j = 0; j <  n; j++ ) {
@@ -232,27 +219,15 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	qecheck_cufft_call( cufftDestroy(p_global) );
 
 #if defined(__CUDA_NOALLOC)
-	/* Deallocating... */
+	/* Deallocating preloaded_nls_D */
 	if (precomp_psic_indexes) {
-		ierr = cudaFree ( preloaded_nls_D );
-		if(ierr != cudaSuccess) {
-			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
-			exit(EXIT_FAILURE);
-		}
-
-		preloaded_nls_D = NULL;
-
-#if defined(__CUDA_DEBUG)
-	    printf("[VLOC_PSI_K_OPT2] preloaded_nls_D deallocated\n"); fflush(stdout);
-#endif
+		ierr = nls_precompute_k_cleanup_();
 		precomp_psic_indexes = false;
 	}
 
+	/* Deallocating qe_dev_scratch */
 	ierr = cudaFree ( qe_dev_scratch[0] );
-	if(ierr != cudaSuccess) {
-		fprintf( stderr, "\n*** VLOC_PSI_K_OPT2*** Error in memory release, program will be terminated!!! Bye...\n\n" );
-		exit(EXIT_FAILURE);
-	}
+	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "error in memory release");
 #else
 
 #if defined(__CUDA_KERNEL_MEMSET)

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2001-2012 Quantum ESPRESSO group
- * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
+ * Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -28,9 +27,15 @@
 #endif
 
 qeCudaMemDevPtr qe_dev_scratch;
+qeCudaMemDevPtr qe_dev_zero_scratch;
+
 qeCudaMemSizes qe_gpu_mem_tot;
 qeCudaMemSizes qe_gpu_mem_unused;
+
 qeCudaDevicesBond qe_gpu_bonded;
+
+// Pre-loaded data-structure
+int * preloaded_nlsm_D, * preloaded_nls_D;
 
 // global useful information
 long ngpus_detected;
@@ -150,8 +155,9 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 extern "C" void initphigemm_(int lRank){
 	/* Compatibility with CUDA 4.x (latest phiGEMM): */
 
-#if defined(__PHIGEMM_NOALLOC)
-	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
+#if defined(__CUDA_NOALLOC)
+	// phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
 #else
 	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
 #endif
@@ -164,6 +170,9 @@ extern "C" void preallocatedevicememory_(int lRank){
 	int i;
 
 	size_t free, total;
+
+	preloaded_nls_D = NULL;
+	preloaded_nlsm_D = NULL;
 
 	for (i = 0; i < ngpus_per_process; i++) {
 
@@ -208,13 +217,15 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 
 
-#if !defined(__PHIGEMM_NOALLOC)
+#if !defined(__CUDA_NOALLOC)
 		/* Do real allocation */
 		ierr = cudaMalloc ( (void**) &(qe_dev_scratch[i]), (size_t) qe_gpu_mem_tot[i] );
 		if ( ierr != cudaSuccess) {
 			fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
 			exit(EXIT_FAILURE);
 		}
+
+		qe_dev_zero_scratch[i] = qe_dev_scratch[i];
 #endif
 //
 //#if defined(__PARA)
@@ -353,7 +364,7 @@ void deallocatedevicememory_(){
 
 extern "C" void closecudaenv_()
 {
-#if !defined(__PHIGEMM_NOALLOC)
+#if !defined(__CUDA_NOALLOC)
 	deallocatedevicememory_();
 #endif
 
