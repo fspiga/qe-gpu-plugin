@@ -16,6 +16,7 @@ default :
 	@echo '  pwall-gpu    same as "make pw-gpu ph-gpu neb-gpu"'
 	@echo '  all-gpu      same as "make pwall-gpu cp-gpu tddfpt-gpu"'
 	@echo '  clean        remove executables and objects'
+	@echo '  clean-gpu    remove executables and objects (GPU-only section)'
 	@echo '  veryclean    revert distribution to the original status'
 	@echo '  tar          create a tarball of the source tree'
 	@echo '  doc          build documentation'
@@ -283,6 +284,21 @@ endif
 	- /bin/rm -rf bin/*.x tmp
 	- cd PW/tests; /bin/rm -rf CRASH *.out *.out? ; cd -
 	- cd CPV/tests; /bin/rm -rf CRASH *.out *.out? 
+
+# remove object files and executables (GPU-only section)
+clean-gpu :
+	touch make.sys
+	for dir in \
+		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
+	; do \
+	    if test -d $$dir ; then \
+		( cd $$dir ; \
+		if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= clean ; \
+		else $(MAKE) $(MFLAGS) TLDEPS= clean ; fi ) \
+	    fi \
+	done
+	# - @(cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile clean)
+	- /bin/rm -rf bin/*.x tmp
 
 # remove configuration files too
 distclean veryclean : clean
