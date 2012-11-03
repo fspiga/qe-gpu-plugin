@@ -131,7 +131,11 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
   INTEGER (C_SIZE_T), PARAMETER :: test_flag = 0
   INTEGER (C_SIZE_T) :: allocation_size
 #endif
-
+  !
+#if defined(__CUDA_DEBUG)
+  WRITE(*,*) "[REGTERG] Enter"
+#endif
+  !
   CALL start_clock( 'regterg' )
   !
   IF ( nvec > nvecx / 2 ) CALL errore( 'regter', 'nvecx is too small', 1 )
@@ -141,11 +145,11 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
   empty_ethr = MAX( ( ethr * 5.D0 ), 1.D-5 )
   !
 #if defined(__CUDA) && defined(__CUDA_MEM_PINNED)
- allocation_size = npwx*nvecx*sizeof(fp_kind)*4
- res = cudaHostAlloc ( cptr_psi, allocation_size, test_flag )
- call c_f_pointer ( cptr_psi, psi, (/ npwx, nvecx /) )
- res = cudaHostAlloc ( cptr_hpsi, allocation_size, test_flag )
- call c_f_pointer ( cptr_hpsi, hpsi, (/ npwx, nvecx /) )
+  allocation_size = npwx*nvecx*sizeof(fp_kind)*4
+  res = cudaHostAlloc ( cptr_psi, allocation_size, test_flag )
+  CALL c_f_pointer ( cptr_psi, psi, (/ npwx, nvecx /) )
+  res = cudaHostAlloc ( cptr_hpsi, allocation_size, test_flag )
+  CALL c_f_pointer ( cptr_hpsi, hpsi, (/ npwx, nvecx /) )
 #else
   ALLOCATE( psi(  npwx, nvecx ), STAT=ierr )
   IF( ierr /= 0 ) &

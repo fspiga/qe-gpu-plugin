@@ -60,6 +60,10 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
   !
   CALL start_clock( 'rdiaghg' )
   !
+#if defined(__CUDA_DEBUG)
+  WRITE(*,*) "[RDIAGHG] n = ", n
+#endif
+  !
 #if defined(__CUDA) && defined(__MAGMA) && defined(__MAGMA_HACK)
   ! HACK: Until GPU interfaces for DSYGVD will be released, we need
   ! to release all the GPU memory preallocated and leave MAGMA to
