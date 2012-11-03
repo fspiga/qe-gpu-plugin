@@ -276,7 +276,7 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	qecudaGetLastError("kernel launch failure");
 
 #if defined(__CUDA_DEBUG)
-	printf("[NLS_PRECOMPUTE_K] preloaded_nls_D populated\n"); fflush(stdout);
+	printf("[NLS_PRECOMPUTE_GAMMA] preloaded_nls_D/preloaded_nlsm_D populated\n"); fflush(stdout);
 #endif
 
 	/* Deallocating... but NOT preloaded_nls_D/preloaded_nlsm_D */
@@ -287,7 +287,7 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	cudaDeviceSynchronize();
 
 #if defined(__CUDA_DEBUG)
-	printf("[NLS_PRECOMPUTE_K] qe_dev_scratch cleaned\n"); fflush(stdout);
+	printf("[NLS_PRECOMPUTE_GAMMA] qe_dev_scratch cleaned\n"); fflush(stdout);
 #endif
 
 	return 0;

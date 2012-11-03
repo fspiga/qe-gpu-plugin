@@ -228,17 +228,19 @@ PWOBJS = \
 ../../PW/src/wannier_occ.o \
 ../../PW/src/wannier_enrg.o
 
-#CUGPUOBJS = \
+# Original, well tested
+CUGPUOBJS = \
 addusdens_cuda.o \
 vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
 newd_cuda.o
 
-CUGPUOBJS = \
+# Optimized, experimental (-D__CUDAPRELOAD -D__CUDA_NOALLOC needed)
+#CUGPUOBJS = \
 addusdens_cuda.o \
 newd_cuda.o \
 vloc_psi_k_cuda_opt2.o \
-vloc_psi_gamma_cuda_opt.o \
+vloc_psi_gamma_cuda_opt2.o \
 nls_precompute.o
 
 QEMODS=../Modules/libqemodgpu.a

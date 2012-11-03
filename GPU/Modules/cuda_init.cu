@@ -156,8 +156,8 @@ extern "C" void initphigemm_(int lRank){
 	/* Compatibility with CUDA 4.x (latest phiGEMM): */
 
 #if defined(__CUDA_NOALLOC)
-	// phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
-	phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
+	// phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
 #else
 	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
 #endif
@@ -293,7 +293,7 @@ extern "C" void preallocatedevicememory_(int lRank){
 	printf("       USE_3D_FFT    : no \n"); fflush(stdout);
 #endif
 
-#if defined(__DISABLE_CUDA_ADDUSDENS) || defined(__DISABLE_CUDA_VLOCPSI) || defined(__DISABLE_CUDA_NEWD) || defined(__PHIGEMM_ENABLE_SPECIALK)
+#if defined(__CUDA_DEBUG)
 	printf("       # DEBUG MODE #\n");fflush(stdout);
 #if defined(__DISABLE_CUDA_ADDUSDENS)
 	printf("         CUDA addusdens    = disabled\n");fflush(stdout);
