@@ -156,8 +156,8 @@ extern "C" void initphigemm_(int lRank){
 	/* Compatibility with CUDA 4.x (latest phiGEMM): */
 
 #if defined(__CUDA_NOALLOC)
-	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
-	// phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
+//	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
 #else
 	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
 #endif
@@ -266,9 +266,9 @@ extern "C" void preallocatedevicememory_(int lRank){
 	printf("       GPU-accelerated Quantum ESPRESSO \n\n"); fflush(stdout);
 
 #if defined(__PARA)
-	printf("       parallel      : yes (GPUs per node = %d, GPUs per process = %d)  \n", ngpus_detected, ngpus_per_process); fflush(stdout);
+	printf("       parallel      : yes (GPUs per node = %d, GPUs per process = %d)  \n", (int) ngpus_detected, (int) ngpus_per_process); fflush(stdout);
 #else
-	printf("       parallel      : no (GPUs detected = %d, GPUs used = %d)  \n", ngpus_detected, ngpus_used); fflush(stdout);
+	printf("       parallel      : no (GPUs detected = %d, GPUs used = %d)  \n", (int) ngpus_detected, (int) ngpus_used); fflush(stdout);
 #endif
 
 #if defined(__OPENACC)
