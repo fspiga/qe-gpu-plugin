@@ -100,13 +100,13 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 #endif
 
 	blocksPerGrid = ( n + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_K] kernel_init_psic_k cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( (nrxxs * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_K] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}

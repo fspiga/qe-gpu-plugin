@@ -107,7 +107,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	printf("\n[NEWD] Enter \n");fflush(stdout);
 #endif
 
-	if ( ((nspin_mag * ngm) / __CUDA_TxB_NEWD_QGM__) > 65535) {
+	if ( ((nspin_mag * ngm) / __CUDA_TxB_NEWD_QGM__) > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", (nspin_mag * ngm * 2 / __CUDA_TxB_NEWD_QGM__) );
 		return 1;
 	}

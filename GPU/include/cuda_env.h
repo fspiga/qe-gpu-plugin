@@ -20,7 +20,10 @@
 #if defined __GPU_NVIDIA_13
 
 #define __CUDA_THREADPERBLOCK__ 256
+#define __CUDA_MAXNUMBLOCKS__ 65535
+
 #define __NUM_FFT_MULTIPLAN__ 4
+
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ __CUDA_THREADPERBLOCK__
 #define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
@@ -32,7 +35,10 @@
 #elif defined __GPU_NVIDIA_20
 
 #define __CUDA_THREADPERBLOCK__ 512
+#define __CUDA_MAXNUMBLOCKS__ 65535
+
 #define __NUM_FFT_MULTIPLAN__ 4
+
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 768
 #define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ 64
@@ -45,7 +51,10 @@
 #elif defined __GPU_NVIDIA_30
 
 #define __CUDA_THREADPERBLOCK__ 512
+#define __CUDA_MAXNUMBLOCKS__ 65535
+
 #define __NUM_FFT_MULTIPLAN__ 4
+
 #define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 128
 #define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
 #define __CUDA_TxB_VLOCPSI_PSIC__ 256
@@ -73,13 +82,17 @@ typedef void* qeCudaMemDevPtr[MAX_QE_GPUS];
 typedef size_t qeCudaMemSizes[MAX_QE_GPUS];
 typedef int qeCudaDevicesBond[MAX_QE_GPUS];
 
+
 extern qeCudaMemDevPtr qe_dev_scratch;
+extern qeCudaMemDevPtr qe_dev_zero_scratch;
+
 extern qeCudaMemSizes qe_gpu_mem_tot;
 extern qeCudaMemSizes qe_gpu_mem_unused;
+
 extern qeCudaDevicesBond qe_gpu_bonded;
 
 // Pre-loaded data-structure
-extern void * preloaded_nlsm_D, * preloaded_nls_D;
+extern int * preloaded_nlsm_D, * preloaded_nls_D;
 
 extern long ngpus_detected;
 extern long ngpus_used;
@@ -90,37 +103,47 @@ extern "C" void closeCudaEnv();
 extern "C" void preallocateDeviceMemory(int);
 extern "C" void initPhigemm(int);
 
-/* These routines are exactly the same in "cutil_inline_runtime.h" but,
+/*
+ * These routines are exactly the same in "cutil_inline_runtime.h" but,
  * replicating them here, we remove the annoying dependency to CUTIL & SDK (Filippo)
  *
  * We define these calls here, so the user doesn't need to include __FILE__ and __LINE__
  * The advantage is the developers gets to use the inline function so they can debug
  */
 
+#define qecudaGenericErr(err, routine, msg)  __qecudaGenericErr(err, routine, msg, __FILE__, __LINE__)
 #define qecudaSafeCall(err)  __qecudaSafeCall(err, __FILE__, __LINE__)
 #define qecudaGetLastError(msg)  __qecudaGetLastError(msg, __FILE__, __LINE__)
 #define qecheck_cufft_call(err) __qecheck_cufft_call(err, __FILE__, __LINE__)
 
+
+inline void __qecudaGenericErr( cudaError_t err, char* routine, char* msg, const char *file, const int line )
+{
+	if(err != cudaSuccess) {
+		printf("[%s:%d] qecudaGenericErr() Runtime %s : %s (%s).\n",
+					file, line, routine, msg, cudaGetErrorString( err) ); fflush(stdout);
+		exit(EXIT_FAILURE);
+	}
+}
+
 inline void __qecudaSafeCall( cudaError_t err, const char *file, const int line )
 {
     if( cudaSuccess != err) {
-		printf("%s(%i) : cudaSafeCall() Runtime API error : %s.\n",
+		printf("[%s:%d] qecudaSafeCall() Runtime API error : %s.\n",
 					file, line, cudaGetErrorString( err) ); fflush(stdout);
 		exit(EXIT_FAILURE);
     }
 }
 
-
 inline void __qecudaGetLastError(const char *errorMessage, const char *file, const int line )
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err) {
-		printf("%s(%i) : qecudaGetLastError() error : %s : %s.\n",
+		printf("[%s:%d] qecudaGetLastError() error : %s : %s.\n",
 				file, line, errorMessage, cudaGetErrorString( err) ); fflush(stdout);
 		exit(EXIT_FAILURE);
     }
 }
-
 
 inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, const int line )
 {

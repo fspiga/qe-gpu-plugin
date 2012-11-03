@@ -160,19 +160,19 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	}
 
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_init_psic cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( (nrxxs * 2) + __CUDA_TxB_VLOCPSI_PROD__  - 1) / __CUDA_TxB_VLOCPSI_PROD__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
-	if ( blocksPerGrid > 65535) {
+	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_save_hpsi cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}

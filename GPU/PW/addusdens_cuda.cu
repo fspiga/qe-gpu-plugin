@@ -113,7 +113,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 #endif
 
 	int number_of_block = (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__;
-	if ( number_of_block > 65535) {
+	if ( number_of_block > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[NEWD] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", number_of_block );
 		return 1;
 	}
