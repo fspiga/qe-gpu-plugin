@@ -104,6 +104,8 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
      !
      IF ( nks > 1 ) READ( iunigk ) igk
      !
+     npw = ngk(ik)
+     !
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
      IF ( gamma_only ) THEN
 #if defined(__CUDA_DEBUG)
@@ -117,8 +119,6 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
          ierr = nls_precompute_k ( npw, igk(1:), nls(1:), ngms)
      END IF
 #endif
-     !
-     npw = ngk(ik)
      !
      ! ... do not recalculate k-points if restored from a previous run
      !
