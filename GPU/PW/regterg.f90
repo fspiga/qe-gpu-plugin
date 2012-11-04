@@ -1,8 +1,8 @@
 #if defined(__CUDA) && defined(__PHIGEMM)
-#define dgemm UDGEMM  
-#define zgemm UZGEMM  
-#define DGEMM UDGEMM  
-#define ZGEMM UZGEMM  
+#define dgemm UDGEMM
+#define zgemm UZGEMM
+#define DGEMM UDGEMM
+#define ZGEMM UZGEMM
 #if defined(__PHIGEMM_PROFILE)
 #define _STRING_LINE_(s) #s
 #define _STRING_LINE2_(s) _STRING_LINE_(s)
@@ -92,7 +92,7 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
   INTEGER :: ierr
 #if defined(__CUDA) && defined(__CUDA_MEM_PINNED)
   REAL(fp_kind), DIMENSION(:,:), POINTER :: hr(:,:), sr(:,:), vr(:,:)
-  REAL(fp_kind), DIMENSION(:,:), POINTER :: ew(:)
+  REAL(fp_kind), DIMENSION(:), POINTER :: ew(:)
 #else
   REAL(DP), ALLOCATABLE :: hr(:,:), sr(:,:), vr(:,:), ew(:)
 #endif
@@ -194,10 +194,10 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
   ALLOCATE( ew( nvecx ), STAT=ierr )
   IF( ierr /= 0 ) &
      CALL errore( 'regterg ',' cannot allocate ew ', ABS(ierr) )
+#endif
   ALLOCATE( conv( nvec ), STAT=ierr )
   IF( ierr /= 0 ) &
      CALL errore( 'regterg ',' cannot allocate conv ', ABS(ierr) )
-#endif
   !
   npw2  = 2*npw
   npwx2  = 2*npwx

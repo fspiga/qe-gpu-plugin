@@ -7,7 +7,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 
-#if defined(__CUDA) && (defined(__CUDA_PINNED) || defined(__MAGMA))
+#if defined(__CUDA) && (defined(__CUDA_MEM_PINNED) || defined(__MAGMA))
 ! Interface to cudaMallocHost and cudaFree
 MODULE cuda_mem_alloc
 
