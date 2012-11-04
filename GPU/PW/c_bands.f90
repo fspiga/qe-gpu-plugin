@@ -25,7 +25,6 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   USE uspp,                 ONLY : vkb, nkb
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
   USE gvecs,                ONLY : nls, nlsm, ngms
-  USE control_flags,        ONLY : gamma_only
 #endif
   USE gvect,                ONLY : g, ngm
   USE wvfct,                ONLY : et, nbnd, npwx, igk, npw, current_k
@@ -36,6 +35,7 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   USE bp,                   ONLY : lelfield
   USE mp_global,            ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
+  USE control_flags,        ONLY : gamma_only
   !
   IMPLICIT NONE
   !
@@ -53,6 +53,11 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   ! average number of H*psi products
   INTEGER :: ik
   ! counter on k points
+  !
+#if defined(__CUDA_PRELOAD_2)
+  INTEGER :: back_counter, buff_igk_len
+  INTEGER, ALLOCATABLE, TARGET :: buff_igk(:,:)
+#endif
   !
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
   INTEGER :: ierr
@@ -72,6 +77,12 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   END IF
   !
   CALL start_clock( 'c_bands' )
+  !
+#if defined(__CUDA_PRELOAD_2)
+  buff_igk_len = 4
+  ALLOCATE ( buff_igk(npwx, buff_igk_len) )
+  WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
+#endif
   !
   IF ( isolve == 0 ) THEN
      !
@@ -94,28 +105,52 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   !
   ! ... For each k point diagonalizes the hamiltonian
   !
+  back_counter = -1
   k_loop: DO ik = 1, nks
      !
      current_k = ik
      !
+#if defined(__CUDA_DEBUG)
+     IF ( gamma_only ) THEN
+         WRITE(*,*) "[CUDA_DEBUG] GAMMA-POINT, k = ", current_k
+     ELSE
+         WRITE(*,*) "[CUDA_DEBUG] k = ", current_k
+     ENDIF
+#endif
+     !
      IF ( lsda ) current_spin = isk(ik)
      !
+#if defined(__CUDA_PRELOAD_2)
+     ! ... Reads the list of indices k+G <-> G of this k point (BUFFERED)
+     IF (( .NOT. gamma_only ) .AND. ( nks > 1 )) THEN
+         IF ( (MOD(current_k,buff_igk_len).EQ.1) .AND. (current_k + buff_igk_len < nks) ) THEN
+             DO back_counter = 1, buff_igk_len
+                    WRITE (*,*) "[Read buffer and store] buff_igk(:,", back_counter, ")"
+                    READ( iunigk ) buff_igk(:, back_counter)
+             ENDDO
+             back_counter = buff_igk_len
+         ENDIF
+         !
+         IF (back_counter > 0 ) THEN
+            back_counter = back_counter - 1
+            WRITE (*,*) "[Assignment] igk = buff_igk(:,", buff_igk_len - back_counter , ")"
+            igk (:) = buff_igk(:,buff_igk_len - back_counter )
+         ELSE
+            WRITE (*,*) "[Read and assign igk DIRECTLY]"
+            READ( iunigk ) igk
+         ENDIF
+     ENDIF
+#else
      ! ... Reads the list of indices k+G <-> G of this k point
-     !
      IF ( nks > 1 ) READ( iunigk ) igk
+#endif
      !
      npw = ngk(ik)
      !
 #if defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA) && defined(__CUDA_NOALLOC) && defined(__CUDA_PRELOAD)
      IF ( gamma_only ) THEN
-#if defined(__CUDA_DEBUG)
-         WRITE(*,*) "[CUDA_DEBUG] GAMMA-POINT, k = ", ik
-#endif
          ierr = nls_precompute_gamma ( npw, igk(1:), nls(1:), nlsm(1:), ngms, ngm)
      ELSE
-#if defined(__CUDA_DEBUG)
-         WRITE(*,*) "[CUDA_DEBUG] k = ", ik
-#endif
          ierr = nls_precompute_k ( npw, igk(1:), nls(1:), ngms)
      END IF
 #endif
