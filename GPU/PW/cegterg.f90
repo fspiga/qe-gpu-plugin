@@ -124,13 +124,13 @@ SUBROUTINE cegterg( npw, npwx, nvec, nvecx, npol, evc, ethr, &
     !    calculates (diag(h)-e)^-1 * psi, diagonal approx. to (h-e)^-1*psi
     !    the first nvec columns contain the trial eigenvectors
   !
-
+  !
 #if defined(__CUDA) && defined(__CUDA_MEM_PINNED)
   TYPE(C_PTR) :: cptr_psi, cptr_spsi, cptr_vc, cptr_hpsi, cptr_sc, cptr_hc
   INTEGER (C_SIZE_T), PARAMETER :: test_flag = 0
   INTEGER (C_SIZE_T) :: allocation_size
 #endif
-
+  !
   CALL start_clock( 'cegterg' )
   !
   IF ( nvec > nvecx / 2 ) CALL errore( 'cegterg', 'nvecx is too small', 1 )
