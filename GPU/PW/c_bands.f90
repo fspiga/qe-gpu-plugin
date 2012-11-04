@@ -81,7 +81,9 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
 #if defined(__CUDA_PRELOAD_2)
   buff_igk_len = 4
   ALLOCATE ( buff_igk(npwx, buff_igk_len) )
-  ! WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
+#if defined(__CUDA_DEBUG)
+  WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
+#endif
   back_counter = -1
 #endif
   !
