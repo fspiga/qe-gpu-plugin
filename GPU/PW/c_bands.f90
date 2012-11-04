@@ -80,7 +80,10 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   !
 #if defined(__CUDA_PRELOAD_2)
   buff_igk_len = 4
-  ALLOCATE ( buff_igk(npwx, buff_igk_len) )
+  ALLOCATE ( buff_igk(npwx, buff_igk_len), STAT=ierr )
+  IF( ierr /= 0 ) &
+     CALL errore( 'c_bands ',' cannot allocate buff_igk ', ABS(ierr) )
+  !
 #if defined(__CUDA_DEBUG)
   WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
 #endif
@@ -214,6 +217,11 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
        ierr = nls_precompute_k_cleanup( )
   ENDIF
 #endif
+  !
+#if defined(__CUDA_PRELOAD_2)
+  DEALLOCATE ( buff_igk )
+#endif
+  !
   CALL stop_clock( 'c_bands' )
   !
   RETURN
