@@ -81,7 +81,8 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
 #if defined(__CUDA_PRELOAD_2)
   buff_igk_len = 4
   ALLOCATE ( buff_igk(npwx, buff_igk_len) )
-  WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
+  ! WRITE (*,*) "SIZEOF(buff_igk) = ", SIZEOF(buff_igk)
+  back_counter = -1
 #endif
   !
   IF ( isolve == 0 ) THEN
@@ -105,7 +106,6 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   !
   ! ... For each k point diagonalizes the hamiltonian
   !
-  back_counter = -1
   k_loop: DO ik = 1, nks
      !
      current_k = ik
@@ -125,21 +125,18 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
      IF (( .NOT. gamma_only ) .AND. ( nks > 1 )) THEN
          IF ( (MOD(current_k,buff_igk_len).EQ.1) .AND. (current_k + buff_igk_len < nks) ) THEN
              DO back_counter = 1, buff_igk_len
-                    WRITE (*,*) "[Read buffer and store] buff_igk(:,", back_counter, ")"
                     READ( iunigk ) buff_igk(:, back_counter)
-             ENDDO
+             END DO
              back_counter = buff_igk_len
-         ENDIF
+         END IF
          !
          IF (back_counter > 0 ) THEN
             back_counter = back_counter - 1
-            WRITE (*,*) "[Assignment] igk = buff_igk(:,", buff_igk_len - back_counter , ")"
             igk (:) = buff_igk(:,buff_igk_len - back_counter )
          ELSE
-            WRITE (*,*) "[Read and assign igk DIRECTLY]"
             READ( iunigk ) igk
-         ENDIF
-     ENDIF
+         END IF
+     END IF
 #else
      ! ... Reads the list of indices k+G <-> G of this k point
      IF ( nks > 1 ) READ( iunigk ) igk
