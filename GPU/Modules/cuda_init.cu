@@ -34,6 +34,9 @@ qeCudaMemSizes qe_gpu_mem_unused;
 
 qeCudaDevicesBond qe_gpu_bonded;
 
+cudaStream_t  qecudaStreams[ MAX_QE_GPUS ];
+cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
+
 // Pre-loaded data-structure
 int * preloaded_nlsm_D, * preloaded_nls_D;
 
@@ -328,9 +331,24 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 }
 
+extern "C"  void initStreams_()
+{
+	int ierr, i;
+
+	for (i = 0; i < ngpus_per_process; i++) {
+		ierr = cudaStreamCreate( &qecudaStreams[ i ] );
+		qecudaGenericErr((cudaError_t) ierr, "INIT_CUDA", "error during stream creation");
+
+		if ( cublasCreate( &qecudaHandles[ i ] ) != CUBLAS_STATUS_SUCCESS ) {
+			printf("\n*** CUDA VLOC_PSI_K *** ERROR *** cublasInit() for device %d failed!",qe_gpu_bonded[i]);
+			fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 extern "C"  void initcudaenv_()
 {
-
 	// In case of serial (default)
 	int lRankThisNode = 0, lSizeThisNode = 1, lRank = -1;
 
@@ -345,6 +363,8 @@ extern "C"  void initcudaenv_()
 #if defined(__PHIGEMM)
 	initphigemm_(lRank);
 #endif
+
+	initStreams_();
 }
 
 void deallocatedevicememory_(){
@@ -362,11 +382,29 @@ void deallocatedevicememory_(){
 	return;
 }
 
+extern "C"  void destroyStreams_()
+{
+	int ierr, i;
+
+	for (i = 0; i < ngpus_per_process; i++) {
+		ierr = cudaStreamDestroy( qecudaStreams[ i ] );
+		qecudaGenericErr((cudaError_t) ierr, "INIT_CUDA", "error during stream creation");
+
+		if ( cublasDestroy( qecudaHandles[ i ] ) != CUBLAS_STATUS_SUCCESS ) {
+			printf("\n*** CUDA INIT_CUDA *** ERROR *** cublasDestroy() for device %d failed!",qe_gpu_bonded[i]);
+			fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 extern "C" void closecudaenv_()
 {
 #if !defined(__CUDA_NOALLOC)
 	deallocatedevicememory_();
 #endif
+
+	destroyStreams_();
 
 #if defined(__PHIGEMM)
 	phiGemmShutdown();

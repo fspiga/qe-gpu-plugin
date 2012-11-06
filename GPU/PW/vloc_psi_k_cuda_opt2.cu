@@ -85,9 +85,6 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	bool precomp_psic_indexes = false;
 	int ierr;
 
-	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
-	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
-
 #if defined(__CUDA_DEBUG)
 	printf("[VLOC_PSI_K_OPT2] Enter (n=%d, m=%d, ngms=%d)\n", n, m, ngms); fflush(stdout);
 #endif
@@ -115,18 +112,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		precomp_psic_indexes = true;
 		ierr = nls_precompute_k_ ( ptr_n, igk, nls, ptr_ngms);
 	}
-#endif
 
-	if ( cublasCreate( &vlocHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
-		printf("\n*** CUDA VLOC_PSI_K_OPT2 *** ERROR *** cublasInit() for device %d failed!",qe_gpu_bonded[0]);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
-
-	ierr = cudaStreamCreate( &vlocStreams[ 0 ] );
-	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "failing during stream creation");
-
-#if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
 	ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
 	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_K_OPT2", "error in memory allocation");
@@ -166,7 +152,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
 
 	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
-	qecheck_cufft_call( cufftSetStream(p_global,vlocStreams[ 0 ]) );
+	qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
 
 	qecudaSafeCall( cudaHostAlloc ( (void**) &psic, size_psic * sizeof( fftw_complex ), cudaHostAllocPortable ) );
 
@@ -199,7 +185,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 		tscale = 1.0 / (double) ( size_psic );
 
-		cublasZdscal(vlocHandles[ 0 ] , size_psic, &tscale, (cuDoubleComplex *) psic_D, 1);
+		cublasZdscal(qecudaHandles[ 0 ] , size_psic, &tscale, (cuDoubleComplex *) psic_D, 1);
 
 		qecudaSafeCall( cudaMemcpy( psic, psic_D, sizeof( cufftDoubleComplex ) * size_psic, cudaMemcpyDeviceToHost ) );
 
@@ -236,9 +222,6 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 
 #endif
 
-	cudaStreamDestroy( vlocStreams[ 0 ] );
-	cublasDestroy( vlocHandles[ 0 ]);
-
 #if defined(__CUDA_DEBUG)
 	printf("[VLOC_PSI_K_OPT2] Exit\n"); fflush(stdout);
 #endif
@@ -273,24 +256,9 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 
 	int last;
 
-	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
-	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
-
 	size_t buffer_size = 0L;
 
 	cudaSetDevice(qe_gpu_bonded[0]);
-
-	if ( cublasCreate( &vlocHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
-		printf("\n*** CUDA VLOC_PSI_K *** ERROR *** cublasInit() for device %d failed!",qe_gpu_bonded[0]);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
-
-	if( cudaStreamCreate( &vlocStreams[ 0 ] ) != cudaSuccess ) {
-		printf("\n*** CUDA VLOC_PSI_K *** ERROR *** creating stream for device %d failed!",qe_gpu_bonded[0]);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
 
 	dim_multiplepsic = __NUM_FFT_MULTIPLAN__;
 
@@ -340,7 +308,7 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 
 		qecheck_cufft_call( cufftPlanMany( &p_global, 3, array, NULL, 1, 0, NULL, 1, 0, CUFFT_Z2Z, dim_multiplepsic ) );
 
-		if( cufftSetStream(p_global,vlocStreams[ 0 ]) != CUFFT_SUCCESS ) {
+		if( cufftSetStream(p_global,qecudaStreams[ 0 ]) != CUFFT_SUCCESS ) {
 			printf("\n*** CUDA VLOC_PSI_K *** ERROR *** cufftSetStream for device %d failed!",qe_gpu_bonded[0]);
 			fflush(stdout);
 			exit( EXIT_FAILURE );
@@ -378,7 +346,7 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 			qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex*) psic_D, (cufftDoubleComplex*) psic_D, CUFFT_FORWARD ) );
 
 			tscale = 1.0 / (double) ( size_psic );
-			cublasZdscal(vlocHandles[ 0 ] , size_psic*dim_multiplepsic, &tscale, (cuDoubleComplex *) psic_D, 1);
+			cublasZdscal(qecudaHandles[ 0 ] , size_psic*dim_multiplepsic, &tscale, (cuDoubleComplex *) psic_D, 1);
 
 			qecudaSafeCall( cudaMemcpy( psic, (cufftDoubleComplex*) psic_D, sizeof( cufftDoubleComplex ) * size_psic * dim_multiplepsic, cudaMemcpyDeviceToHost ) );
 		}
@@ -403,7 +371,7 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 
 		qecheck_cufft_call( cufftPlanMany( &p_global, 3, array, NULL, 1, 0, NULL, 1, 0,CUFFT_Z2Z, n_singlepsic ) );
 
-		if( cufftSetStream(p_global,vlocStreams[ 0 ]) != CUFFT_SUCCESS ) {
+		if( cufftSetStream(p_global,qecudaStreams[ 0 ]) != CUFFT_SUCCESS ) {
 			printf("\n*** CUDA VLOC_PSI_K *** ERROR *** cufftSetStream for device %d failed!",qe_gpu_bonded[0]);
 			fflush(stdout);
 			exit( EXIT_FAILURE );
@@ -432,7 +400,7 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex*) psic_D, (cufftDoubleComplex*) psic_D, CUFFT_FORWARD ) );
 
 		tscale = 1.0 / (double) ( size_psic );
-		cublasZdscal(vlocHandles[ 0 ] , n_singlepsic * size_psic, &tscale, (cuDoubleComplex *) psic_D, 1);
+		cublasZdscal(qecudaHandles[ 0 ] , n_singlepsic * size_psic, &tscale, (cuDoubleComplex *) psic_D, 1);
 
 		qecudaSafeCall( cudaMemcpy( psic, psic_D, sizeof( cufftDoubleComplex ) * n_singlepsic * size_psic, cudaMemcpyDeviceToHost ) );
 
@@ -447,7 +415,5 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 		qecudaSafeCall( cudaFreeHost(psic));
 	}
 
-	cudaStreamDestroy( vlocStreams[ 0 ] );
-	cublasDestroy( vlocHandles[ 0 ]);
 }
 #endif

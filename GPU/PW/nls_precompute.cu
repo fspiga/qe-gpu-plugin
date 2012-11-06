@@ -54,9 +54,7 @@ extern "C" int nls_precompute_k_( int * ptr_n, int * igk, int * nls, int * ptr_n
 	int  blocksPerGrid;
 	int n = (* ptr_n);
 	int ngms = (* ptr_ngms);
-#if defined(__CUDA_NOALLOC)
 	int ierr;
-#endif
 	size_t shift;
 
 #if defined(__CUDA_DEBUG)
@@ -173,9 +171,7 @@ extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * 
 	int n = (* ptr_n);
 	int ngms = (* ptr_ngms);
 	int ngm = (* ptr_ngm);
-#if defined(__CUDA_NOALLOC)
 	int ierr;
-#endif
 	size_t shift;
 
 #if defined(__CUDA_DEBUG)

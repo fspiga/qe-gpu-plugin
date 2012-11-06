@@ -92,8 +92,8 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 	double * qgm_na;
 
-	cudaStream_t  vlocStreams[ MAX_QE_GPUS ];
-	cublasHandle_t vlocHandles[ MAX_QE_GPUS ];
+//	cudaStream_t  qecudaStreams[ MAX_QE_GPUS ];
+//	cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
 
 	int blocksPerGrid;
 
@@ -116,17 +116,17 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 	cudaSetDevice(qe_gpu_bonded[0]);
 
-	if ( cublasCreate( &vlocHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
-		printf("\n*** CUDA NEWD *** ERROR *** cublasInit() for device %d failed!",0);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
-
-	if( cudaStreamCreate( &vlocStreams[ 0 ] ) != cudaSuccess ) {
-		printf("\n*** CUDA NEWD *** ERROR *** creating stream for device %d failed!", 0);
-		fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
+//	if ( cublasCreate( &qecudaHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
+//		printf("\n*** CUDA NEWD *** ERROR *** cublasInit() for device %d failed!",0);
+//		fflush(stdout);
+//		exit(EXIT_FAILURE);
+//	}
+//
+//	if( cudaStreamCreate( &qecudaStreams[ 0 ] ) != cudaSuccess ) {
+//		printf("\n*** CUDA NEWD *** ERROR *** creating stream for device %d failed!", 0);
+//		fflush(stdout);
+//		exit(EXIT_FAILURE);
+//	}
 
 #if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
@@ -190,7 +190,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	qecudaSafeCall( cudaMemset( (double *) qgm_na_D, 0, sizeof( double ) * ngm * 2  ) );
 	qecudaSafeCall( cudaMemset( (double *) dtmp_D, 0, sizeof( double ) * nspin_mag ) );
 	
-	cublasSetPointerMode(vlocHandles[ 0 ] , CUBLAS_POINTER_MODE_DEVICE);
+	cublasSetPointerMode(qecudaHandles[ 0 ] , CUBLAS_POINTER_MODE_DEVICE);
 
 	for( ih = 0, iih = 1; ih < nh[nt - 1]; ih++, iih++ )
 	{
@@ -210,7 +210,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 					qecudaGetLastError("kernel kernel_compute_qgm_na launch failure");
 
 					for( is = 0; is < nspin_mag; is++ ){
-						cublasDdot(vlocHandles[ 0 ] , ngm * 2, (double *) aux_D + (is * ngm * 2), 1, (double *) qgm_na_D, 1, (double *) dtmp_D + is );
+						cublasDdot(qecudaHandles[ 0 ] , ngm * 2, (double *) aux_D + (is * ngm * 2), 1, (double *) qgm_na_D, 1, (double *) dtmp_D + is );
 					}
 
 					blocksPerGrid = ( (nspin_mag) + __CUDA_TxB_NEWD_DEEPQ__ - 1) / __CUDA_TxB_NEWD_DEEPQ__;
@@ -221,15 +221,15 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 		}
 	}
 	
-	cublasSetPointerMode(vlocHandles[ 0 ] , CUBLAS_POINTER_MODE_HOST);
+	cublasSetPointerMode(qecudaHandles[ 0 ] , CUBLAS_POINTER_MODE_HOST);
 
 	qecudaSafeCall( cudaMemcpy( deeq, (double *) deeq_D, sizeof( double ) * ( nhm * nhm * nat * nspin ), cudaMemcpyDeviceToHost ) );
 
 	free( qgm_na );
 	cudaFreeHost(qgm);
 
-	cudaStreamDestroy( vlocStreams[ 0 ] );
-	cublasDestroy( vlocHandles[ 0 ]);
+//	cudaStreamDestroy( qecudaStreams[ 0 ] );
+//	cublasDestroy( qecudaHandles[ 0 ]);
 
 #if defined(__CUDA_NOALLOC)
 	/* Deallocating... */

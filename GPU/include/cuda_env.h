@@ -91,6 +91,9 @@ extern qeCudaMemSizes qe_gpu_mem_unused;
 
 extern qeCudaDevicesBond qe_gpu_bonded;
 
+extern cudaStream_t  qecudaStreams[ MAX_QE_GPUS ];
+extern cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
+
 // Pre-loaded data-structure
 extern int * preloaded_nlsm_D, * preloaded_nls_D;
 

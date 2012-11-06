@@ -235,8 +235,9 @@ vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
 newd_cuda.o
 
-# Optimized, experimental (-D__CUDAPRELOAD -D__CUDA_NOALLOC needed)
-#CUGPUOBJS = \
+# Optimized, experimental (opt : -D__CUDA_NOALLOC optional)
+#                         (opt2: -D__CUDAPRELOAD -D__CUDA_NOALLOC needed)
+# CUGPUOBJS = \
 addusdens_cuda.o \
 newd_cuda.o \
 vloc_psi_k_cuda_opt2.o \
