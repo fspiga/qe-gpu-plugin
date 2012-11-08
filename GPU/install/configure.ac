@@ -2132,35 +2132,20 @@ then
        nvccflags="-O3"
     fi
     
+    # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
+    nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"
+    try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+        
     # GPU architecture
     case "$cuda_arch" in
-    35 )
-    	# This is for TESLA K20 cards (GK110)
-        nvccflags="$nvccflags -m64 -arch=sm_35 --ptxas-options=-v --fmad=false"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_30"
+    35 | 30 )
         # magma_gpu_target=Kepler
         magma_gpu_target=Fermi
         ;;
-    30 )
-    	# This is for GeForce GTX6xx and TESLA K10 cards (GK104)
-        nvccflags="$nvccflags -m64 -arch=sm_30 --ptxas-options=-v --fmad=false"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_30"
-        # magma_gpu_target=Kepler
-        magma_gpu_target=Fermi
-        ;;
-    25 )
-        nvccflags="$nvccflags -m64 -arch=sm_25 --ptxas-options=-v --fmad=false"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_20"
-        magma_gpu_target=Fermi
-        ;;
-    20 )
-        nvccflags="$nvccflags -m64 -arch=sm_20 --ptxas-options=-v --fmad=false"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_20"
+    20 | 21 )
         magma_gpu_target=Fermi
         ;;
     13 )
-        nvccflags="$nvccflags -m64 -arch=sm_13 --ptxas-options=-v"
-        try_dflags="$try_dflags -D__GPU_NVIDIA_13 -D__DISABLE_CUDA_ADDUSDENS"
         magma_gpu_target=Tesla
         ;;        
     esac
@@ -2171,23 +2156,15 @@ then
         try_dflags="$try_dflags -D__CUDA_DEBUG"
     fi
     
-# PARTIALLY DISABLED    
+# NOT YET READY FOR PRODUCTION    
 #    if test "$use_preloadgpu" -eq 1; then
-#    
-#        try_dflags="$try_dflags -D__CUDA_PRELD"
-#        
-#        if test "$use_pinnedmem" -eq 1  ; then
-#            # If "--enable-pinned-mem" and "--enable-preload-gpu" are used together, pinned 
-#            # memory is ONLY for pre-loading (and MAGMA if present). 
-#            try_dflags="$try_dflags -D__CUDA_PRELD_PINNED"
-#        fi
-#    else
-        if test "$use_pinnedmem" -eq 1  ; then
-            # PINNED everywhere (not a great idea but still possible...
-            try_dflags="$try_dflags -D__CUDA_PINNED"
-        fi                
+#        try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
 #    fi
 
+    if test "$use_pinnedmem" -eq 1  ; then
+        try_dflags="$try_dflags -D__CUDA_PINNED"
+    fi                
+    
     # phiGEMM 
     if test "$use_phigemm" -eq 1  ; then 
         phigemm_switch=1
@@ -2222,10 +2199,14 @@ then
 	        ;;
 		esac
         
+        if test "$use_pinnedmem" -eq 1  ; then
+            phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+        fi   
+    
         if test "$use_phigemmprofile" -eq 1; then
             phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
             try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-           fi
+        fi
     fi
       
     # By default show all CUDA timing    
@@ -2262,12 +2243,12 @@ then
 	# Enable Open ACC (now only for card with compute capaility 2.x)
 	if test "$use_openacc" -eq 1 ; then
 	    case "$arch:$f90_version" in
-	    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )            
+	    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )
 	        if  test "$cuda_arch" = "20" ; then
 	            try_dflags="$try_dflags -D__OPENACC"
-	            fflags="$fflags -ta=host,nvidia:cc20 -Minfo"
-	            f90flags="$f90flags -ta=host,nvidia:cc20 -Minfo"
-	            ldflags="$ldflags -ta=host,nvidia:cc20 -Minfo"
+	            fflags="$fflags -ta=host,nvidia:cc$cuda_arch -Minfo"
+	            f90flags="$f90flags -ta=host,nvidia:cc$cuda_arch -Minfo"
+	            ldflags="$ldflags -ta=host,nvidia:cc$cuda_arch -Minfo"
 	        fi      
 	        ;;
 	    esac

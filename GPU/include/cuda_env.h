@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2012 Quantum ESPRESSO group
+ * Copyright (C) 2001-2013 Quantum ESPRESSO group
  * Copyright (C) 2010-2011 Irish Centre for High-End Computing (ICHEC)
  *
  * This file is distributed under the terms of the
@@ -17,22 +17,7 @@
 #ifndef __QE_CUDA_ENVIRONMENT_H
 #define __QE_CUDA_ENVIRONMENT_H
 
-#if defined __GPU_NVIDIA_13
-
-#define __CUDA_THREADPERBLOCK__ 256
-#define __CUDA_MAXNUMBLOCKS__ 65535
-
-#define __NUM_FFT_MULTIPLAN__ 4
-
-#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
-#define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_PROD__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_HPSI__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
-
-#elif defined __GPU_NVIDIA_20
+#if defined(__GPU_NVIDIA_20) || defined(__GPU_NVIDIA_21)
 
 #define __CUDA_THREADPERBLOCK__ 512
 #define __CUDA_MAXNUMBLOCKS__ 65535
@@ -47,10 +32,10 @@
 #define __CUDA_TxB_NEWD_QGM__ 512
 #define __CUDA_TxB_NEWD_DEEPQ__ 512
 
-
-#elif defined __GPU_NVIDIA_30
+#elif defined(__GPU_NVIDIA_30) || defined(__GPU_NVIDIA_35)
 
 #define __CUDA_THREADPERBLOCK__ 512
+// __CUDA_MAXNUMBLOCKS__ can be much much higher!
 #define __CUDA_MAXNUMBLOCKS__ 65535
 
 #define __NUM_FFT_MULTIPLAN__ 4
@@ -65,12 +50,26 @@
 
 #else
 
+/* This is __GPU_NVIDIA_13
+ * NOTE: if lower than cc13 is not a valid GPU
+ */
+
 #define __CUDA_THREADPERBLOCK__ 256
-#define __NUM_FFT_MULTIPLAN__ 1
+#define __CUDA_MAXNUMBLOCKS__ 65535
+
+#define __NUM_FFT_MULTIPLAN__ 4
+
+#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
+#define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_VLOCPSI_PROD__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_VLOCPSI_HPSI__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
+#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
 
 #endif
 
-#if defined __MAGMA
+#if defined(__MAGMA)
 #define __SCALING_MEM_FACTOR__ 0.75
 #else
 #define __SCALING_MEM_FACTOR__ 0.95
