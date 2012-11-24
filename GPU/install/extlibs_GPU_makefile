@@ -17,7 +17,8 @@ endif
 libphiGEMM:
 ifeq ($(PHIGEMM_ENABLED),1) 
 	if test ! -d ../../phiGEMM ; then \
-	( gzip -dc ../archive/phiGEMM-v2.0.0rc1.tar.gz | (cd ../../; tar -xvf ./GPU/archive/phiGEMM-v2.0.0rc1.tar.gz )); fi
+	( gzip -dc ../archive/phiGEMM-v2.0.0rc1.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/phiGEMM-v2.0.0rc1.tar.gz )); fi
 	cp make_phiGEMM.inc ../../phiGEMM/make.inc;
 	cd ../../phiGEMM; $(MAKE) phigemm;
 endif
@@ -32,7 +33,8 @@ ifeq ($(CBLAS_ENABLED),1)
 endif
 ifeq ($(MAGMA_ENABLED),1) 
 	if test ! -d ../../magma ; then \
-	( gzip -dc ../archive/magma_1.2.1.Y.tar.gz | (cd ../../; tar -xvf ./GPU/archive/magma_1.2.1.Y.tar.gz )); fi
+	( gzip -dc ../archive/magma-1.3.0.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/magma-1.3.0.tar.gz; )); fi
 	cp make_magma.inc ../../magma/make.inc;
 	cd ../../magma; $(MAKE) lib;
 endif

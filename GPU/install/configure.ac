@@ -1,4 +1,4 @@
-AC_INIT(ESPRESSO, 5.0.1, , espresso)
+AC_INIT(ESPRESSO, 5.0.2, , espresso)
 # ----------------------------
 # Non-standard precious variables
 # ----------------------------
@@ -2137,8 +2137,7 @@ then
     # GPU architecture
     case "$cuda_arch" in
     35 | 30 )
-        # magma_gpu_target=Kepler
-        magma_gpu_target=Fermi
+        magma_gpu_target=Kepler
         ;;
     20 | 21 )
         magma_gpu_target=Fermi
@@ -2233,8 +2232,14 @@ then
             # replace with the correct one # ldflags="$ldflags -zmuldefs"
             ;;
         *:gfortran )
-            # replace with the correct one # ldflags="$ldflags -zmuldefs"
             ldflags="$ldflags -z muldefs"
+            # If there are not external BLAS then CBLAS is necessary to 
+            # link MAGMA to QE (NdFilippo)
+            if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
+            	extlib_flags="$extlib_flags -fPIC"
+            	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+            	cblas_switch=1
+            fi
             ;;
         esac
     fi
@@ -2425,8 +2430,8 @@ AC_CONFIG_FILES(configure.msg)
 
 AC_CONFIG_FILES(install/make_wannier90.sys)
 
-AC_CONFIG_FILES(install/make_blas.inc)
-AC_CONFIG_FILES(install/make_lapack.inc)
+AC_CONFIG_FILES(../install/make_blas.inc)
+AC_CONFIG_FILES(../install/make_lapack.inc)
 
 # Third-part CUDA-enabled libraries
 AC_CONFIG_FILES(install/make_phiGEMM.inc)

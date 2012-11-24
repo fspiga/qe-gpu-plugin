@@ -33,7 +33,7 @@ default :
 #	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 pw	: pw-gpu
 
-pw-gpu : bindir mods libphiGEMM libMAGMA gpu-mods liblapack  libblas libs libiotk libenviron  
+pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron  
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
@@ -47,7 +47,7 @@ endif
 # Redirect to GPU build	
 cp	: cp-gpu
 
-cp-gpu : bindir mods libphiGEMM libMAGMA gpu-mods liblapack libblas libs libiotk
+cp-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif

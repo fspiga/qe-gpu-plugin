@@ -1,15 +1,16 @@
 #//////////////////////////////////////////////////////////////////////////////
-#   -- MAGMA (version 1.2.1) --
+#   -- MAGMA (version 1.3.0) --
 #      Univ. of Tennessee, Knoxville
 #      Univ. of California, Berkeley
 #      Univ. of Colorado, Denver
-#      June 2012
+#      November 2012
 #//////////////////////////////////////////////////////////////////////////////
 
 #
 # GPU_TARGET specifies for which GPU you want to compile MAGMA:
-#     "Tesla" (NVIDIA compute capability 1.x cards)
-#     "Fermi" (NVIDIA compute capability 2.x cards)
+#     "Tesla"  (NVIDIA compute capability 1.x cards)
+#     "Fermi"  (NVIDIA compute capability 2.x cards)
+#     "Kepler" (NVIDIA compute capability 3.x cards)
 # See http://developer.nvidia.com/cuda-gpus
 
 GPU_TARGET = @magma_gpu_target@
@@ -22,11 +23,21 @@ ARCH      = @ar@
 ARCHFLAGS = cr
 RANLIB    = @ranlib@
 
-OPTS      = -O3 -DADD_
+# Before CUDA 5.0
+#OPTS      = -O3 -DADD_
+#FOPTS     = -O3 -DADD_ -x f95-cpp-input
+#NVOPTS    = --compiler-options -fno-strict-aliasing -DUNIX -O3 -DADD_
+#LDOPTS    = -fPIC -Xlinker -zmuldefs
+
+# CUDA 5 needs -DCUBLAS_GFORTRAN or appropriate setting to compile cuda/src/fortran.c bindings
+OPTS      = -O3 -DADD_ -DCUBLAS_GFORTRAN
+F77OPTS   = -O3 -DADD_
 FOPTS     = -O3 -DADD_ -x f95-cpp-input
-NVOPTS    = --compiler-options -fno-strict-aliasing -DUNIX -O3 -DADD_
+NVOPTS    = -O3 -DADD_ --compiler-options -fno-strict-aliasing -DUNIX
 LDOPTS    = -fPIC -Xlinker -zmuldefs
 
+# see MKL Link Advisor at http://software.intel.com/sites/products/mkl/
+# gcc with MKL 10.3, sequential version
 LIB      = @ld_libs@
 
 CUDADIR   = @cuda_path@
