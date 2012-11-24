@@ -197,8 +197,7 @@ RAMANOBJS = \
 
 PHGPUAUXOBJS = \
 ../../PHonon/PH/rigid.o \
-../../PHonon/PH/write_eigenvectors.o \
-../../PHonon/PH/q2r.o
+../../PHonon/PH/write_eigenvectors.o
 
 PWOBJS = ../PW/libpwgpu.a
 QEMODS = ../Modules/libqemodgpu.a
@@ -228,7 +227,7 @@ matdyn-gpu.x : matdyn.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
 q2r-gpu.x : q2r.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ libphaux.a libph.a \
+	$(LD) $(LDFLAGS) -o $@ q2r.o libphaux.a libph.a \
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
