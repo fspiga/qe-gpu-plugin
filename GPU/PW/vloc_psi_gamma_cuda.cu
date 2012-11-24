@@ -129,7 +129,9 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	int ngms = (* ptr_ngms);
 	int ngm = (* ptr_ngm);
 	int lda = (* ptr_lda);
-    int ierr;
+#if defined(__CUDA_NOALLOC)
+	int ierr;
+#endif
 	int size_psic = nr1s * nr2s * nr3s;
 
 #if defined(__CUDA_DEBUG)
