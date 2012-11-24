@@ -213,6 +213,16 @@ AC_ARG_ENABLE(profiling,
 #   fi],
 #   [use_preloadgpu=0])
 
+AC_ARG_ENABLE(fast_cuda,
+	[AS_HELP_STRING([--enable-fast-cuda],
+       [enable special CUDA optimizations for fast executions (default: no)])],
+   [if   test "$enableval" = "yes" ; then
+      use_fastcuda=1
+   else
+      use_fastcuda=0
+   fi],
+   [use_fastcuda=0])
+   
 AC_ARG_ENABLE(openacc,
 	[AS_HELP_STRING([--enable-openacc],
        [enable OpenACC directives - PGI only (default: no)])],
@@ -2130,23 +2140,19 @@ then
        nvccflags="-O3"
     fi
     
-    # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
-    nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"
     try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
-        
-    # GPU architecture
-    case "$cuda_arch" in
-    35 | 30 )
-        magma_gpu_target=Kepler
-        ;;
-    20 | 21 )
-        magma_gpu_target=Fermi
-        ;;
-    13 )
-        magma_gpu_target=Tesla
-        ;;        
-    esac
     
+    if test "$use_fastcuda" -eq 1 ; then
+    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"    
+    else
+        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
+    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"   
+    fi
+    
+	if test "$use_pinnedmem" -eq 1  ; then
+		try_dflags="$try_dflags -D__CUDA_PINNED"
+	fi   
+	
     cuda_include="-I$cuda_path/include"
     
     if test "$use_debugcuda" -eq 1 ; then
@@ -2156,11 +2162,7 @@ then
 # NOT YET READY FOR PRODUCTION    
 #    if test "$use_preloadgpu" -eq 1; then
 #        try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
-#    fi
-
-    if test "$use_pinnedmem" -eq 1  ; then
-        try_dflags="$try_dflags -D__CUDA_PINNED"
-    fi                
+#    fi          
     
     # phiGEMM 
     if test "$use_phigemm" -eq 1  ; then 
@@ -2195,11 +2197,16 @@ then
 	        phigemm_fflags="-J../include/"      
 	        ;;
 		esac
-        
-        if test "$use_pinnedmem" -eq 1  ; then
-            phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-        fi   
     
+        if test "$use_fastcuda" -eq 1 ; then
+            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
+    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
+    	fi
+    	
+		if test "$use_pinnedmem" -eq 1  ; then
+        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+        fi  
+        	
         if test "$use_phigemmprofile" -eq 1; then
             phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
             try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
@@ -2215,6 +2222,19 @@ then
         magma_libs="$topdir/magma/lib/libmagma.a $topdir/magma/lib/libmagmablas.a $topdir/magma/lib/libmagma.a" 
         try_dflags="$try_dflags -D__MAGMA"
 
+	    # GPU architecture
+	    case "$cuda_arch" in
+	    35 | 30 )
+	        magma_gpu_target=Kepler
+	        ;;
+	    20 | 21 )
+	        magma_gpu_target=Fermi
+	        ;;
+	    13 )
+	        magma_gpu_target=Tesla
+	        ;;        
+	    esac
+	    
         # MAGMA requires additional flags...        
         case "$arch:$f90_version" in
         ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
@@ -2267,9 +2287,6 @@ then
     
     echo setting CUDA_LIBS... $cuda_libs
 fi
-
-# Always show CUDA timing (if CUDA is not enable, only GEMM are tracked)    
-try_dflags="$try_dflags -D__CUDA_QE_TIMING"
 
 # preprocessing flag for openmp (experimental)
 if test "$use_openmp" -eq 1 ; then try_dflags="$try_dflags -D__OPENMP" ; fi

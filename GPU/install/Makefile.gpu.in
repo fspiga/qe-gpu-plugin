@@ -18,9 +18,6 @@ default :
 	@echo '  clean        remove executables and objects'
 	@echo '  clean-gpu    remove executables and objects (GPU-only section)'
 	@echo '  veryclean    revert distribution to the original status'
-	@echo '  tar          create a tarball of the source tree'
-	@echo '  doc          build documentation'
-	@echo '  links        create links to all executables in bin/'
 
 ###########################################################
 # Main targets
