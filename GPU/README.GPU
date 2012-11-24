@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2001-2012 Quantum ESPRESSO group
- * Copyright (C) 2010-2012 Irish Centre for High-End Computing (ICHEC)
+ * Copyright (C) 2001-2013 Quantum ESPRESSO group
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
@@ -10,68 +9,72 @@
  */
 
 
-*** Last update: September 18, 2012 (Filippo Spiga) ***
+*** Last update: November 25, 2012 (Filippo Spiga) ***
 
-
-Authors:
-- Filippo Spiga, spiga.filippo@gmail.com
-- Ivan Girotto, igirotto@ictp.it
-
-Any suggestion or improvement is welcome.
-              
-
-**************************  R E A D   T H I S  **************************
-
-This version is fully compatible with QE-5.0.1
-
-Rebuild date: September 18, 2012
-Rebuild by: Filippo Spiga
+Rebuild date: November 25, 2012
 Rebuild version: 1
 
-**************************************************************************
 
-# (strongly suggested) Requirements               
+# Requirements               
 
-- Intel compiler (versions above 11), PGI compiler (tested only 12.2), 
-  GNU (version above 4.1)
+>> Strongly suggested:
+- Intel compiler (versions above 11) OR PGI compiler (tested only 12.2)
+- GNU GCC/GFORTRAN (version above 4.1 but lower than 4.6)
 - NVIDIA cards (compute capability >= 1.3)
-- CUDA 4.x (4.0 and 4.1 well tested, 4.2 only partially), CUDA 5.x-pre
+- CUDA 4.x OR CUDA 5.0
 - MKL (version >=10.x) or ACML (>= 4.4.x, >= 5.x)
 - python >= 2.4.x
+- Quantum ESPRESSO 5.0.2
+
+>> Minimum:              
+- GNU GCC/GFORTRAN (version above 4.1 but lower than 4.6)
+- NVIDIA cards (compute capability >= 1.3)
+- CUDA 4.x OR CUDA 5.0
+- python >= 2.4.x
+- Quantum ESPRESSO 5.0.2
+
+The code has always been tested on a 64bit systems.
+
 
 # How to compile 
 
-
 (...after checkout the entire QE repository from SVN or 
-   untar QE-GPU.tar.gz in your working directory...)   
+   untar QE-GPU-5.0.2-build1.tar.gz in your working directory...)   
   
 $ cd GPU
 $ ./configure --enable-parallel --enable-openmp \
   --enable-cuda --with-gpu-arch=20 \
   --with-cuda-dir=/ichec/packages/cuda/4.0/cuda --enable-magma
 $ cd ..
-$ make -f Makefile.gpu pw-gpu
+$ make -f Makefile.gpu all-gpu
 
-'pw-gpu.x' executable will be placed under bin/
+"*-gpu.x" executables will be placed under bin/ (like "pw-gpu.x")
 
 
-GPU-oriented options of the configure:
+Additional options for QE-GPU are:
 
 --enable-cuda           : turn on the GPU support
 
 --with-cuda-dir=<path>  : specify the path where CUDA is installed (mandatory)
 
---with-gpu-arch=<arch>  : it can be '13' for cc1.3, '20' for cc20 or '30' for 
-                          new KEPLER GPU (cc30). By default is '20'
+--with-gpu-arch=<arch>  : specify GPU compute capabilities. QE-GPU supports 
+                          cc_13, cc_20, cc_21, cc_30, cc_35. (default: 20)
 
 --enable-phigemm        : enable BLAS Level 3 GPU acceleration using phiGEMM 
 				           (default: yes)
 				  
---enable-magma		    : enable GPU LAPACK acceleration based on MAGMA 1.1.0
-                          Good for serial, less for parallel run (default: no)
+--enable-magma		    : enable GPU LAPACK acceleration based on MAGMA 1.3.0
+                           (default: yes)
                                              
+--enable-fast-cuda      : this option turn on some special optimizations. 
+                          Use *ONLY* if you can safely run your test in normal
+                          conditions (default: no)
+
+--enable-pinned-mem     : this option enable pinned memory allocations for fast 
+                          H2D-D2H data transfers. (default: no)
+                                                                                              
 --enable-profiling      : turn on the phiGEMM call-per-call profile
-                          (default: no)
+                           (default: no)
 
 --enable-debug-cuda     : turn on verbose debug messages on the stdout
 
@@ -81,29 +84,38 @@ GPU-oriented options of the configure:
 IMPORTANT NOTE (1): run 'configure' in the root directory will produce a 
                     make.sys for CPU-ONLY execution. Do this in a first 
                     instance if you are going to build both CPU and CPU+GPU
-                    versions.
+                    versions. 
 
 IMPORTANT NOTE (2): remember to have CUDA nvcc and CUDA libs properly set in 
                     the environment
 
-IMPORTANT NOTE (3): sometimes is not possible to link "-lcuda" because the file 
-                    'libcuda.so' is not in the system. Usually this file is present 
-                    if the card and the nVidia driver (not the SDK, the driver) are 
-                    installed. In such case, the configure add automatically the 
-                    flag "-D__CUDA_GET_MEM_HACK" and the part of the code 
-                    responsible to detect the GPU memory is skipped. In this case, 
-                    you MUST edit the file "include/cuda_env.h" and manually change 
-                    the value of "__GPU_MEM_AMOUNT_HACK__". See the notes in the 
-                    file for more info.
 
+In order to assess the best flag combination on a specific system we suggest
+to exploit all these 4 configurations by running one or two steps before run 
+the entire (long) simulation:
+1) --enable-phigemm --enable-magma
+2) --enable-phigemm --enable-magma --enable-fast-cuda
+3) --enable-phigemm --enable-magma --enable-pinned-mem
+4) --enable-phigemm --enable-magma --enable-pinned-mem --enable-fast-cuda
 
-# Suggested configurations/compiler flags (by Filippo)
+In detail:
+1) is the default, it has to work. If it does not please contact us.
+2) turn on the phiGEMM "SPECIAL-K" feature and allow the GPU to use FMA 
+   operation at HW level. Due to this option, results might be slightly 
+   different than a reference computed using the CPU. This is perfectly
+   normal if numbers stay within a safe tolerance.
+3) enabling pinned memory will speed-up lot of heavy GEMM operations and
+   will help MAGMA to perform overlap between CPU and GPU. However if the
+   application requests too much pinned memory it might be counterproductive
+4) if pinned memory works well and there is a significant gain in performance
+   then it is possible to combine --enable-pinned-mem and --enable-fast-cuda
+   to get the maximum from the GPU
+
 
 *** PLEASE KEEP ALL THESE NOTES AS ADVICES, NOT RULES WRITTEN IN THE STONE ***
 
-Be careful to do not...
-- mix GPU compute capability: chose ALWAYS the right one ("13" for 1.3 cards or
-  "20" for 2.x card or "30" for GTX 6xx )
+- chose ALWAYS the right GPU compute capability ("13" for 1.3 cards or
+  "20" for 2.x card or "30" for GTX 6xx or "35" for new TESLA K20/K20x).
 - specify the correct PATH of CUDA (where CUDA is installed). Usually HPC 
   systems have the env variable $CUDA_HOME or $CUDA_ROOT
 - run too small systems using the GPU. The GPu implementation has been 
@@ -115,26 +127,27 @@ Be careful to do not...
   is very limited. If you cannot run the GPU PWscf due to memory limits try to
   run (with GPU) but on a parallel machine
 
-Best software configuration is...
-- CUDA 4.0 (because it has been tested a lot on multiple systems)
+Best software configuration for SERIAL computation on multi-core workstation
+- CUDA 5.0
 - Intel compiler (it exists a free version under academic license)
 - Intel MKL (whatever version above 10)
-- Open MPI (IMHO, the best MPI library for process placement and affinity)
+
+Best software configuration for PARALLEL computation on small cluster composed
+by several hybrid nodes
+- CUDA 5.0
+- Intel compiler (it exists a free version under academic license)
+- Intel MKL (whatever version above 10)
+- Open MPI
 
 Best hardware configuration is...
-- NVIDIA cards with compute capability 2.x:
-   - mainstream HPC card, C20xx or 20xx
-   - customer game cards, GTX 4xx or GTX 6xx (I never did tests on GTX 5xx) 
-- for a system with less than 50 atoms, 1.5GByte are usually enough 
+- NVIDIA cards with compute capability 2.x (C20xx, M20xx) or 3.5 (K20/K20x):
 - good amount of memory on the card is 3 GByte
-- more memory there is on the card, better it is
+- for a system with less than 50 atoms, 1.5GByte are usually enough 
 
 For cards with compute capability 1.3...
 - MAGMA does not perform as expected, it generates not precise numbers and the 
   iterative diagonalization fails. Suggestion: --disable-magma (but you might 
   want to check if your input still works with MAGMA)
-- CUDA 4.0 is mandatory. Other new versions of CUDA might not work (there is 
-  some tuning to do, probably soon there will be full support)
 
 For system with GPU GCC/GFORTRAN compilers...
 - be sure that GNU version is above 4.1
@@ -145,12 +158,12 @@ For system with GPU GCC/GFORTRAN compilers...
   or the following (--disable-openmp case)
     BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_gnu_sequential -lmkl_core" LAPACK_LIBS=" "
   at the end of the ./configure
-- "--enable-profiling" does not work (I am working on it...)
+- "--enable-profiling" does not work (and it will never supported)
 
 For system with PGI Compilers...
 - versions above 12.2 experience a problem at run-time due to the IOTK library.
   Be sure to compile by adding the flag -D__IOTK_WORKAROUND1
-    make MANUAL_DFLAGS="-D__IOTK_WORKAROUND1" pw
+    make -f Makefile.gpu MANUAL_DFLAGS="-D__IOTK_WORKAROUND1" pw-gpu
 - do not trust the BLAS/LAPACK (AMCL) implementation provided by PGI. if you 
   are using Intel processors on your system download the Intel MKl library and 
   link link it to QE by adding the following (--enable-openmp case)
@@ -159,12 +172,12 @@ For system with PGI Compilers...
     BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_pgi_sequential -lmkl_core" LAPACK_LIBS=" "
   at the end of the ./configure
 
-For CRAY XK6 systems...
+For CRAY XK6/XK7 systems...
 - be sure to compile by adding the flag -D__IOTK_WORKAROUND1 if PGI compiler is
   used (make MANUAL_DFLAGS="-D__IOTK_WORKAROUND1" pw)
 - CRAY compiler is not supported
 - phiGEMM profiling does not work properly at the moment (no idea why)
-- XK6 systems usually have Intel compiler and MKL. If it is the case, use 
+- XK6/XK7 systems usually have Intel compiler and MKL. If it is the case, use 
   this compiler
 - experimental OpenACC stuff are in the code but please... try it if you know
   what are you doing
@@ -182,8 +195,43 @@ For CRAY XK6 systems...
     ./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CRAY_CUDATOOLKIT_DIR} \ 
      --enable-magma --disable-profiling --enable-phigemm --enable-parallel ARCH=crayxt F90=ifort
 
-Few best practices:
-- NEVER oversubscribe too much the GPU! on HPC system equipped with NVIDIA 
+
+# How to run
+
+Nothing has changed. If the support to the GPU is enables you MUST remember to 
+specify few additional environmental variables required by the phiGEMM library 
+used by Quantum EPSRESSO.
+
+There are 4 recognized variables, one for each *GEMM routine implemented. This 
+factor, a value strictly between 0 and 1, tells to the library how much of the 
+calculation has to be performed on the CPU and how much on the GPU. In detail, 
+if PHI_DGEMM_SPLIT is 0.9 it means that the 95% of the computation will be 
+performed by the GPU, the 5% by the CPU.
+
+Here an example:
+
+export PHI_SGEMM_SPLIT=0.95
+export PHI_CGEMM_SPLIT=0.875
+export PHI_DGEMM_SPLIT=0.9
+export PHI_ZGEMM_SPLIT=0.925
+
+IMPORTANT NOTE: suggested values are between 0.875 and 0.95
+
+IMPORTANT NOTE: some system are equipped with different cards. For example, you 
+                may have 2 Tesla Cxxxx and another card, that you use for the 
+                video output. The video card may have not enough CUDA 
+                capabilities for computation (below 1.3) or different technical
+                specs. There is a way to hide a specific GPU card, using the
+                environmental variable "CUDA_VISIBLE_DEVICES".
+                
+IMPORTANT NOTE: the library auto-tune the split factor at runtime. You just 
+                have to declare a initial good guess. If you are not sure about
+                the guess value leave the default.      
+
+                
+# Best Practices
+
+- NEVER oversubscribe too much the GPU! On HPC system equipped with NVIDIA 
   M20xx you might place 2 MPI process on the same card, no more. The best is 
   1 MPI process per card. So for example (PBS script and Open MPI):
   
@@ -224,38 +272,7 @@ mpirun -v -np 16 -npernode 4  -bysocket -bind-to-socket -display-map -report-bin
   study. It might happen that some inputs perform bad. The developers cannot 
   face this kind of problem if they cannot test THAT specific input. So if you 
   are disappointed about the performance or the support... WRITE TO US!
-
-
-# How to run
-
-Nothing has changed. If the support to the GPU is enables you MUST remember to 
-specify few additional environmental variables required by the phiGEMM library 
-used by Quantum EPSRESSO.
-
-There are 4 recognized variables, one for each *GEMM routine implemented. This 
-factor, a value strictly between 0 and 1, tells to the library how much of the 
-calculation has to be performed on the CPU and how much on the GPU. In detail, 
-if PHI_DGEMM_SPLIT is 0.9 it means that the 95% of the computation will be 
-performed by the GPU, the 5% by the CPU.
-
-Here an example:
-
-export PHI_SGEMM_SPLIT=0.95
-export PHI_CGEMM_SPLIT=0.875
-export PHI_DGEMM_SPLIT=0.9
-export PHI_ZGEMM_SPLIT=0.925
-
-IMPORTANT NOTE: suggested values are between 0.875 and 0.95
-
-IMPORTANT NOTE: some system are equipped with different cards. For example, you 
-                may have 2 Tesla Cxxxx and another card, that you use for the 
-                video output. The video card may have not enough CUDA 
-                capabilities for computation (below 1.3) or different technical
-                specs. There is a way to hide a specific GPU card, using the
-                environmental variable "CUDA_VISIBLE_DEVICES".
-                
-IMPORTANT NOTE: the library auto-tune the split factor at runtime. You just have to declare a
-                initial good guess. If you are not sure about the guess value leave the default.         
+   
 
 
 # Trouble-makers. inconsistencies, etc: 
@@ -272,19 +289,26 @@ issues. To do that it is possible to compile the code with few additional
 flags that exclude the GPU code related to ADDUSDENS, NEWD or VLOC_PSI. 
 
 These flags are: 
--D__DISABLE_CUDA_ADDUSDENS, -D__DISABLE_CUDA_VLOCPSI, 
--D__DISABLE_CUDA_NEWD, -D__PHIGEMM_DISABLE_SPECIALK
+-D__DISABLE_CUDA_ADDUSDENS 
+-D__DISABLE_CUDA_VLOCPSI 
+-D__DISABLE_CUDA_NEWD
 
 Without editing the make.sys, you can run make in this way:
-$ make MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw
+$ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 
 You can also specify more of these flags together.
 
 
 # Acknowledgments
 
-- This work has been supported by the PRACE 1st Implementation Phase project, WP 7.5e
-"Programming Techniques for High-Performance Applications - Accelerator". The 
-Irish Centre for High-End Computing (ICHEC) has been directly responsible to 
-extend the  Quantum ESPRESSO suite in order to support GPU calculation using 
-the NVIDIA CUDA environment.
+[2011-2012] The first phase of this work has been supported by the PRACE 1st 
+Implementation Phase project, WP 7.5e "Programming Techniques for High 
+Performance Applications - Accelerator". The Irish Centre for High-End 
+Computing (ICHEC) has been directly responsible to extend the Quantum ESPRESSO
+suite in order to support GPU calculation using the NVIDIA CUDA environment.
+- Filippo Spiga (former computational scientist, ICHEC, Ireland)
+- Ivan Girotto  (former computational scientist, ICHEC, Ireland)
+
+[2012-2013]
+- Filippo Spiga (developer and member Quantum ESPRESSO Foundation)
+- Ivan Girotto  (HPC specialist, ICTP, Italy)
