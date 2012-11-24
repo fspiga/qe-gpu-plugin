@@ -661,10 +661,10 @@ ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort* | crayxt*:ifort* )
         pre_fdflags="-fpp "
         ;;
 ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-# -O2 could be upgraded to -fast, it depends by the PGI version
-        try_fflags="-O3 -r8"
+	    try_fflags_nomain="-Mnomain"
+        try_fflags="-fast -r8"
         try_fflags_openmp="-mp"
-        try_f90flags="-O2 -Mcache_align -r8"
+        try_f90flags="-fast -r8 -Mcache_align"
         try_fflags_noopt="-O0"
         try_ldflags=""
         try_ldflags_openmp="-mp"
@@ -759,7 +759,7 @@ crayxt*:pgf* )
 	    try_fflags_nomain="-Mnomain"
         try_fflags_openmp="-mp"
         try_fflags="-O3 -r8"
-        try_f90flags="-O2 -Mcache_align -r8 -Mpreprocess"
+        try_f90flags="-fast -Mcache_align -r8 -Mpreprocess"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-mp"
         try_ldflags="-v"
@@ -801,7 +801,6 @@ ppc64:*xlf* )
         pre_fdflags="-WF,"
         xlf_flags=1
         ;;
-
 ppc64-mn:*xlf* )
     if test "$use_debug" -eq 1; then
         try_fflags="-g -C -q64 -qstrict -qsuffix=cpp=f90 -qdpc -qalias=nointptr -Q -qtune=ppc970 -qarch=ppc970 -qcache=auto -qhot=vector,simd -qenablevmx"
@@ -882,8 +881,7 @@ try_cpp="cpp"
 
 case "$arch:$cc" in
 *:pgcc )
-        # see comment above about PGF90
-        try_cflags="-O2"
+        try_cflags="-fast"
         ;;
 # pathcc -E seems to give problems when preprocessing iotk
 #*:pathcc )
@@ -2019,7 +2017,7 @@ elpa_libs_switch="disabled"
 if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then 
     scalapack_libs="../../ELPA/libelpa.a $scalapack_libs"
     try_dflags="$try_dflags -D__ELPA"
-    elpa_libs_switch="enabled"
+    elpa_libs_switch="enabled"    
 fi
     
 echo setting SCALAPACK_LIBS... $scalapack_libs
@@ -2236,6 +2234,7 @@ then
             ;;
         *:gfortran )
             # replace with the correct one # ldflags="$ldflags -zmuldefs"
+            ldflags="$ldflags -z muldefs"
             ;;
         esac
     fi
