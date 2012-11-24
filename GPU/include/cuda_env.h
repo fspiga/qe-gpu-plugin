@@ -71,6 +71,8 @@
 
 #if defined(__MAGMA)
 #define __SCALING_MEM_FACTOR__ 0.75
+#elif defined(__CUDA_NOALLOC)
+#define __SCALING_MEM_FACTOR__ 0.99
 #else
 #define __SCALING_MEM_FACTOR__ 0.95
 #endif
@@ -96,14 +98,23 @@ extern cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
 // Pre-loaded data-structure
 extern int * preloaded_nlsm_D, * preloaded_nls_D;
 
+// FFT plans
+extern cufftHandle qeCudaFFT_dfftp, qeCudaFFT_dffts;
+
 extern long ngpus_detected;
 extern long ngpus_used;
 extern long ngpus_per_process;
+extern long procs_per_gpu;
 
 extern "C" size_t initCudaEnv();
 extern "C" void closeCudaEnv();
 extern "C" void preallocateDeviceMemory(int);
 extern "C" void initPhigemm(int);
+
+// Auxiliary functions
+void print_cuda_header_(int lRank);
+extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
+extern "C" void mybarrier_();
 
 /*
  * These routines are exactly the same in "cutil_inline_runtime.h" but,

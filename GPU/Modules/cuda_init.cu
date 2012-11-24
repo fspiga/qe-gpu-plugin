@@ -40,14 +40,15 @@ cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
 // Pre-loaded data-structure
 int * preloaded_nlsm_D, * preloaded_nls_D;
 
+// FFT plans (works only with "-D__CUDA_NOALLOC")
+cufftHandle qeCudaFFT_dfftp, qeCudaFFT_dffts;
+
 // global useful information
 long ngpus_detected;
 long ngpus_used;
 long ngpus_per_process;
 long procs_per_gpu;
 
-extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
-extern "C" void mybarrier_();
 
 #if defined(__TIMELOG)
 double cuda_cclock(void)
@@ -124,6 +125,8 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 
 #else
 
+	procs_per_gpu = 1;
+
 	cudaGetDeviceCount(&lNumDevicesThisNode);
 
 	if (lNumDevicesThisNode == 0)
@@ -147,9 +150,6 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 		 */
 		qe_gpu_bonded[i] = i;
 	}
-
-	// NULL tag for phiGEMM
-	lRank = -1;
 
 #endif
 }
@@ -199,6 +199,11 @@ extern "C" void preallocatedevicememory_(int lRank){
 	mybarrier_();
 
 	for (i = 0; i < ngpus_per_process; i++) {
+
+		if ( cudaSetDevice(qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaSetDevice(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
 #endif
 
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
@@ -211,13 +216,8 @@ extern "C" void preallocatedevicememory_(int lRank){
 #endif
 #endif
 
-#if defined(__PARA)
-		qe_gpu_mem_tot[i] = (size_t) ((((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0) / procs_per_gpu);
+		qe_gpu_mem_tot[i] = (size_t) ((free * __SCALING_MEM_FACTOR__ ) / procs_per_gpu);
 		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
-#else
-		qe_gpu_mem_tot[i] = (size_t) (((free * __SCALING_MEM_FACTOR__ ) * 16.0) / 16.0);
-		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
-#endif
 
 
 #if !defined(__CUDA_NOALLOC)
@@ -230,16 +230,14 @@ extern "C" void preallocatedevicememory_(int lRank){
 
 		qe_dev_zero_scratch[i] = qe_dev_scratch[i];
 #endif
-//
-//#if defined(__PARA)
-//	}
-//
-//	mybarrier_();
-//
-//	for (i = 0; i < ngpus_per_process; i++) {
-//#endif
 
-//		dev_heap_QE[i] = (char * ) qe_dev_scratch[i] + (32*(qe_gpu_mem_tot[i]/32));
+#if defined(__PARA) && defined(__CUDA_DEBUG)
+	}
+
+	mybarrier_();
+
+	for (i = 0; i < ngpus_per_process; i++) {
+#endif
 
 #if defined(__CUDA_DEBUG)
 #if defined(__PARA)
@@ -253,82 +251,12 @@ extern "C" void preallocatedevicememory_(int lRank){
 	}
 	
 #if defined(__PARA)
+	// Is this necessary?
 	mybarrier_();
 #endif
 
-	// Print information on screen
-#if defined(__PARA)
-	if (lRank == 0) {	
-#endif
-	printf("\n"); fflush(stdout);
-	printf("     *******************************************************************\n\n"); fflush(stdout);
-#if defined(__PHIGEMM_CPUONLY) && defined(__PHIGEMM_PROFILE)
-	printf("       CPU-version plus call-by-call GEMM profiling"); fflush(stdout);
-#else
-
-	printf("       GPU-accelerated Quantum ESPRESSO \n\n"); fflush(stdout);
-
-#if defined(__PARA)
-	printf("       parallel      : yes (GPUs per node = %d, GPUs per process = %d)  \n", (int) ngpus_detected, (int) ngpus_per_process); fflush(stdout);
-#else
-	printf("       parallel      : no (GPUs detected = %d, GPUs used = %d)  \n", (int) ngpus_detected, (int) ngpus_used); fflush(stdout);
-#endif
-
-#if defined(__OPENACC)
-	printf("       OpenACC       : yes \n"); fflush(stdout);
-#endif
-
-#if defined(__CUDA_PINNED)
-    printf("       pinned memory : yes \n"); fflush(stdout);
-#else
-	printf("       pinned memory : no \n"); fflush(stdout);
-#endif
-
-#if defined(__MAGMA)
-	printf("       MAGMA         : yes \n"); fflush(stdout);
-#else
-	printf("       MAGMA         : no \n"); fflush(stdout);
-#endif
-
-#if defined(__PARA) && defined(__USE_3D_FFT)
-	printf("       USE_3D_FFT    : yes ( assert(size(pool)=1) ) \n"); fflush(stdout);
-#else
-	printf("       USE_3D_FFT    : no \n"); fflush(stdout);
-#endif
-
-#if defined(__CUDA_DEBUG)
-	printf("       # DEBUG MODE #\n");fflush(stdout);
-#if defined(__DISABLE_CUDA_ADDUSDENS)
-	printf("         CUDA addusdens    = disabled\n");fflush(stdout);
-#else
-	printf("         CUDA addusdens    = enabled\n");fflush(stdout);
-#endif
-#if defined(__DISABLE_CUDA_VLOCPSI)
-	printf("         CUDA vloc_psi     = disabled\n");fflush(stdout);
-#else
-	printf("         CUDA vloc_psi     = enabled\n");fflush(stdout);
-#endif
-#if defined(__DISABLE_CUDA_NEWD)
-	printf("         CUDA newd         = disabled\n");fflush(stdout);
-#else
-	printf("         CUDA newd         = enabled\n");fflush(stdout);
-#endif
-#if defined(__PHIGEMM_ENABLE_SPECIALK)
-	printf("         phiGEMM special-k = enabled\n");fflush(stdout);
-#else
-	printf("         phiGEMM special-k = disabled\n");fflush(stdout);
-#endif
-#endif
-
-#endif
-
-    printf("\n"); fflush(stdout);
-	printf("     *******************************************************************\n"); fflush(stdout);
-	printf("\n"); fflush(stdout);
-
-#if defined(__PARA)
-	}
-#endif
+	// Print CUDA header
+	print_cuda_header_(lRank);
 }
 
 extern "C"  void initStreams_()

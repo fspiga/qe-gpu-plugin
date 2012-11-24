@@ -99,7 +99,8 @@ MODULES = \
 CUGPUOBJS = \
 cuda_mem_alloc.o \
 cuda_env_para.o \
-cuda_init.o
+cuda_init.o \
+cuda_header.o
 
 all : libqemodgpu.a 
 
