@@ -9819,7 +9819,7 @@ ac_config_files="$ac_config_files make.sys"
 ac_config_files="$ac_config_files configure.msg"
 
 
-ac_config_files="$ac_config_files install/make_wannier90.sys"
+ac_config_files="$ac_config_files ../install/make_wannier90.sys"
 
 
 ac_config_files="$ac_config_files ../install/make_blas.inc"
@@ -10521,7 +10521,7 @@ do
     "../include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS ../include/c_defs.h:../include/c_defs.h.in" ;;
     "make.sys") CONFIG_FILES="$CONFIG_FILES make.sys" ;;
     "configure.msg") CONFIG_FILES="$CONFIG_FILES configure.msg" ;;
-    "install/make_wannier90.sys") CONFIG_FILES="$CONFIG_FILES install/make_wannier90.sys" ;;
+    "../install/make_wannier90.sys") CONFIG_FILES="$CONFIG_FILES ../install/make_wannier90.sys" ;;
     "../install/make_blas.inc") CONFIG_FILES="$CONFIG_FILES ../install/make_blas.inc" ;;
     "../install/make_lapack.inc") CONFIG_FILES="$CONFIG_FILES ../install/make_lapack.inc" ;;
     "install/make_phiGEMM.inc") CONFIG_FILES="$CONFIG_FILES install/make_phiGEMM.inc" ;;
