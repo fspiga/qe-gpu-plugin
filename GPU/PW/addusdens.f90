@@ -133,28 +133,21 @@ subroutine addusdens_g(rho)
 #endif
 	              ijh = ijh + 1
 	              do na = 1, nat
-	                 if (ityp (na) .eq.nt) then
+	                 if (ityp (na) .eq. nt) then
 	                    !
 	                    !  Multiply becsum and qg with the correct structure factor
 	                    !
-#ifdef DEBUG_ADDUSDENS
-	                    call start_clock ('addus:aux')
-#endif
-
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig, is, skk)
 	                    do is = 1, nspin_mag
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig, skk)
 	                       do ig = 1, ngm
 	                          skk = eigts1 (mill (1,ig), na) * &
 	                                eigts2 (mill (2,ig), na) * &
 	                                eigts3 (mill (3,ig), na)
 	                          aux(ig,is)=aux(ig,is) + qgm(ig)*skk*becsum(ijh,na,is)
 	                       enddo
-	                    enddo
 !$OMP END PARALLEL DO
-
-#ifdef DEBUG_ADDUSDENS
-	                  call stop_clock ('addus:aux')
-#endif
+	                    enddo
+                        !
 	                 endif
 	              enddo
 	           enddo
