@@ -106,15 +106,15 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	int nspin = (* ptr_nspin);
 	int first_becsum = (* ptr_first_becsum );
 
-	ijh = 0;
+	dim3 threads2_aux(1, __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__);
+	dim3 grid2_aux( qe_compute_num_blocks(nspin_mag, threads2_aux.x), qe_compute_num_blocks(ngm, threads2_aux.y) );
 
 #if defined(__CUDA_DEBUG)
 	printf("\n[ADDUSDENS] Enter \n");fflush(stdout);
 #endif
 
-	int number_of_block = (ngm + __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ - 1) / __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__;
-	if ( number_of_block > __CUDA_MAXNUMBLOCKS__) {
-		fprintf( stderr, "\n[NEWD] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", number_of_block );
+	if ( grid2_aux.y > __CUDA_MAXNUMBLOCKS__) {
+		fprintf( stderr, "\n[ADDUSDENS] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_aux.y );
 		return 1;
 	}
 
@@ -175,11 +175,9 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	qecudaSafeCall( cudaMemcpy( eigts2_D, eigts2,  sizeof( double ) * ( ( ( nr2 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( eigts3_D, eigts3,  sizeof( double ) * ( ( ( nr3 * 2 + 1 ) * nat ) * 2 ), cudaMemcpyHostToDevice ) );
 
-	dim3 threads2(1, __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__);
-	dim3 grid2( nspin_mag / 1 ? nspin_mag / 1 : 1,
-			number_of_block ? number_of_block : 1);
-
 	qecudaSafeCall( cudaFuncSetCacheConfig(kernel_compute_aux, cudaFuncCachePreferShared) );
+
+	ijh = 0;
 
 	for( ih = 0, iih = 1; ih < nh[nt - 1]; ih++, iih++) {
 		for( jh = ih, jjh = iih; jh < nh[nt - 1]; jh++, jjh++, ijh++ ) {
@@ -190,7 +188,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 			qecudaSafeCall( cudaMemcpy( (double *) qgm_D, qgm,  sizeof( double ) * ngm * 2, cudaMemcpyHostToDevice ) );
 
-			kernel_compute_aux<<<grid2, threads2>>>( (double *) eigts1_D,
+			kernel_compute_aux<<< grid2_aux, threads2_aux >>>( (double *) eigts1_D,
 					(double *) eigts2_D, (double *) eigts3_D,
 					(int *)  ig1_D, (int *)  ig2_D,
 					(int *)  ig3_D, nr1, nr2, nr3, (double *) qgm_D,

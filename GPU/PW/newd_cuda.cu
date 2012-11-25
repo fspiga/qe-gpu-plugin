@@ -75,7 +75,13 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 		int * ig2, int * ig3, double * deeq, int * ityp, double * ptr_omega, int * ptr_flag,
 		double * aux, int * ptr_nspin_mag)
 {
-	int ih, jh, jjh, iih, is;
+	void * qgm_D, * deeq_D, * aux_D, * dtmp_D, * qgm_na_D;
+    void * eigts1_D, * eigts2_D, * eigts3_D;
+    void * ig1_D, * ig2_D, * ig3_D;
+
+	double * qgm_na, * qgm;
+
+    int ih, jh, jjh, iih, is, number_of_block;
 	double fact = (* ptr_fact);
 	int nt = (* ptr_nt);
 	int na = (* ptr_na);
@@ -90,24 +96,17 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	double omega = (* ptr_omega);
 	int nspin_mag = (* ptr_nspin_mag);
 
-	double * qgm_na;
+	dim3 threads2_qgm( __CUDA_TxB_NEWD_QGM__ );
+	dim3 grid2_qgm( qe_compute_num_blocks( (nspin_mag * ngm ), threads2_qgm.x) );
 
-//	cudaStream_t  qecudaStreams[ MAX_QE_GPUS ];
-//	cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
-
-	int blocksPerGrid;
-
-	double * qgm;
-
-	void * qgm_D, * deeq_D, * aux_D, * dtmp_D, * qgm_na_D;
-    void * eigts1_D, * eigts2_D, * eigts3_D;
-    void * ig1_D, * ig2_D, * ig3_D;
+	dim3 threads2_deepq( __CUDA_TxB_NEWD_DEEPQ__ );
+	dim3 grid2_deepq( qe_compute_num_blocks( nspin_mag, threads2_deepq.x));
 
 #if defined(__CUDA_DEBUG)
 	printf("\n[NEWD] Enter \n");fflush(stdout);
 #endif
 
-	if ( ((nspin_mag * ngm) / __CUDA_TxB_NEWD_QGM__) > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_qgm.x > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", (nspin_mag * ngm * 2 / __CUDA_TxB_NEWD_QGM__) );
 		return 1;
 	}
@@ -115,18 +114,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	qgm_na = (double *) malloc( ngm * 2 * sizeof(double) );
 
 	cudaSetDevice(qe_gpu_bonded[0]);
-
-//	if ( cublasCreate( &qecudaHandles[ 0 ] ) != CUBLAS_STATUS_SUCCESS ) {
-//		printf("\n*** CUDA NEWD *** ERROR *** cublasInit() for device %d failed!",0);
-//		fflush(stdout);
-//		exit(EXIT_FAILURE);
-//	}
-//
-//	if( cudaStreamCreate( &qecudaStreams[ 0 ] ) != cudaSuccess ) {
-//		printf("\n*** CUDA NEWD *** ERROR *** creating stream for device %d failed!", 0);
-//		fflush(stdout);
-//		exit(EXIT_FAILURE);
-//	}
 
 #if defined(__CUDA_NOALLOC)
 	/* Do real allocation */
@@ -205,16 +192,14 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 				if( ityp[na] == nt ) {
 
-					blocksPerGrid = ( (nspin_mag * ngm ) + __CUDA_TxB_NEWD_QGM__ - 1) / __CUDA_TxB_NEWD_QGM__;
-					kernel_compute_qgm_na<<<blocksPerGrid, __CUDA_TxB_NEWD_QGM__>>>( (double *) eigts1_D, (double *) eigts2_D, (double *) eigts3_D, (int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (double *) qgm_D, nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
+					kernel_compute_qgm_na<<< grid2_qgm, threads2_qgm >>>( (double *) eigts1_D, (double *) eigts2_D, (double *) eigts3_D, (int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (double *) qgm_D, nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
 					qecudaGetLastError("kernel kernel_compute_qgm_na launch failure");
 
 					for( is = 0; is < nspin_mag; is++ ){
 						cublasDdot(qecudaHandles[ 0 ] , ngm * 2, (double *) aux_D + (is * ngm * 2), 1, (double *) qgm_na_D, 1, (double *) dtmp_D + is );
 					}
 
-					blocksPerGrid = ( (nspin_mag) + __CUDA_TxB_NEWD_DEEPQ__ - 1) / __CUDA_TxB_NEWD_DEEPQ__;
-					kernel_compute_deeq<<<blocksPerGrid, __CUDA_TxB_NEWD_DEEPQ__>>>( (double *) qgm_D, (double *) deeq_D, (double *) aux_D, na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact, (double *) qgm_na_D, (double *) dtmp_D );
+					kernel_compute_deeq<<< grid2_deepq, threads2_deepq >>>( (double *) qgm_D, (double *) deeq_D, (double *) aux_D, na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact, (double *) qgm_na_D, (double *) dtmp_D );
 					qecudaGetLastError("kernel kernel_compute_deeq launch failure");
 				}
 			}
@@ -227,9 +212,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 	free( qgm_na );
 	cudaFreeHost(qgm);
-
-//	cudaStreamDestroy( qecudaStreams[ 0 ] );
-//	cublasDestroy( qecudaHandles[ 0 ]);
 
 #if defined(__CUDA_NOALLOC)
 	/* Deallocating... */
