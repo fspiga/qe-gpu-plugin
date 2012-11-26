@@ -74,6 +74,8 @@ __global__ void kernel_compute_aux( const double * __restrict eigts1, const doub
 			aux[ ( ( ig + (is * ngm) ) * 2 ) + 1 ] = aux_sup[1];
 		}
 	}
+
+	return;
 }
 
 extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * ptr_first_becsum,
@@ -178,7 +180,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 				if ( ityp[iit] == nt ) {
 
-					kernel_compute_aux<<< grid2_aux, threads2_aux >>>(
+					kernel_compute_aux<<< grid2_aux, threads2_aux, 0, qecudaStreams[ 0 ] >>>(
 							(double *) eigts1_D, (double *) eigts2_D, (double *) eigts3_D,
 							(int *) ig1_D, (int *)  ig2_D, (int *) ig3_D, nr1, nr2, nr3,
 							(double *) qgm_D, (double *) becsum_D, (double *) aux_D,

@@ -21,6 +21,8 @@ __device__ inline void complex_by_complex_device( const  double * __restrict A, 
 
 	C[0] = (re_a * re_b) - (img_a * img_b);
 	C[1] = (re_a * img_b) + (re_b * img_a);
+
+	return;
 }
 
 __global__ void kernel_compute_qgm_na( const  double * __restrict eigts1, const  double * __restrict eigts2, const  double * __restrict eigts3,
@@ -43,6 +45,8 @@ __global__ void kernel_compute_qgm_na( const  double * __restrict eigts1, const 
 		complex_by_complex_device( sup_prod_2,  &qgm[ global_index * 2 ],  &qgm_na[ global_index * 2 ] );
 
 	}
+
+	return;
 }
 
 __global__ void kernel_compute_deeq( const double * qgm, double * deeq, const double * aux,
@@ -67,6 +71,8 @@ __global__ void kernel_compute_deeq( const double * qgm, double * deeq, const do
 		deeq[ rev_index ] = temp;
 		deeq[ index ] = temp;
 	}
+
+	return;
 }
 
 extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * ptr_na, int * nh,
@@ -192,14 +198,20 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 				if( ityp[na] == nt ) {
 
-					kernel_compute_qgm_na<<< grid2_qgm, threads2_qgm >>>( (double *) eigts1_D, (double *) eigts2_D, (double *) eigts3_D, (int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (double *) qgm_D, nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
+					kernel_compute_qgm_na<<< grid2_qgm, threads2_qgm, 0, qecudaStreams[ 0 ] >>>(
+							(double *) eigts1_D, (double *) eigts2_D, (double *) eigts3_D,
+							(int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (double *) qgm_D,
+							nr1, nr2, nr3, na, ngm, (double *) qgm_na_D );
 					qecudaGetLastError("kernel kernel_compute_qgm_na launch failure");
 
 					for( is = 0; is < nspin_mag; is++ ){
 						cublasDdot(qecudaHandles[ 0 ] , ngm * 2, (double *) aux_D + (is * ngm * 2), 1, (double *) qgm_na_D, 1, (double *) dtmp_D + is );
 					}
 
-					kernel_compute_deeq<<< grid2_deepq, threads2_deepq >>>( (double *) qgm_D, (double *) deeq_D, (double *) aux_D, na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact, (double *) qgm_na_D, (double *) dtmp_D );
+					kernel_compute_deeq<<< grid2_deepq, threads2_deepq, 0, qecudaStreams[ 0 ] >>>(
+							(double *) qgm_D, (double *) deeq_D, (double *) aux_D,
+							na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact,
+							(double *) qgm_na_D, (double *) dtmp_D );
 					qecudaGetLastError("kernel kernel_compute_deeq launch failure");
 				}
 			}

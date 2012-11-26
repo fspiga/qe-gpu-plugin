@@ -25,6 +25,8 @@ __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int di
 		sup = a[ix] * b[ii];
 		a[ix] = sup;
 	}
+
+	return;
 }
 
 
@@ -63,6 +65,8 @@ __global__ void kernel_init_psic( const  int * __restrict nls, const  int * __re
 
 		}
 	}
+
+	return;
 }
 
 __global__ void kernel_save_hpsi( const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, double * hpsi, const  double * __restrict psic, const int n, const int m, const int lda, const int ibnd )
@@ -105,6 +109,8 @@ __global__ void kernel_save_hpsi( const  int * __restrict nls, const  int * __re
 
 		}
 	}
+
+	return;
 }
 
 
@@ -140,7 +146,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
 
 	dim3 threads2_hpsi(__CUDA_TxB_VLOCPSI_HPSI__);
-	dim3 grid2_hpsi( qe_compute_num_blocks(n, grid2_hpsi.x) );
+	dim3 grid2_hpsi( qe_compute_num_blocks(n, threads2_hpsi.x) );
 
 #if defined(__CUDA_DEBUG)
 	printf("[CUDA_DEBUG - VLOC_PSI_GAMMA]\n");fflush(stdout);
@@ -222,12 +228,15 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	{
 		qecudaSafeCall( cudaMemset( psic_D , 0, size_psic * sizeof( cufftDoubleComplex ) ) );
 
-		kernel_init_psic<<< grid2_psic, threads2_psic >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (double *) psi_D, (double *) psic_D, n, m, lda, ibnd );
+		kernel_init_psic<<< grid2_psic, threads2_psic, 0, qecudaStreams[ 0 ] >>>(
+				(int *) nls_D, (int *) nlsm_D, (int *) igk_D, (double *) psi_D, (double *) psic_D,
+				n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
 
-		kernel_vec_prod<<< grid2_prod, threads2_prod >>>( (double *) psic_D, (double *) v_D , nrxxs );
+		kernel_vec_prod<<< grid2_prod, threads2_prod, 0, qecudaStreams[ 0 ] >>>(
+				(double *) psic_D, (double *) v_D , nrxxs );
 		qecudaGetLastError("kernel launch failure");
 
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_FORWARD ) );
@@ -235,7 +244,9 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		tscale = 1.0 / (double) ( size_psic );
 		cublasZdscal(qecudaHandles[ 0 ] , size_psic, &tscale, (cufftDoubleComplex *) psic_D, 1);
 
-		kernel_save_hpsi<<< grid2_hpsi, threads2_hpsi >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (double *) hpsi_D, (double *) psic_D, n, m, lda, ibnd );
+		kernel_save_hpsi<<< grid2_hpsi, threads2_hpsi, 0, qecudaStreams[ 0 ] >>>(
+				(int *) nls_D, (int *) nlsm_D, (int *) igk_D, (double *) hpsi_D, (double *) psic_D,
+				n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
 	}
@@ -260,7 +271,8 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	return 0;
 }
 
-#if defined(__CUDA_MULTIPLAN_FFT)
+/* This method will be updated in the next build */
+#if defined(__CUDA_MULTIPLAN_FFT) && !defined(__CUDA_NOALLOC) && !defined(__CUDA_PRELOAD)
 extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, int * ptr_nr2s, int * ptr_nr3s, int * ptr_n, int * ptr_m, void * psi, double * v, void * hpsi, int * igk, int * nls, int * nlsm, int * ptr_ngms, int * ptr_ngm)
 {
 	cufftHandle p_global;
@@ -284,10 +296,16 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
     int ierr;
 	int array[3];
 	int dim_multiplepsic, n_singlepsic, n_multiplepsic, size_multiplepsic, v_size;
-	int m_fake, m_buf, blocksPerGrid, i, j;
+	int m_fake, m_buf, i, j;
 
-	cudaStream_t  qecudaStreams[ MAX_QE_GPUS ];
-	cublasHandle_t qecudaHandles[ MAX_QE_GPUS ];
+	dim3 threads2_psic(__CUDA_TxB_VLOCPSI_PSIC__);
+	dim3 grid2_psic( qe_compute_num_blocks(n, threads2_psic.x) );
+
+	dim3 threads2_prod(__CUDA_TxB_VLOCPSI_PROD__);
+	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
+
+	dim3 threads2_hpsi(__CUDA_TxB_VLOCPSI_HPSI__);
+	dim3 grid2_hpsi( qe_compute_num_blocks(n, grid2_hpsi.x) );
 
 	psic_D = (cufftDoubleComplex * ) qe_dev_scratch[0];
 
@@ -358,20 +376,18 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 
 			qecudaSafeCall( cudaMemset( psic_D , 0, dim_multiplepsic * size_psic * sizeof( cufftDoubleComplex ) ) );
 
-			blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 			for (i = 0; i < dim_multiplepsic; i++  )
 			{
 				shift = 2*i*size_psic*sizeof(double);
-				kernel_init_psic<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) psi_D, (double*) ( (char*) psic_D + shift), n, m, lda, ((j+i)*2) );
+				kernel_init_psic<<< grid2_psic, threads2_psic >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) psi_D, (double*) ( (char*) psic_D + shift), n, m, lda, ((j+i)*2) );
 				qecudaGetLastError("kernel launch failure");
 			}
 
 			qecheck_cufft_call( cufftExecZ2Z( p_global,  (cufftDoubleComplex*) psic_D, (cufftDoubleComplex*) psic_D , CUFFT_INVERSE ) );
 
-			blocksPerGrid = ( (v_size * 2) + __CUDA_THREADPERBLOCK__  - 1) / __CUDA_THREADPERBLOCK__ ;
 			for( i = 0; i < dim_multiplepsic; i++ ) {
 				shift = 2*i*size_psic*sizeof(double);
-				kernel_vec_prod<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (double*) ( (char*)psic_D + shift), (double*) v_D , v_size );
+				kernel_vec_prod<<< grid2_prod, threads2_prod >>>( (double*) ( (char*)psic_D + shift), (double*) v_D , v_size );
 				qecudaGetLastError("kernel launch failure");
 			}
 
@@ -380,11 +396,10 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 			tscale = 1.0 / (double) ( size_psic );
 			cublasZdscal(qecudaHandles[ 0 ] , size_psic*dim_multiplepsic, &tscale, (cuDoubleComplex *) psic_D, 1);
 
-			blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 			for (i = 0; i < dim_multiplepsic; i++  )
 			{
 				shift = 2*i*size_psic*sizeof(double);
-				kernel_save_hpsi<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) hpsi_D, (double*) ( (char*) psic_D + shift), n, m, lda, ((j+i)*2) );
+				kernel_save_hpsi<<< grid2_hpsi, threads2_hpsi >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) hpsi_D, (double*) ( (char*) psic_D + shift), n, m, lda, ((j+i)*2) );
 				qecudaGetLastError("kernel launch failure");
 			}
 		}
@@ -399,20 +414,18 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 		qecheck_cufft_call( cufftPlanMany( &p_global, 3, array, NULL, 1, 0, NULL,1,0,CUFFT_Z2Z,n_singlepsic ) );
         qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
 
-		blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 		for (i = 0; i < n_singlepsic; i++  )
 		{
 			shift = 2*i*size_psic*sizeof(double);
-			kernel_init_psic<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) psi_D, (double*) ( (char*) psic_D + shift), n, m, lda, (dim_multiplepsic*n_multiplepsic + i)*2 );
+			kernel_init_psic<<< grid2_psic, threads2_psic >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) psi_D, (double*) ( (char*) psic_D + shift), n, m, lda, (dim_multiplepsic*n_multiplepsic + i)*2 );
 			qecudaGetLastError("kernel launch failure");
 		}
 
 		qecheck_cufft_call( cufftExecZ2Z( p_global,  (cufftDoubleComplex*) psic_D, (cufftDoubleComplex*) psic_D , CUFFT_INVERSE ) );
 
-		blocksPerGrid = ( (v_size * 2) + __CUDA_THREADPERBLOCK__  - 1) / __CUDA_THREADPERBLOCK__ ;
 		for( i = 0; i < n_singlepsic; i++ ){
 			shift = 2*i*size_psic*sizeof(double);
-			kernel_vec_prod<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (double*) ((char*) psic_D + shift), (double*) v_D , v_size );
+			kernel_vec_prod<<< grid2_proc, threads2_proc >>>( (double*) ((char*) psic_D + shift), (double*) v_D , v_size );
 			qecudaGetLastError("kernel launch failure");
 		}
 
@@ -421,11 +434,10 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 
 		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex*) psic_D, (cufftDoubleComplex*) psic_D, CUFFT_FORWARD ) );
 
-		blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 		for (i = 0; i < n_singlepsic; i++  )
 		{
 			shift = 2*i*size_psic*sizeof(double);
-			kernel_save_hpsi<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) hpsi_D, (double*) ( (char*) psic_D + shift), n, m, lda, (dim_multiplepsic*n_multiplepsic + i)*2 );
+			kernel_save_hpsi<<< grid2_hpsi, threads2_hpsi >>>( (int*) nls_D, (int*) nlsm_D, (int*) igk_D, (double*) hpsi_D, (double*) ( (char*) psic_D + shift), n, m, lda, (dim_multiplepsic*n_multiplepsic + i)*2 );
 			qecudaGetLastError("kernel launch failure");
 		}
 
