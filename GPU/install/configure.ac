@@ -119,6 +119,16 @@ AC_ARG_WITH(internal-blas,
    fi],
    [use_internal_blas=0])
 
+AC_ARG_WITH(internal-cblas,
+   [AS_HELP_STRING([--with-internal-cblas],
+       [compile with internal cblas (default: no -- for CRAY only)])],
+    [if   test "$withval" = "yes" ; then
+      use_internal_cblas=1
+   else
+      use_internal_cblas=0
+   fi],
+   [use_internal_cblas=0])
+   
 AC_ARG_WITH(internal-lapack,
    [AS_HELP_STRING([--with-internal-lapack],
        [compile with internal lapack (default: no)])],
@@ -346,6 +356,7 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
+        try_dflags="-D__CRAY"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -2221,7 +2232,7 @@ then
         magma_include="-I$topdir/magma/include -I$topdir/quark/include"
         magma_libs="$topdir/magma/lib/libmagma.a $topdir/magma/lib/libmagmablas.a $topdir/magma/lib/libmagma.a" 
         try_dflags="$try_dflags -D__MAGMA"
-
+		
 	    # GPU architecture
 	    case "$cuda_arch" in
 	    35 | 30 )
@@ -2234,34 +2245,80 @@ then
 	        magma_gpu_target=Tesla
 	        ;;        
 	    esac
-	    
+
+        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
+        # This does not work on CRAY
+	    have_cblas=0
+	    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0
+	    then
+	    	try_libdirs=""
+            try_libdirs="$libdirs $ld_library_path $try_libdirs"
+	        for dir in $try_libdirs
+	        do
+	            unset ac_cv_search_cblas_dscal # clear cached value
+	        
+	            if test "$dir" = "none"
+	            then
+	                    try_loption=
+	            else                  
+	                    try_loption="-L$dir"
+	            fi          
+                FFLAGS="$test_fflags"
+                LDFLAGS="$test_ldflags $try_loption"
+                LIBS=""
+	            
+	            LIBS=""
+	            echo $ECHO_N "in $dir: " $ECHO_C                
+	            AC_SEARCH_LIBS(cblas_dscal, cblas, 
+	                 have_cblas=1 magma_libs="$magma_libs $LIBS")	
+	            
+	            if test "$have_cblas" -eq 1
+	            then                 
+	                break
+	            fi
+	        done  
+	        	        
+	        if test "$have_cblas" -eq 0
+	        then                 
+	        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+	        	cblas_switch=1
+	        	have_cblas=1
+            fi
+        fi
+                          
         # MAGMA requires additional flags...        
         case "$arch:$f90_version" in
-        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
-            ldflags="$ldflags -zmuldefs"
-            ;;
-        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-            ldflags="$ldflags -Wl,-z,muldefs"
-            ;;
-        crayxt*:pgf* )
-            ldflags="$ldflags -Wl,-z,muldefs"
-            magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
-            cblas_switch=1
-            ;;            
-        *:g95 )
-            # replace with the correct one # ldflags="$ldflags -zmuldefs"
-            ;;
-        *:gfortran )
-            ldflags="$ldflags -z muldefs"
-            # If there are not external BLAS then CBLAS is necessary to 
-            # link MAGMA to QE (NdFilippo)
-            if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-            	extlib_flags="$extlib_flags -fPIC"
-            	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
-            	cblas_switch=1
-            fi
-            ;;
+	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+	            ldflags="$ldflags -zmuldefs"
+	            ;;
+	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;
+	        crayxt*:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;            
+	        *:g95 )
+	            # replace with the correct one # ldflags="$ldflags -zmuldefs"
+	            ;;
+	        *:gfortran )
+	            ldflags="$ldflags -z muldefs"
+	            # If there are not external BLAS then CBLAS is necessary to 
+	            # link MAGMA to QE (NdFilippo)
+	            if test "$have_cblas" -eq 1 ; then
+	            	extlib_flags="$extlib_flags -fPIC"
+	            fi
+	            ;;
         esac
+        
+        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
+        # interfaces. I hope to find a way to detect this case automatically
+        # (NdFilippo)
+        if test "$use_internal_cblas" -eq 1 ; then                 
+        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+        	cblas_switch=1
+        	have_cblas=1
+        fi
+        
     fi
     
 	# Enable Open ACC (now only for card with compute capaility 2.x)

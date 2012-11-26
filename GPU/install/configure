@@ -732,6 +732,7 @@ with_gpu_arch
 with_scalapack
 with_elpa
 with_internal_blas
+with_internal_cblas
 with_internal_lapack
 enable_environment
 enable_cuda
@@ -1400,6 +1401,8 @@ Optional Packages:
   --with-scalapack        use scalapack if available (default: yes)
   --with-elpa             use elpa if available (default: no)
   --with-internal-blas    compile with internal blas (default: no)
+  --with-internal-cblas   compile with internal cblas (default: no -- for CRAY
+                          only)
   --with-internal-lapack  compile with internal lapack (default: no)
 
 Some influential environment variables:
@@ -2636,6 +2639,19 @@ fi
 
 
 
+# Check whether --with-internal-cblas was given.
+if test "${with_internal_cblas+set}" = set; then :
+  withval=$with_internal_cblas; if   test "$withval" = "yes" ; then
+      use_internal_cblas=1
+   else
+      use_internal_cblas=0
+   fi
+else
+  use_internal_cblas=0
+fi
+
+
+
 # Check whether --with-internal-lapack was given.
 if test "${with_internal_lapack+set}" = set; then :
   withval=$with_internal_lapack; if   test "$withval" = "yes" ; then
@@ -2944,6 +2960,7 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
+        try_dflags="-D__CRAY"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -9519,33 +9536,120 @@ then
 	        ;;
 	    esac
 
+        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
+        # This does not work on CRAY
+	    have_cblas=0
+	    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0
+	    then
+	    	try_libdirs=""
+            try_libdirs="$libdirs $ld_library_path $try_libdirs"
+	        for dir in $try_libdirs
+	        do
+	            unset ac_cv_search_cblas_dscal # clear cached value
+
+	            if test "$dir" = "none"
+	            then
+	                    try_loption=
+	            else
+	                    try_loption="-L$dir"
+	            fi
+                FFLAGS="$test_fflags"
+                LDFLAGS="$test_ldflags $try_loption"
+                LIBS=""
+
+	            LIBS=""
+	            echo $ECHO_N "in $dir: " $ECHO_C
+	            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing cblas_dscal" >&5
+$as_echo_n "checking for library containing cblas_dscal... " >&6; }
+if test "${ac_cv_search_cblas_dscal+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call cblas_dscal
+      end
+_ACEOF
+for ac_lib in '' cblas; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_f77_try_link "$LINENO"; then :
+  ac_cv_search_cblas_dscal=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_cblas_dscal+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_cblas_dscal+set}" = set; then :
+
+else
+  ac_cv_search_cblas_dscal=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_cblas_dscal" >&5
+$as_echo "$ac_cv_search_cblas_dscal" >&6; }
+ac_res=$ac_cv_search_cblas_dscal
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_cblas=1 magma_libs="$magma_libs $LIBS"
+fi
+
+
+	            if test "$have_cblas" -eq 1
+	            then
+	                break
+	            fi
+	        done
+
+	        if test "$have_cblas" -eq 0
+	        then
+	        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a"
+	        	cblas_switch=1
+	        	have_cblas=1
+            fi
+        fi
+
         # MAGMA requires additional flags...
         case "$arch:$f90_version" in
-        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
-            ldflags="$ldflags -zmuldefs"
-            ;;
-        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-            ldflags="$ldflags -Wl,-z,muldefs"
-            ;;
-        crayxt*:pgf* )
-            ldflags="$ldflags -Wl,-z,muldefs"
-            magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a"
-            cblas_switch=1
-            ;;
-        *:g95 )
-            # replace with the correct one # ldflags="$ldflags -zmuldefs"
-            ;;
-        *:gfortran )
-            ldflags="$ldflags -z muldefs"
-            # If there are not external BLAS then CBLAS is necessary to
-            # link MAGMA to QE (NdFilippo)
-            if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-            	extlib_flags="$extlib_flags -fPIC"
-            	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a"
-            	cblas_switch=1
-            fi
-            ;;
+	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+	            ldflags="$ldflags -zmuldefs"
+	            ;;
+	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;
+	        crayxt*:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;
+	        *:g95 )
+	            # replace with the correct one # ldflags="$ldflags -zmuldefs"
+	            ;;
+	        *:gfortran )
+	            ldflags="$ldflags -z muldefs"
+	            # If there are not external BLAS then CBLAS is necessary to
+	            # link MAGMA to QE (NdFilippo)
+	            if test "$have_cblas" -eq 1 ; then
+	            	extlib_flags="$extlib_flags -fPIC"
+	            fi
+	            ;;
         esac
+
+        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
+        # interfaces. I hope to find a way to detect this case automatically
+        # (NdFilippo)
+        if test "$use_internal_cblas" -eq 1 ; then
+        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a"
+        	cblas_switch=1
+        	have_cblas=1
+        fi
+
     fi
 
 	# Enable Open ACC (now only for card with compute capaility 2.x)
