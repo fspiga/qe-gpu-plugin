@@ -54,12 +54,22 @@ SUBROUTINE cdiaghg( n, m, h, s, ldh, e, v )
   COMPLEX(DP), ALLOCATABLE :: vv(:,:)
 #endif
   !
-  !
   CALL start_clock( 'cdiaghg' )
+  !
+#if defined(__CUDA_DEBUG)
+  WRITE(*,*) "[CDIAGHG] Compute cdiaghg, n = ", n
+#endif
   !
   ! ... only the first processor diagonalizes the matrix
   !
   IF ( me_bgrp == root_bgrp ) THEN
+     !
+#if defined(__CUDA) && defined(__MAGMA)
+#if defined(__PHIGEMM)
+     call phigemmShutdown()
+#endif
+     call deAllocateDeviceMemory()
+#endif
      !
      ! ... save the diagonal of input S (it will be overwritten)
      !
@@ -155,17 +165,6 @@ SUBROUTINE cdiaghg( n, m, h, s, ldh, e, v )
         !
         !lwork = -1
         !
-        !CALL ZHEGVX( 1, 'V', 'I', 'U', n, h, ldh, s, ldh, &
-        !             0.D0, 0.D0, 1, m, abstol, mm, e, v, ldh, &
-        !             work, lwork, rwork, iwork, ifail, info )
-        !
-        !lwork = INT( work(1) ) + 1
-        !
-        !IF( lwork > SIZE( work ) ) THEN
-        !   DEALLOCATE( work )
-        !   ALLOCATE( work( lwork ) )
-        !END IF
-        !
 #if defined(__CUDA) && defined(__MAGMA)
         !
         CALL  magmaf_zhegvx( 1, 'V', 'I', 'U', n, h, ldh, s, ldh, &
@@ -223,8 +222,30 @@ SUBROUTINE cdiaghg( n, m, h, s, ldh, e, v )
   !
   ! ... broadcast eigenvectors and eigenvalues to all other processors
   !
+  ! ... if OpenMP is enabled then the GPU memory is re-allocated in
+  ! ... parallel during the data broadcasting
+  !
+!$OMP PARALLEL DEFAULT(SHARED)
+  !
+!$OMP MASTER
   CALL mp_bcast( e, root_bgrp, intra_bgrp_comm )
   CALL mp_bcast( v, root_bgrp, intra_bgrp_comm )
+!$OMP END MASTER
+  !
+#if defined(__CUDA) && defined(__MAGMA)
+!$OMP SECTIONS
+!$OMP SECTION
+  IF ( me_bgrp == root_bgrp ) THEN
+     ! Reinizialize the GPU memory
+     call allocateDeviceMemory()
+#if defined(__PHIGEMM)
+     call initPhigemm()
+#endif
+  END IF
+!$OMP END SECTIONS
+#endif
+  !
+!$OMP END PARALLEL
   !
   CALL stop_clock( 'cdiaghg' )
   !

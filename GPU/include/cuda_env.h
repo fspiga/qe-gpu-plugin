@@ -71,9 +71,7 @@
 
 #endif
 
-#if defined(__MAGMA) && !defined(__MAGMA_HACK)
-#define __SCALING_MEM_FACTOR__ 0.75
-#elif defined(__CUDA_NOALLOC)
+#if defined(__CUDA_NOALLOC)
 #define __SCALING_MEM_FACTOR__ 0.99
 #else
 #define __SCALING_MEM_FACTOR__ 0.95

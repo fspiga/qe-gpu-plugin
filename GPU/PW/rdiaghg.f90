@@ -60,21 +60,20 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
   !
   CALL start_clock( 'rdiaghg' )
   !
-#if defined(__CUDA_DEBUG)
-  WRITE(*,*) "[RDIAGHG] n = ", n
-#endif
-  !
-#if defined(__CUDA) && defined(__MAGMA) && defined(__MAGMA_HACK)
-  ! HACK: Until GPU interfaces for DSYGVD will be released, we need
-  ! to release all the GPU memory preallocated and leave MAGMA to
-  ! use as much memory as possible otherwise, for large system, the
-  ! library will fails. *This is a temporary work-around* (NdFilippo)
-  call CloseCudaEnv()
-#endif
   ! ... only the first processor diagonalize the matrix
   !
   IF ( me_bgrp == root_bgrp ) THEN
      !
+#if defined(__CUDA_DEBUG)
+     WRITE(*,*) "[RDIAGHG] Compute rdiaghg, n = ", n
+#endif
+     !
+#if defined(__CUDA) && defined(__MAGMA)
+#if defined(__PHIGEMM)
+     call phigemmShutdown()
+#endif
+     call deAllocateDeviceMemory()
+#endif
      ! ... save the diagonal of input S (it will be overwritten)
      !
      ALLOCATE( sdiag( n ) )
@@ -230,16 +229,30 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
   !
   ! ... broadcast eigenvectors and eigenvalues to all other processors
   !
+  ! ... if OpenMP is enabled then the GPU memory is re-allocated in
+  ! ... parallel during the data broadcasting
+  !
+!$OMP PARALLEL DEFAULT(SHARED)
+  !
+!$OMP MASTER
   CALL mp_bcast( e, root_bgrp, intra_bgrp_comm )
   CALL mp_bcast( v, root_bgrp, intra_bgrp_comm )
+!$OMP END MASTER
   !
-#if defined(__CUDA) && defined(__MAGMA) && defined(__MAGMA_HACK)
-  ! HACK: then, after the diagonalization, the memory has to be
-  ! reallocated. *This is a temporary work-around* (NdFilippo)
-  CALL preallocateDeviceMemory();
-  !
-  CALL initPhigemm();
+#if defined(__CUDA) && defined(__MAGMA)
+!$OMP SECTIONS
+!$OMP SECTION
+  IF ( me_bgrp == root_bgrp ) THEN
+     ! Reinizialize the GPU memory
+     call allocateDeviceMemory()
+#if defined(__PHIGEMM)
+     call initPhigemm()
 #endif
+  END IF
+!$OMP END SECTIONS
+#endif
+  !
+!$OMP END PARALLEL
   !
   CALL stop_clock( 'rdiaghg' )
   !
