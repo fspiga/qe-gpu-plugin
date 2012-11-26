@@ -79,7 +79,7 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
   CALL start_clock( 'c_bands' )
   !
 #if defined(__CUDA_PRELOAD_2)
-  buff_igk_len = 4
+  buff_igk_len = 3
   ALLOCATE ( buff_igk(npwx, buff_igk_len), STAT=ierr )
   IF( ierr /= 0 ) &
      CALL errore( 'c_bands ',' cannot allocate buff_igk ', ABS(ierr) )
@@ -127,15 +127,18 @@ SUBROUTINE c_bands( iter, ik_, dr2 )
      !
 #if defined(__CUDA_PRELOAD_2)
      ! ... Reads the list of indices k+G <-> G of this k point (BUFFERED)
-     IF (( .NOT. gamma_only ) .AND. ( nks > 1 )) THEN
-         IF ( (MOD(current_k,buff_igk_len).EQ.1) .AND. (current_k + buff_igk_len < nks) ) THEN
+     IF (( .NOT. gamma_only ) .AND. ( nks .GT. 1 )) THEN
+         IF ( (MOD(current_k,buff_igk_len).EQ.1) .AND. (current_k + buff_igk_len - 1 .LE. nks ) ) THEN
+#if defined(__CUDA_DEBUG)
+             WRITE(*,*) "[C_BANDS] refresh k-point igk pool, current_k=", current_k
+#endif
              DO back_counter = 1, buff_igk_len
                     READ( iunigk ) buff_igk(:, back_counter)
              END DO
              back_counter = buff_igk_len
          END IF
          !
-         IF (back_counter > 0 ) THEN
+         IF (back_counter .GT. 0 ) THEN
             back_counter = back_counter - 1
             igk (:) = buff_igk(:,buff_igk_len - back_counter )
          ELSE

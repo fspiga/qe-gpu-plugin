@@ -15,7 +15,9 @@ h_psi.o \
 rdiaghg.o \
 cegterg.o \
 regterg.o \
-c_bands.o
+c_bands.o \
+data_structure.o
+
 
 PWOBJS = \
 ../../PW/src/a2fmod.o \
@@ -55,7 +57,6 @@ PWOBJS = \
 ../../PW/src/compute_ux.o \
 ../../PW/src/coset.o \
 ../../PW/src/d_matrix.o \
-../../PW/src/data_structure.o \
 ../../PW/src/data_structure_custom.o \
 ../../PW/src/deriv_drhoc.o \
 ../../PW/src/divide_class.o \
@@ -235,14 +236,15 @@ vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
 newd_cuda.o
 
-# Optimized, experimental (opt : -D__CUDA_NOALLOC optional)
-#                         (opt2: -D__CUDAPRELOAD -D__CUDA_NOALLOC needed)
+# Optimized, experimental (opt : -D__CUDA_NOALLOC needed)
+#                         (opt2: -D__CUDA_PRELOAD -D__CUDA_NOALLOC needed)
 # CUGPUOBJS = \
 addusdens_cuda.o \
 newd_cuda.o \
 vloc_psi_k_cuda_opt2.o \
 vloc_psi_gamma_cuda_opt2.o \
-nls_precompute.o
+nls_precompute.o \
+fft_plans_mgn.o
 
 QEMODS=../Modules/libqemodgpu.a
 

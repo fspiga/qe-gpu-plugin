@@ -124,7 +124,7 @@ __global__ void kernel_save_hpsi(  const  int * __restrict psic_index_nls, const
 
 extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, int * ptr_nr2s, int * ptr_nr3s, int * ptr_n, int * ptr_m, void * psi, double * v, void * hpsi, int * igk, int * nls, int * nlsm, int * ptr_ngms, int * ptr_ngm)
 {
-	cufftHandle p_global;
+//	cufftHandle p_global;
 
     void * psic_D, * psi_D, * hpsi_D; // cufftDoubleComplex*
 	void * v_D; // double*
@@ -248,8 +248,8 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	qecudaSafeCall( cudaMemcpy( hpsi_D, hpsi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
 
-	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
-    qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
+//	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
+    qecheck_cufft_call( cufftSetStream(qeCudaFFT_dffts,qecudaStreams[ 0 ]) );
 
 	for( ibnd =  0; ibnd < m_fake; ibnd = ibnd + 2 )
 	{
@@ -259,13 +259,13 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 		kernel_init_psic<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PSIC__ >>>( (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, (double *) psi_D, (double *) psic_D, n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
-		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
+		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
 
 		blocksPerGrid = ( (nrxxs * 2) + __CUDA_TxB_VLOCPSI_PROD__  - 1) / __CUDA_TxB_VLOCPSI_PROD__ ;
 		kernel_vec_prod<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PROD__ >>>( (double *) psic_D, (double *) v_D , nrxxs );
 		qecudaGetLastError("kernel launch failure");
 
-		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_FORWARD ) );
+		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_FORWARD ) );
 
 		tscale = 1.0 / (double) ( size_psic );
 		cublasZdscal(qecudaHandles[ 0 ] , size_psic, &tscale, (cufftDoubleComplex *) psic_D, 1);
@@ -278,7 +278,7 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	qecudaSafeCall( cudaMemcpy( hpsi, (cufftDoubleComplex *) hpsi_D, sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyDeviceToHost ) );
 
-	qecheck_cufft_call( cufftDestroy(p_global) );
+//	qecheck_cufft_call( cufftDestroy(p_global) );
 
 #if defined(__CUDA_NOALLOC)
 	/* Deallocating... */

@@ -71,7 +71,7 @@ __global__ void kernel_save_hpsi_k( const  int * __restrict psic_index_nls, doub
 
 extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, int * ptr_nr2s, int * ptr_nr3s, int * ptr_n, int * ptr_m, cufftDoubleComplex * psi, double * v, fftw_complex * hpsi, int * igk, int * nls, int * ptr_ngms)
 {
-	cufftHandle p_global;
+//	cufftHandle p_global;
 	fftw_complex * psic = NULL;
 
 	void * psic_D, * psi_D; // cufftDoubleComplex *
@@ -167,8 +167,8 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	printf("[VLOC_PSI_K_OPT] psic_index_nls_D computed\n"); fflush(stdout);
 #endif
 
-	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
-    qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
+//	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
+    qecheck_cufft_call( cufftSetStream(qeCudaFFT_dffts,qecudaStreams[ 0 ]) );
 
 	qecudaSafeCall( cudaHostAlloc ( (void**) &psic, size_psic * sizeof( fftw_complex ), cudaHostAllocPortable ) );
 
@@ -182,7 +182,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		kernel_init_psic_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (int *) psic_index_nls_D, (double *) psi_D, (double *) psic_D, n, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
-		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
+		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
 
 		blocksPerGrid = ( (nrxxs * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 		kernel_vec_prod_k<<<blocksPerGrid, __CUDA_THREADPERBLOCK__ >>>( (double *) psic_D, (double *) v_D , nrxxs );
@@ -199,7 +199,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 			}
 		}
 		
-		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *)psic_D, CUFFT_FORWARD ) );
+		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *)psic_D, CUFFT_FORWARD ) );
 
 		tscale = 1.0 / (double) ( size_psic );
 
@@ -220,7 +220,7 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 		hpsi[ j + ( ( m - 1 ) * lda ) ][1] += psic[ nls [ igk[ j ] - 1  ] - 1 ][1];
 	}
 
-	qecheck_cufft_call( cufftDestroy(p_global) );
+//	qecheck_cufft_call( cufftDestroy(p_global) );
 
 #if defined(__CUDA_NOALLOC)
 	/* Deallocating... */
