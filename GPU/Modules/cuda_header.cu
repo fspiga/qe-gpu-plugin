@@ -13,10 +13,36 @@
 
 #include "cuda_env.h"
 
-void print_cuda_header_(int lRank)
+void print_cuda_header_()
 {
-	// Print information on screen
+	// Print GPU memory allocation information on stdout
+#if defined(__CUDA_DEBUG)
+	int i;
+	size_t free, total;
 
+	for (i = 0; i < ngpus_per_process; i++) {
+
+		if ( cudaSetDevice(qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaSetDevice(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+
+		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
+
+#if defined(__PARA)
+		printf("[GPU %d - rank: %d] Allocated: %lu, Free: %lu, Total: %lu)\n", qe_gpu_bonded[i], (int) lRank, (unsigned long)qe_gpu_mem_tot[i], (unsigned long)free, (unsigned long)total);
+		fflush(stdout);
+#else
+		printf("[GPU %d] Allocated: %lu, , Free: %lu, Total: %lu\n", qe_gpu_bonded[i], (unsigned long)qe_gpu_mem_tot[i], (unsigned long)free, (unsigned long)total);
+		fflush(stdout);
+#endif
+	}
+#if defined(__PARA)
+	mybarrier_();
+#endif
+#endif
+
+	// Print general information on stdout
 	#if defined(__PARA)
 	if (lRank == 0) {	
 #endif
@@ -45,7 +71,7 @@ void print_cuda_header_(int lRank)
 #if defined(__PARA) && defined(__USE_3D_FFT)
 	printf(", USE_3D_FFT : Y"); fflush(stdout);
 #endif
-	printf(")\n\n"); fflush(stdout);
+	printf(")\n"); fflush(stdout);
 #endif
 
 #if defined(__CUDA_DEBUG)
