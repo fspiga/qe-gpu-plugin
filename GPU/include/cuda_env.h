@@ -17,6 +17,8 @@
 #ifndef __QE_CUDA_ENVIRONMENT_H
 #define __QE_CUDA_ENVIRONMENT_H
 
+#define qe_compute_num_blocks(N, THREADS) N / THREADS + (N % THREADS == 0 ? 0 : 1 )
+
 #if defined(__GPU_NVIDIA_20) || defined(__GPU_NVIDIA_21)
 
 #define __CUDA_THREADPERBLOCK__ 512
@@ -69,7 +71,7 @@
 
 #endif
 
-#if defined(__MAGMA)
+#if defined(__MAGMA) && !defined(__MAGMA_HACK)
 #define __SCALING_MEM_FACTOR__ 0.75
 #elif defined(__CUDA_NOALLOC)
 #define __SCALING_MEM_FACTOR__ 0.99
@@ -106,13 +108,16 @@ extern long ngpus_used;
 extern long ngpus_per_process;
 extern long procs_per_gpu;
 
+extern long lRank;
+
 extern "C" size_t initCudaEnv();
 extern "C" void closeCudaEnv();
-extern "C" void preallocateDeviceMemory(int);
-extern "C" void initPhigemm(int);
+extern "C" void deAllocateDeviceMemory();
+extern "C" void allocateDeviceMemory();
+extern "C" void initPhigemm();
 
 // Auxiliary functions
-void print_cuda_header_(int lRank);
+void print_cuda_header_();
 extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
 extern "C" void mybarrier_();
 

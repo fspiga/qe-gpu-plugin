@@ -49,6 +49,7 @@ long ngpus_used;
 long ngpus_per_process;
 long procs_per_gpu;
 
+long lRank;
 
 #if defined(__TIMELOG)
 double cuda_cclock(void)
@@ -67,7 +68,7 @@ double cuda_cclock(void)
 #endif
 
 
-void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
+void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 	int lNumDevicesThisNode = 0;
 	int i;
@@ -150,24 +151,27 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode, int lRank){
 		 */
 		qe_gpu_bonded[i] = i;
 	}
-
 #endif
+
+	return;
 }
 
 #if defined(__PHIGEMM)
-extern "C" void initphigemm_(int lRank){
-	/* Compatibility with CUDA 4.x (latest phiGEMM): */
+extern "C" void initphigemm_(){
 
 #if defined(__CUDA_NOALLOC)
-//	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
-	phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, lRank);
+//	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_unused, (int *)qe_gpu_bonded, (int) lRank);
+	phiGemmInit(ngpus_per_process , NULL, NULL, (int *)qe_gpu_bonded, (int) lRank);
 #else
-	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_tot, (int *)qe_gpu_bonded, lRank);
+	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_unused, (int *)qe_gpu_bonded, (int)lRank);
 #endif
+
+	return;
 }
 #endif
 
-extern "C" void preallocatedevicememory_(int lRank){
+
+void detectdevicememory_(){
 
 	int ierr = 0;
 	int i;
@@ -208,58 +212,15 @@ extern "C" void preallocatedevicememory_(int lRank){
 
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
 
-#if defined(__CUDA_DEBUG)
-#if defined(__PARA)
-		printf("[GPU %d - rank: %d] before: %lu (total: %lu)\n", qe_gpu_bonded[i], lRank, (unsigned long)free, (unsigned long)total); fflush(stdout);
-#else
-		printf("[GPU %d] before: %lu (total: %lu)\n", qe_gpu_bonded[i], (unsigned long)free, (unsigned long)total); fflush(stdout);
-#endif
-#endif
-
 		qe_gpu_mem_tot[i] = (size_t) ((free * __SCALING_MEM_FACTOR__ ) / procs_per_gpu);
 		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
 
-
-#if !defined(__CUDA_NOALLOC)
-		/* Do real allocation */
-		ierr = cudaMalloc ( (void**) &(qe_dev_scratch[i]), (size_t) qe_gpu_mem_tot[i] );
-		if ( ierr != cudaSuccess) {
-			fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
-			exit(EXIT_FAILURE);
-		}
-
-		qe_dev_zero_scratch[i] = qe_dev_scratch[i];
-#endif
-
-#if defined(__PARA) && defined(__CUDA_DEBUG)
 	}
 
-	mybarrier_();
-
-	for (i = 0; i < ngpus_per_process; i++) {
-#endif
-
-#if defined(__CUDA_DEBUG)
-#if defined(__PARA)
-		printf("[GPU %d - rank: %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], lRank, (unsigned long)free, (unsigned long)total);
-		fflush(stdout);
-#else
-		printf("[GPU %d] after: %lu (total: %lu)\n", qe_gpu_bonded[i], (unsigned long)free, (unsigned long)total);
-		fflush(stdout);
-#endif
-#endif
-	}
-	
-#if defined(__PARA)
-	// Is this necessary?
-	mybarrier_();
-#endif
-
-	// Print CUDA header
-	print_cuda_header_(lRank);
+	return;
 }
 
-extern "C"  void initStreams_()
+void initStreams_()
 {
 	int ierr, i;
 
@@ -273,44 +234,56 @@ extern "C"  void initStreams_()
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	return;
 }
 
-extern "C"  void initcudaenv_()
-{
-	// In case of serial (default)
-	int lRankThisNode = 0, lSizeThisNode = 1, lRank = -1;
+extern "C" void allocatedevicememory_(){
 
-#if defined(__PARA)
-	paralleldetect_(&lRankThisNode, &lSizeThisNode, &lRank);
-#endif
+	int ierr, i;
 
-	gpubinding_(lRankThisNode, lSizeThisNode, lRank);
+	for (i = 0; i < ngpus_per_process; i++) {
+		if ( cudaSetDevice(qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaSetDevice(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
 
-	preallocatedevicememory_(lRank);
+		/* Do real allocation */
+		ierr = cudaMalloc ( (void**) &(qe_dev_scratch[i]), (size_t) qe_gpu_mem_unused[i] );
+		if ( ierr != cudaSuccess) {
+			fprintf( stderr, "\nError in memory allocation, program will be terminated (%d)!!! Bye...\n\n", ierr );
+			exit(EXIT_FAILURE);
+		}
 
-#if defined(__PHIGEMM)
-	initphigemm_(lRank);
-#endif
-
-	initStreams_();
-}
-
-void deallocatedevicememory_(){
-
-	int ierr = 0;
-
-	// Assumed 1 GPU per process...
-	ierr = cudaFree ( qe_dev_scratch[0] );
-
-	if(ierr != cudaSuccess) {
-		fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
-		exit(EXIT_FAILURE);
+		qe_dev_zero_scratch[i] = qe_dev_scratch[i];
 	}
 
 	return;
 }
 
-extern "C"  void destroyStreams_()
+extern "C" void deallocatedevicememory_(){
+
+	int ierr, i;
+
+	for (i = 0; i < ngpus_per_process; i++) {
+
+		/* query the real free memory, taking into account the "stack" */
+		if ( cudaSetDevice(qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaSetDevice(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+
+		ierr = cudaFree ( qe_dev_scratch[i] );
+		if(ierr != cudaSuccess) {
+			fprintf( stderr, "\nError in memory release, program will be terminated!!! Bye...\n\n" );
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	return;
+}
+
+void destroyStreams_()
 {
 	int ierr, i;
 
@@ -324,6 +297,38 @@ extern "C"  void destroyStreams_()
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	return;
+}
+
+extern "C" void initcudaenv_()
+{
+	// In case of serial (default)
+	int lRankThisNode = 0, lSizeThisNode = 1, lRank_local = -1;
+
+#if defined(__PARA)
+	paralleldetect_(&lRankThisNode, &lSizeThisNode, &lRank_local);
+#endif
+	lRank = lRank_local;
+
+	gpubinding_(lRankThisNode, lSizeThisNode);
+
+	detectdevicememory_();
+
+#if !defined(__CUDA_NOALLOC)
+	allocatedevicememory_();
+#endif
+
+#if defined(__PHIGEMM)
+	initphigemm_();
+#endif
+
+	initStreams_();
+
+	// Print CUDA header
+	print_cuda_header_();
+
+	return;
 }
 
 extern "C" void closecudaenv_()
@@ -338,4 +343,5 @@ extern "C" void closecudaenv_()
 	phiGemmShutdown();
 #endif
 
+	return;
 }
