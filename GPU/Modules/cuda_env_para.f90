@@ -32,11 +32,14 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
     hosts(lRank)=hostname(1:namelength)
 
+
 !    do i=0, nProcs -1
-!        call mpi_bcast(hosts(i),MPI_MAX_PROCESSOR_NAME ,mpi_character ,i, mpi_comm_world ,ierr)
+!     call mpi_bcast(hosts(i),MPI_MAX_PROCESSOR_NAME ,&
+!                       mpi_character ,i, mpi_comm_world ,ierr)
 !    enddo
 
-    CALL MPI_Allgather(hostname, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, hosts, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, mpi_comm_world, ierr)
+    CALL mpi_allgather(hostname, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, &
+            hosts, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, mpi_comm_world, ierr)
 
     allocate( marked_hosts(0:nProcs -1) )
 
