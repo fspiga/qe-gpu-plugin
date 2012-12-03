@@ -36,6 +36,11 @@ Rebuild version: 1
 The code has always been tested on a 64bit systems.
 
 
+# Features not (yet) GPU accelerated
+- iterative diagonalization of a complex hermitian matrix through 
+  preconditioned conjugate gradient algorithm (rcgdiagg, ccgdiagg)
+- noncollinear case 
+
 # How to compile 
 
 (...after checkout the entire QE repository from SVN or 
