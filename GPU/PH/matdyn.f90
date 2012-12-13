@@ -146,7 +146,6 @@ PROGRAM matdyn
   ! variables *_blk refer to the original cell, other variables
   ! to the (super)cell (which may coincide with the original cell)
   !
-  INTEGER:: nax, nax_blk
   INTEGER, PARAMETER:: ntypx=10, nrwsx=200
   REAL(DP), PARAMETER :: eps=1.0d-6
   INTEGER :: nr1, nr2, nr3, nsc, nk1, nk2, nk3, ntetra, ibrav
@@ -336,8 +335,6 @@ PROGRAM matdyn
      ! read/generate atomic positions of the (super)cell
      !
      nat = nat_blk * nsc
-     nax = nat
-     nax_blk = nat_blk
      !
      ALLOCATE ( tau (3, nat), ityp(nat), itau_blk(nat) )
      !
@@ -470,8 +467,15 @@ PROGRAM matdyn
         CALL setupmat (q(1,n), dyn, nat, at, bg, tau, itau_blk, nsc, alat, &
              dyn_blk, nat_blk, at_blk, bg_blk, tau_blk, omega_blk,  &
              epsil, zeu, frc, nr1,nr2,nr3, has_zstar, rws, nrws)
-
-        IF (q(1,n)==0.d0 .AND. q(2,n)==0.d0 .AND. q(3,n)==0.d0) THEN
+        !
+        ! the following lines recognize as q=0 all q=G reciprocal latt. vectors
+        !
+        qhat(1) = q(1,n)*at(1,1)+q(2,n)*at(2,1)+q(3,n)*at(3,1)
+        qhat(2) = q(1,n)*at(1,2)+q(2,n)*at(2,2)+q(3,n)*at(3,2)
+        qhat(3) = q(1,n)*at(1,3)+q(2,n)*at(2,3)+q(3,n)*at(3,3)
+        IF ( ABS( qhat(1) - NINT (qhat(1) ) ) <= eps .AND. &
+             ABS( qhat(2) - NINT (qhat(2) ) ) <= eps .AND. &
+             ABS( qhat(3) - NINT (qhat(3) ) ) <= eps ) THEN
            !
            ! q = 0 : we need the direction q => 0 for the non-analytic part
            !
@@ -561,7 +565,7 @@ PROGRAM matdyn
         endif
         !
 
-        IF (ionode.and.iout.ne.0) CALL writemodes(nax,nat,q(1,n),w2(1,n),z,iout)
+        IF (ionode.and.iout.ne.0) CALL writemodes(nat,q(1,n),w2(1,n),z,iout)
 
         !
      END DO  !nq
@@ -641,7 +645,7 @@ PROGRAM matdyn
            !
            !WRITE (2, '(F15.10,F15.2,F15.6,F20.5)') &
            !     E, E*RY_TO_CMM1, E*RY_TO_THZ, 0.5d0*DOSofE(1)
-           IF (ionode) WRITE (2, '(E12.4,E12.4)') E, 0.5d0*DOSofE(1)
+           IF (ionode) WRITE (2, '(ES12.4,ES12.4)') E, 0.5d0*DOSofE(1)
         END DO
         IF (ionode) CLOSE(unit=2)
      END IF  !dos

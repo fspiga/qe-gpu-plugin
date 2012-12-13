@@ -121,6 +121,8 @@ PROGRAM phonon
         !
      END IF
      !
+     call rotate_dvscf_star(iq)
+     !
      !  electron-phonon interaction
      !
      IF ( elph ) THEN

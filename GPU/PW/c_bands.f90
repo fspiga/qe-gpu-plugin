@@ -268,6 +268,7 @@ SUBROUTINE diag_bands( iter, ik, avg_iter )
                                    allocate_bec_type, deallocate_bec_type
   USE klist,                ONLY : nks
   USE mp_global,            ONLY : nproc_bgrp, intra_bgrp_comm
+  USE mp,                   ONLY : mp_sum
   !
   IMPLICIT NONE
   !
@@ -281,7 +282,7 @@ SUBROUTINE diag_bands( iter, ik, avg_iter )
   ! number of iterations in Davidson
   ! number or repeated call to diagonalization in case of non convergence
   ! number of notconverged elements
-  INTEGER :: ierr
+  INTEGER :: ierr, ipw
   !
   LOGICAL :: lrot
   ! .TRUE. if the wfc have already be rotated
@@ -296,7 +297,9 @@ SUBROUTINE diag_bands( iter, ik, avg_iter )
   !
   ! ... allocate space for <beta_i|psi_j> - used in h_psi and s_psi
   !
-  IF ( nbndx > npwx*nproc_bgrp ) &
+  ipw=npwx
+  CALL mp_sum(ipw, intra_bgrp_comm)
+  IF ( nbndx > ipw ) &
      CALL errore ( 'diag_bands', 'too many bands, or too few plane waves',1)
   !
   CALL allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )
