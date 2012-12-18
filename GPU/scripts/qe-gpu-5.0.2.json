@@ -2,7 +2,6 @@
   "date" : "2012-12-13 08:22:26 +0100",
   "revision" : "9704", 
   "filenames" : { 
-      "./GPU/clib/fft_stick.c" : { "original" : "./clib/fft_stick.c", "hash" : "d7249b45a5ea404065779bd66de95ea1"},
       "./GPU/CPV/cplib.f90" : { "original" : "./CPV/src/cplib.f90", "hash" : "2a7cd7611545d3b76dd0b03fff128d16"},
       "./GPU/CPV/cprstart.f90" : { "original" : "./CPV/src/cprstart.f90", "hash" : "f8a64cb5d565ed00d7e1e4c7a0ded9c9"},
       "./GPU/CPV/fpmdpp.f90" : { "original" : "./CPV/src/fpmdpp.f90", "hash" : "3c85c41a286f558248174b5a8507fe19"},
@@ -15,6 +14,8 @@
       "./GPU/install/configure.msg.in" : { "original" : "./install/configure.msg.in", "hash" : "bfee6d88acd5707b87851a22c313ea4d"},
       "./GPU/install/Makefile.gpu.in" : { "original" : "./Makefile", "hash" : "2613ef973def4057182c202a947768cb"},
       "./GPU/install/make.sys.in" : { "original" : "./install/make.sys.in", "hash" : "50fba07e25839cf006f833cc15ef2882"},
+      "./GPU/include/fftw.h" : { "original" : "./clib/fftw.h", "hash" : "e4b78a62e549ae1b8fa9ae979d858575"},
+      "./GPU/Modules/fft_stick_cuda.cu" : { "original" : "./clib/fft_stick.c", "hash" : "d7249b45a5ea404065779bd66de95ea1"},
       "./GPU/Modules/fft_scalar.f90" : { "original" : "./Modules/fft_scalar.f90", "hash" : "2c23e8cb4fa912c065f7de0dd1e6e64b"},
       "./GPU/Modules/Makefile" : { "original" : "./Modules/Makefile", "hash" : "522920a10c2321f050e3a47f1c23d227"},
       "./GPU/Modules/mp.f90" : { "original" : "./Modules/mp.f90", "hash" : "cbd09cd2bc526477f10ebb966e7c288a"},
