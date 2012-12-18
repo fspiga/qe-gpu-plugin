@@ -109,7 +109,7 @@ all : libqemodgpu.a
 #	- ( if test -x ../install/update_version ; then \
 #                       ../install/update_version; fi )
 
-libqemodgpu.a: $(GPUMODULES) $(CUGPUOBJS)
+libqemodgpu.a: $(CUGPUOBJS) $(GPUMODULES)
 	$(AR) $(ARFLAGS) $@ $? $(MODULES)     
 	$(RANLIB) $@    
 

@@ -15,6 +15,9 @@
 ! Nicolas Lacorne, Ivan Girotto, Filippo Spiga - Last update Dic 2012      !
 !--------------------------------------------------------------------------!
 
+#define CUFFT_FORWARD_EQUIVALENT -1
+#define CUFFT_INVERSE_EQUIVALENT  1
+
 #include "../../include/fft_defs.h"
 !=----------------------------------------------------------------------=!
    MODULE fft_scalar
@@ -290,12 +293,14 @@
 
 #if defined(__CUDA) && defined(__PARA) && defined(__CUDA_SCALAR_DRV)
 
+       WRITE (*,*) "CALLED 1D"
+
      IF (isign < 0) THEN
-        CALL FFT_Z_STICK_CUDA(fw_planz( ip), c(1), ldz, nsl, CUFFT_FORWARD)
+        CALL FFT_Z_STICK_CUDA(fw_planz( ip), c(1), ldz, nsl, CUFFT_FORWARD_EQUIVALENT)
         tscale = 1.0_DP / nz
         cout( 1 : ldz * nsl ) = c( 1 : ldz * nsl ) * tscale
      ELSE IF (isign > 0) THEN
-        CALL FFT_Z_STICK_CUDA(bw_planz( ip), c(1), ldz, nsl, CUFFT_INVERSE)
+        CALL FFT_Z_STICK_CUDA(bw_planz( ip), c(1), ldz, nsl, CUFFT_INVERSE_EQUIVALENT)
         cout( 1 : ldz * nsl ) = c( 1 : ldz * nsl )
      END IF
 

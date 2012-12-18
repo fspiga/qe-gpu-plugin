@@ -8,12 +8,12 @@
  *
  */
 
-#include "c_defs.h"
+#include "../../include/c_defs.h"
 #include "fftw.h"
 
 #include "cuda_env.h"
 
-void check_cufftplan_call(  cufftResult cufft_err, char *origin ){
+extern "C" void check_cufftplan_call(  cufftResult cufft_err, char *origin ){
   switch( cufft_err ){
   case CUFFT_ALLOC_FAILED :
     fprintf( stderr, "\n[%s] CUFFT_ALLOC_FAILED! Program exits... \n", origin );
@@ -50,7 +50,7 @@ void check_cufftplan_call(  cufftResult cufft_err, char *origin ){
   }
 }
 
-void check_cufft_call(  cufftResult cufft_err, char *origin ){
+extern "C" void check_cufft_call(  cufftResult cufft_err, char *origin ){
   switch( cufft_err ){
   case CUFFT_INVALID_PLAN :
     fprintf( stderr, "\n[%s] The plan parameter is not a valid handle! Program exits... \n", origin );
@@ -98,7 +98,7 @@ void check_cufft_call(  cufftResult cufft_err, char *origin ){
 }
 
 #define __FUNCT__ "fft_stick::create_plan_1d_cuda"
-int F77_FUNC_ (create_plan_1d_cuda, CREATE_PLAN_1D_CUDA)(cufftHandle *plan, int *nx, int *batch)
+extern "C" int F77_FUNC_ (create_plan_1d_cuda, CREATE_PLAN_1D_CUDA)(cufftHandle *plan, int *nx, int *batch)
 {
 	check_cufftplan_call( cufftPlan1d( plan, (* nx) , CUFFT_Z2Z, (* batch) ), __FUNCT__ );
   
@@ -119,7 +119,7 @@ int F77_FUNC_ (create_plan_1d_many_cuda, CREATE_PLAN_1D_MANY_CUDA)(cufftHandle *
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::fft_z_stick_cuda"
-int F77_FUNC_ (fft_z_stick_cuda, FFT_Z_STICK_CUDA)
+extern "C" int F77_FUNC_ (fft_z_stick_cuda, FFT_Z_STICK_CUDA)
    (cufftHandle * plan, FFTW_COMPLEX *zstick, int *ldz, int *nstick_l, int idir)
 {
    int howmany, idist;
@@ -144,7 +144,7 @@ int F77_FUNC_ (fft_z_stick_cuda, FFT_Z_STICK_CUDA)
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::destroy_plan_1d_cuda"
-int F77_FUNC_ (destroy_plan_1d_cuda, DESTROY_PLAN_1D_CUDA)(cufftHandle * plan)
+extern "C" int F77_FUNC_ (destroy_plan_1d_cuda, DESTROY_PLAN_1D_CUDA)(cufftHandle * plan)
 {
   if ( *plan != NULL )
 	  check_cufft_call( cufftDestroy( (* plan) ), __FUNCT__ );
@@ -155,7 +155,7 @@ int F77_FUNC_ (destroy_plan_1d_cuda, DESTROY_PLAN_1D_CUDA)(cufftHandle * plan)
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::destroy_plan_3d_cuda"
-int F77_FUNC_ (destroy_plan_3d_cuda, DESTROY_PLAN_3D_CUDA)(cufftHandle * plan)
+extern "C" int F77_FUNC_ (destroy_plan_3d_cuda, DESTROY_PLAN_3D_CUDA)(cufftHandle * plan)
 {
   if ( *plan != NULL )
 	  check_cufft_call( cufftDestroy( (* plan) ), __FUNCT__ );
@@ -167,7 +167,7 @@ int F77_FUNC_ (destroy_plan_3d_cuda, DESTROY_PLAN_3D_CUDA)(cufftHandle * plan)
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::create_plan_3d_cuda"
-int F77_FUNC_ (create_plan_3d_cuda, CREATE_PLAN_3D_CUDA)(cufftHandle *plan, int *nx, int *ny, int *nz )
+extern "C" int F77_FUNC_ (create_plan_3d_cuda, CREATE_PLAN_3D_CUDA)(cufftHandle *plan, int *nx, int *ny, int *nz )
 {
   check_cufft_call(cufftPlan3d( plan, (* nz) , (* ny) , (* nx) , CUFFT_Z2Z ), __FUNCT__ );
 
@@ -176,7 +176,7 @@ int F77_FUNC_ (create_plan_3d_cuda, CREATE_PLAN_3D_CUDA)(cufftHandle *plan, int 
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::fftw_inplace_drv_1d_cuda"
-int F77_FUNC_ ( fftw_inplace_drv_1d_cuda, FFTW_INPLACE_DRV_1D_CUDA )
+extern "C" int F77_FUNC_ ( fftw_inplace_drv_1d_cuda, FFTW_INPLACE_DRV_1D_CUDA )
      (cufftHandle *plan, long int *a, int * direction)
 {
 	check_cufft_call( cufftExecZ2Z( (* plan), (cufftDoubleComplex *) (* a), (cufftDoubleComplex *) (* a), (* direction) ), __FUNCT__ );
@@ -186,7 +186,7 @@ int F77_FUNC_ ( fftw_inplace_drv_1d_cuda, FFTW_INPLACE_DRV_1D_CUDA )
 #undef __FUNCT__
 
 #define __FUNCT__ "fft_stick::fftw_inplace_drv_3d_cuda"
-int F77_FUNC_ ( fftw_inplace_drv_3d_cuda, FFTW_INPLACE_DRV_3D_CUDA )
+extern "C" int F77_FUNC_ ( fftw_inplace_drv_3d_cuda, FFTW_INPLACE_DRV_3D_CUDA )
      (cufftHandle *plan, long int *a, int * direction)
 {
   check_cufft_call( cufftExecZ2Z( (* plan), (cufftDoubleComplex *) (* a), (cufftDoubleComplex *) (* a), (* direction) ), __FUNCT__);
