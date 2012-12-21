@@ -131,6 +131,10 @@ SUBROUTINE cegterg( npw, npwx, nvec, nvecx, npol, evc, ethr, &
   INTEGER (C_SIZE_T) :: allocation_size
 #endif
   !
+#if defined(__CUDA_DEBUG)
+  WRITE(*,*) "[CEGTERG] Enter"
+#endif
+  !
   CALL start_clock( 'cegterg' )
   !
   IF ( nvec > nvecx / 2 ) CALL errore( 'cegterg', 'nvecx is too small', 1 )
@@ -305,13 +309,47 @@ SUBROUTINE cegterg( npw, npwx, nvec, nvecx, npol, evc, ethr, &
      !
      IF ( uspp ) THEN
         !
+        
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL ZGEMV( 'N', kdim, nbase, ONE, spsi, kdmx, vc, 1, ZERO, &
+                     psi(1,1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, spsi, &
+               kdmx, vc, nvecx, ZERO, psi(1,1,nb1), kdmx )
+
+           !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
         CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, spsi, &
                     kdmx, vc, nvecx, ZERO, psi(1,1,nb1), kdmx )
+#endif
         !     
      ELSE
         !
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL ZGEMV( 'N', kdim, nbase, ONE, psi, kdmx, vc, 1, ZERO, &
+                     psi(1,1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, psi, &
+                  kdmx, vc, nvecx, ZERO, psi(1,1,nb1), kdmx )
+           !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
         CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, psi, &
-                    kdmx, vc, nvecx, ZERO, psi(1,1,nb1), kdmx )
+                  kdmx, vc, nvecx, ZERO, psi(1,1,nb1), kdmx )
+#endif
         !
      END IF
      !
@@ -321,8 +359,24 @@ SUBROUTINE cegterg( npw, npwx, nvec, nvecx, npol, evc, ethr, &
         !
      END DO
      !
+#if defined(__IMPROVED_GEMM)
+     IF ( notcnv == 1 ) THEN
+        !
+        CALL ZGEMV( 'N', kdim, nbase, ONE, hpsi, kdmx, vc, 1, ONE, &
+             psi(1,1,nb1), 1 )
+        !
+     ELSE
+        !
+        CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, hpsi, &
+                 kdmx, vc, nvecx, ONE, psi(1,1,nb1), kdmx )
+        !
+     ENDIF
+     !
+#else
+     ! ORIGINAL:
      CALL ZGEMM( 'N', 'N', kdim, notcnv, nbase, ONE, hpsi, &
                  kdmx, vc, nvecx, ONE, psi(1,1,nb1), kdmx )
+#endif
      !
      CALL stop_clock( 'cegterg:update' )
      !
@@ -373,20 +427,67 @@ SUBROUTINE cegterg( npw, npwx, nvec, nvecx, npol, evc, ethr, &
      !
      CALL start_clock( 'cegterg:overlap' )
      !
+#if defined(__IMPROVED_GEMM)
+     IF ( notcnv == 1 ) THEN
+        !
+        CALL ZGEMV( 'C', kdim, nbase+notcnv, ONE, psi, kdmx, hpsi(1,1,nb1), 1, ZERO, &
+                     hc(1,nb1), 1 )
+        !
+     ELSE
+        !
+        CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
+                 kdmx, hpsi(1,1,nb1), kdmx, ZERO, hc(1,nb1), nvecx )
+        !
+     ENDIF
+     !
+#else
+     ! ORIGINAL:
      CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
                  kdmx, hpsi(1,1,nb1), kdmx, ZERO, hc(1,nb1), nvecx )
+#endif
      !
      CALL mp_sum( hc( :, nb1:nb1+notcnv-1 ), intra_bgrp_comm )
      !
      IF ( uspp ) THEN
         !
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL ZGEMV( 'C', kdim, nbase+notcnv, ONE, psi, kdmx, spsi(1,1,nb1), 1, ZERO, &
+                     sc(1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
+               kdmx, spsi(1,1,nb1), kdmx, ZERO, sc(1,nb1), nvecx )
+           !
+        ENDIF
+#else
+        ! ORIGINAL:
         CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
                     kdmx, spsi(1,1,nb1), kdmx, ZERO, sc(1,nb1), nvecx )
+#endif
         !     
      ELSE
         !
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL ZGEMV( 'C', kdim, nbase+notcnv, ONE, psi, kdmx, psi(1,1,nb1), 1, ZERO, &
+                     sc(1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
+                  kdmx, psi(1,1,nb1), kdmx, ZERO, sc(1,nb1), nvecx )
+          !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
         CALL ZGEMM( 'C', 'N', nbase+notcnv, notcnv, kdim, ONE, psi, &
                     kdmx, psi(1,1,nb1), kdmx, ZERO, sc(1,nb1), nvecx )
+#endif
         !
      END IF
      !

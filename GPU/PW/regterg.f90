@@ -311,13 +311,45 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
      !
      IF ( uspp ) THEN
         !
-        CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL DGEMV( 'N', npw2, nbase, 1.0_DP, spsi, npwx2, vr, 1, 0.0_DP, &
+                     psi(1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
                     spsi, npwx2, vr, nvecx, 0.D0, psi(1,nb1), npwx2 )
+           !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
+        CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
+            spsi, npwx2, vr, nvecx, 0.D0, psi(1,nb1), npwx2 )
+#endif
         !
      ELSE
         !
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL DGEMV( 'N', npw2, nbase, 1.0_DP, psi, npwx2, vr, 1, 0.0_DP, &
+                     psi(1,nb1), 1 )
+           !
+        ELSE
+           !
         CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
                     psi, npwx2, vr, nvecx, 0.D0, psi(1,nb1), npwx2 )
+           !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
+        CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
+                    psi, npwx2, vr, nvecx, 0.D0, psi(1,nb1), npwx2 )
+#endif
         !
      END IF
      !
@@ -327,8 +359,24 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
         !
      END DO
      !
+#if defined(__IMPROVED_GEMM)
+     IF ( notcnv == 1 ) THEN
+        !
+        CALL DGEMV( 'N', npw2, nbase, 1.0_DP, hpsi, npwx2, vr, 1, 1.0_DP, &
+             psi(1,nb1), 1 )
+        !
+     ELSE
+        !
+        CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
+                 hpsi, npwx2, vr, nvecx, 1.D0, psi(1,nb1), npwx2 )
+        !
+     ENDIF
+     !
+#else
+     ! ORIGINAL:
      CALL DGEMM( 'N', 'N', npw2, notcnv, nbase, 1.D0, &
                  hpsi, npwx2, vr, nvecx, 1.D0, psi(1,nb1), npwx2 )
+#endif
      !
      CALL stop_clock( 'regterg:update' )
      !
@@ -370,8 +418,24 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
      !
      CALL start_clock( 'regterg:overlap' )
      !
-     CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+#if defined(__IMPROVED_GEMM)
+     IF ( notcnv == 1 ) THEN
+        !
+        CALL DGEMV( 'T', npw2, nbase+notcnv, 2.0_DP, psi, npwx2, hpsi(1,nb1), 1, 0.0_DP, &
+                     hr(1,nb1), 1 )
+        !
+     ELSE
+        !
+        CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
                  npwx2, hpsi(1,nb1), npwx2, 0.D0, hr(1,nb1), nvecx )
+        !
+     ENDIF
+     !
+#else
+     ! ORIGINAL:
+     CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+           npwx2, hpsi(1,nb1), npwx2, 0.D0, hr(1,nb1), nvecx )
+#endif
      !
      IF ( gstart == 2 ) &
         CALL DGER( nbase+notcnv, notcnv, -1.D0, psi, &
@@ -381,8 +445,23 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
      !
      IF ( uspp ) THEN
         !
-        CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL DGEMV( 'T', npw2, nbase+notcnv, 2.0_DP, psi, npwx2, spsi(1,nb1), 1, 0.0_DP, &
+                     sr(1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
                     npwx2, spsi(1,nb1), npwx2, 0.D0, sr(1,nb1), nvecx )
+           !
+        ENDIF
+#else
+        ! ORIGINAL:
+        CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+                npwx2, spsi(1,nb1), npwx2, 0.D0, sr(1,nb1), nvecx )
+#endif
         !
         IF ( gstart == 2 ) &
            CALL DGER( nbase+notcnv, notcnv, -1.D0, psi, &
@@ -390,8 +469,24 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
         !
      ELSE
         !
-        CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+#if defined(__IMPROVED_GEMM)
+        IF ( notcnv == 1 ) THEN
+           !
+           CALL DGEMV( 'T', npw2, nbase+notcnv, 2.0_DP, psi, npwx2, psi(1,nb1), 1, 0.0_DP, &
+                     sr(1,nb1), 1 )
+           !
+        ELSE
+           !
+           CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
                     npwx2, psi(1,nb1), npwx2, 0.D0, sr(1,nb1) , nvecx )
+           !
+        ENDIF
+        !
+#else
+        ! ORIGINAL:
+        CALL DGEMM( 'T', 'N', nbase+notcnv, notcnv, npw2, 2.D0, psi, &
+                npwx2, psi(1,nb1), npwx2, 0.D0, sr(1,nb1) , nvecx )
+#endif
         !
         IF ( gstart == 2 ) &
            CALL DGER( nbase+notcnv, notcnv, -1.D0, psi, &
