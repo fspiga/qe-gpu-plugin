@@ -9,6 +9,7 @@ MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Mod
 
 PWGPUOBJS = \
 addusdens.o \
+add_vuspsi.o \
 newd.o \
 cdiaghg.o \
 h_psi.o \
@@ -23,7 +24,6 @@ PWOBJS = \
 ../../PW/src/a2fmod.o \
 ../../PW/src/add_bfield.o \
 ../../PW/src/add_efield.o \
-../../PW/src/add_vuspsi.o \
 ../../PW/src/add_paw_to_deeq.o \
 ../../PW/src/add_vhub_to_deeq.o \
 ../../PW/src/addusforce.o \

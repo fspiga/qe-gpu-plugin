@@ -27,6 +27,7 @@
       "./GPU/PH/matdyn.f90" : { "original" : "./PHonon/PH/matdyn.f90", "hash" : "9d787dd5fd80244726a57ce81a6c3bf9"},
       "./GPU/PH/phonon.f90" : { "original" : "./PHonon/PH/phonon.f90", "hash" : "c460cc6f59a8d8889cb648a5f0b2fc59"},
       "./GPU/PH/q2r.f90" : { "original" : "./PHonon/PH/q2r.f90", "hash" : "afdf142f90c95d7ae3d7b682d75d6908"},
+      "./GPU/PW/add_vuspsi.f90" : { "original" : "./PW/src/add_vuspsi.f90", "hash" : "14e716811214a3f944dc924da97fa09c"},
       "./GPU/PW/addusdens.f90" : { "original" : "./PW/src/addusdens.f90", "hash" : "c840da98049487e88a9ed5b6224633f9"},
       "./GPU/PW/c_bands.f90" : { "original" : "./PW/src/c_bands.f90", "hash" : "d1cc5c7a30c5ff6a70f0dffb86b4cec3"},
       "./GPU/PW/cdiaghg.f90" : { "original" : "./PW/src/cdiaghg.f90", "hash" : "0c2aee58c00dffd36265cd396e7eae83"},
