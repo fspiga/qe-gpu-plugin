@@ -35,7 +35,7 @@ while s.strip()!='':
 		# open a different file for writing
 		f = open(tmp_file, 'w') 
 		f.write("""
-#if defined(__CUDA) && defined(__PHIGEMM)
+#if defined(__PHIGEMM)
 #define dgemm UDGEMM  
 #define zgemm UZGEMM  
 #define DGEMM UDGEMM  
@@ -51,7 +51,6 @@ while s.strip()!='':
 #define UZGEMM phizgemm
 #endif
 #endif
-
 """) 
 
 		# write the original contents 

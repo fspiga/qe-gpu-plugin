@@ -33,21 +33,22 @@ if not os.path.exists(backup_file) :
 		# open a different file for writing
 		f = open(tmp_file, 'w') 
 		f.write("""
-#if defined(__CUDA) && defined(__PHIGEMM) 
-
+#if defined(__PHIGEMM)
+#define dgemm UDGEMM  
+#define zgemm UZGEMM  
+#define DGEMM UDGEMM  
+#define ZGEMM UZGEMM  
 #if defined(__PHIGEMM_PROFILE)
 #define _STRING_LINE_(s) #s
 #define _STRING_LINE2_(s) _STRING_LINE_(s)
 #define __LINESTR__ _STRING_LINE2_(__LINE__)
-#define DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC) phidgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC,__FILE__,__LINESTR__)
-#define ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC) phizgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC,__FILE__,__LINESTR__)
+#define UDGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC) phidgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC,__FILE__,__LINESTR__)
+#define UZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC) phizgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC,__FILE__,__LINESTR__)
 #else
-#define DGEMM phidgemm
-#define ZGEMM phizgemm
+#define UDGEMM phidgemm
+#define UZGEMM phizgemm
 #endif
-
 #endif
-
 """) 
 
 		# write the original contents 
