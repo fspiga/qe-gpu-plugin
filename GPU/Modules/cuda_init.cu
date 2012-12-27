@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <driver_types.h>
-
 #if defined(__TIMELOG)
 #include <time.h>
 #include <sys/types.h>
@@ -20,11 +18,13 @@
 #include <sys/time.h>
 #endif
 
-#include "cuda_env.h"
-
 #if defined(__PHIGEMM)
 #include "phigemm.h"
 #endif
+
+#if defined(__CUDA)
+
+#include "cuda_env.h"
 
 qeCudaMemDevPtr qe_dev_scratch;
 qeCudaMemDevPtr qe_dev_zero_scratch;
@@ -49,6 +49,8 @@ long ngpus_used;
 long ngpus_per_process;
 long procs_per_gpu;
 
+#endif
+
 long lRank;
 
 #if defined(__TIMELOG)
@@ -68,6 +70,7 @@ double cuda_cclock(void)
 #endif
 
 
+#if defined(__CUDA)
 void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 	int lNumDevicesThisNode = 0;
@@ -155,9 +158,12 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 	return;
 }
+#endif
 
 #if defined(__PHIGEMM)
 extern "C" void initphigemm_(){
+
+#if defined(__CUDA)
 
 #if defined(__CUDA_NOALLOC)
 //	phiGemmInit(ngpus_per_process , NULL, (qeCudaMemSizes*)&qe_gpu_mem_unused, (int *)qe_gpu_bonded, (int) lRank);
@@ -166,11 +172,19 @@ extern "C" void initphigemm_(){
 	phiGemmInit(ngpus_per_process , (qeCudaMemDevPtr*)&qe_dev_scratch, (qeCudaMemSizes*)&qe_gpu_mem_unused, (int *)qe_gpu_bonded, (int)lRank);
 #endif
 
+#else
+
+	// __PHIGEMM_CPUONLY --> what is important is lRank, nothing else
+	phiGemmInit(0 , NULL, NULL, NULL, (int) lRank);
+
+#endif
+
 	return;
 }
 #endif
 
 
+#if defined(__CUDA)
 void detectdevicememory_(){
 
 	int ierr = 0;
@@ -219,7 +233,9 @@ void detectdevicememory_(){
 
 	return;
 }
+#endif
 
+#if defined(__CUDA)
 void initStreams_()
 {
 	int ierr, i;
@@ -237,7 +253,9 @@ void initStreams_()
 
 	return;
 }
+#endif
 
+#if defined(__CUDA)
 extern "C" void allocatedevicememory_(){
 
 	int ierr, i;
@@ -260,7 +278,9 @@ extern "C" void allocatedevicememory_(){
 
 	return;
 }
+#endif
 
+#if defined(__CUDA)
 extern "C" void deallocatedevicememory_(){
 
 	int ierr, i;
@@ -282,7 +302,9 @@ extern "C" void deallocatedevicememory_(){
 
 	return;
 }
+#endif
 
+#if defined(__CUDA)
 void destroyStreams_()
 {
 	int ierr, i;
@@ -300,6 +322,7 @@ void destroyStreams_()
 
 	return;
 }
+#endif
 
 extern "C" void initcudaenv_()
 {
@@ -311,6 +334,7 @@ extern "C" void initcudaenv_()
 #endif
 	lRank = lRank_local;
 
+#if defined(__CUDA)
 	gpubinding_(lRankThisNode, lSizeThisNode);
 
 	detectdevicememory_();
@@ -318,15 +342,18 @@ extern "C" void initcudaenv_()
 #if !defined(__CUDA_NOALLOC)
 	allocatedevicememory_();
 #endif
+#endif
 
 #if defined(__PHIGEMM)
 	initphigemm_();
 #endif
 
+#if defined(__CUDA)
 	initStreams_();
 
 	// Print CUDA header
 	print_cuda_header_();
+#endif
 
 	return;
 }
@@ -337,7 +364,9 @@ extern "C" void closecudaenv_()
 	deallocatedevicememory_();
 #endif
 
+#if defined(__CUDA)
 	destroyStreams_();
+#endif
 
 #if defined(__PHIGEMM)
 	phiGemmShutdown();
