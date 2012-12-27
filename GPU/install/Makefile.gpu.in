@@ -150,6 +150,9 @@ all-gpu   : pwall-gpu cp-gpu tddfpt-gpu
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 mods : libiotk libelpa
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 libs : mods

@@ -36,11 +36,17 @@ default :
 # Main targets
 ###########################################################
 pw : libphiGEMM bindir mods liblapack libblas libs libiotk libenviron
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	if test -d PW ; then \
 	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
 cp : libphiGEMM bindir mods liblapack libblas libs libiotk
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	if test -d CPV ; then \
 	( cd CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
@@ -97,6 +103,9 @@ all   : pwall cp ld1 upf tddfpt
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 mods : libiotk libelpa
+ifeq ($(PHIGEMM_ENABLED),1) 
+	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
 libs : mods
@@ -191,6 +200,13 @@ links : bindir
 # remove object files and executables
 clean :
 	touch make.sys 
+ifeq ($(PHIGEMM_ENABLED),1)
+	for dir in \
+		CPV/src PW/src Modules \
+	; do \
+	    grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
+	done
+endif  
 	for dir in \
 		CPV Modules PP PW \
 		ACFDT \
@@ -213,6 +229,9 @@ clean :
 distclean veryclean : clean
 	- @(cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile veryclean)
 	- @(cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile veryclean)
+ifeq ($(PHIGEMM_ENABLED),1)
+	- @(cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile veryclean)
+endif
 	- rm -rf install/patch-plumed
 	- cd install ; rm -f config.log configure.msg config.status \
 	CPV/version.h ChangeLog* intel.pcl */intel.pcl
