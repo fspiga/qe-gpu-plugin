@@ -8,13 +8,21 @@
  *
  */
 
+#if defined(__CUDA)
+
 #include <cuda.h>
 #include <cufft.h>
 #include <cuda_runtime.h>
 #include "cublas_v2.h"
 
+#include <driver_types.h>
+
+#endif
+
 #ifndef __QE_CUDA_ENVIRONMENT_H
 #define __QE_CUDA_ENVIRONMENT_H
+
+#if defined(__CUDA)
 
 #define qe_compute_num_blocks(N, THREADS) N / THREADS + (N % THREADS == 0 ? 0 : 1 )
 
@@ -105,19 +113,26 @@ extern long ngpus_used;
 extern long ngpus_per_process;
 extern long procs_per_gpu;
 
+#endif
+
 extern long lRank;
 
-extern "C" size_t initCudaEnv();
-extern "C" void closeCudaEnv();
-extern "C" void deAllocateDeviceMemory();
-extern "C" void allocateDeviceMemory();
-extern "C" void initPhigemm();
+extern size_t initCudaEnv();
+extern void closeCudaEnv();
+#if defined(__CUDA)
+extern void deAllocateDeviceMemory();
+extern void allocateDeviceMemory();
+#endif
+void initPhigemm();
 
 // Auxiliary functions
-void print_cuda_header_();
-extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
-extern "C" void mybarrier_();
+void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
 
+#if defined(__CUDA)
+extern void mybarrier_();
+
+extern void print_cuda_header_();
+#endif
 /*
  * These routines are exactly the same in "cutil_inline_runtime.h" but,
  * replicating them here, we remove the annoying dependency to CUTIL & SDK (Filippo)
@@ -125,6 +140,8 @@ extern "C" void mybarrier_();
  * We define these calls here, so the user doesn't need to include __FILE__ and __LINE__
  * The advantage is the developers gets to use the inline function so they can debug
  */
+
+#if defined(__CUDA)
 
 #define qecudaGenericErr(err, routine, msg)  __qecudaGenericErr(err, routine, msg, __FILE__, __LINE__)
 #define qecudaSafeCall(err)  __qecudaSafeCall(err, __FILE__, __LINE__)
@@ -204,5 +221,7 @@ inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, cons
 		exit(EXIT_FAILURE);
 	}
 }
+
+#endif
 
 #endif // __QE_CUDA_ENVIRONMENT_H
