@@ -44,7 +44,7 @@ LD_SHARED_FLAGS = @phigemm_ldsharedflag@
 FC_PREPROC_FLAG = @phigemm_fflags@
 
 NVCC        = @nvcc@
-NVCC_FLAGS  = -ccbin gcc -O3 --compiler-options '-fPIC -fopenmp'
+NVCC_FLAGS  = @phigemm_nvccflags@
 
 EXT_INC     = @phigemm_include@ @cuda_include@
 CUDA_LIB    = @cuda_libs@

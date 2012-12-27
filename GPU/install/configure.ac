@@ -2043,6 +2043,7 @@ fi
     
 echo setting SCALAPACK_LIBS... $scalapack_libs
 
+
 # CUDA
 if test "$use_cuda" -eq 1 
 then 
@@ -2055,131 +2056,311 @@ then
     if test -n "$nvcc"; then
         have_valid_cuda_compiler=0
     fi
-fi
 
-if test "$have_valid_cuda_compiler" -eq 1 
-then 
-
-    AC_PATH_PROG(GNUCC, gcc, )
-    if test -n "$gnucc"; then
-        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gcc compiler missing in PATH (required for QE+GPU).])
-    fi
-    AC_PATH_PROG(GNUFC, gfortran, )
-    if test -n "$gnufc"; then
-        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gfortran compiler missing in PATH (required for QE+GPU).])
-    fi
-    
-    # check for CUDA headers
-    have_valid_cuda_header=0
-    if test -e "$cuda_path/include/cuda.h"; then
-        have_valid_cuda_header=1
-    fi
-
-    if test "$have_valid_cuda_header" == 1  && test "$have_valid_cuda_compiler" == 1 ; then 
-        # check for CUDA libs
-        AC_LANG_PUSH(C)
-        nvcc=$NVCC
-		
-        try_libdirs="$cuda_path/lib64 /usr/lib64/nvidia /usr/local/cuda/lib64"
-        try_libdirs="$try_libdirs $libdirs $ld_library_path"
-        for dir in $try_libdirs
-        do
-            unset ac_cv_search_cudaGetDeviceCount # clear cached value
-            unset ac_cv_search_cublasInit
-            unset ac_cv_search_cufftPlan1d
-            unset ac_cv_search_cuMemGetInfo_v2
-            if test "$dir" = "none"
-            then
-                    try_loption=
-            else                  
-                    try_loption="-L$dir"
-            fi          
-            CFLAGS="$test_cflags"
-            # $test_ldflags
-            LDFLAGS="$try_loption"
-            
-            LIBS=""
-            echo $ECHO_N "in $dir: " $ECHO_C                
-            AC_SEARCH_LIBS(cudaGetDeviceCount,cudart, 
-                  cuda_libs="$cuda_libs $LIBS",,)
-            
-            LIBS=""
-            echo $ECHO_N "in $dir: " $ECHO_C    
-            AC_SEARCH_LIBS(cublasInit,cublas, 
-                  cuda_libs="$cuda_libs $LIBS",,)
-            
-            LIBS=""         
-            echo $ECHO_N "in $dir: " $ECHO_C
-            AC_SEARCH_LIBS(cufftPlan1d,cufft, 
-                  cuda_libs="$cuda_libs $LIBS",,)                     
-                          
-            cuda_libs="$try_loption $cuda_libs"
-            
-            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && test "$ac_cv_search_cublasInit" != "no" && test "$ac_cv_search_cufftPlan1d" != "no"
-            then                 
-                
-                try_dflags="$try_dflags -D__CUDA"    
-                have_cuda=1
-                break
-            fi
-        done    
-        AC_LANG_POP(C)      
-    else
-        AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
-    fi
-fi
-
-if test "$use_cuda" -eq 1 && test "$have_cuda" -eq 0; then 
-    AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
-fi
-
-if test "$have_cuda" -eq 1
-then
-     
-    # Empty inits... really necessary?
-    magma_include=""
-    magma_libs=""
-    phigemm_include=""
-    phigemm_libs=""
-    magma_switch=0
-    phigemm_switch=0
-    cblas_switch=0
-    
-    if test "$use_debug" -eq 1; then
-       nvccflags="-O0 -g" 
-    else
-       nvccflags="-O3"
-    fi
-    
-    try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
-    
-    if test "$use_fastcuda" -eq 1 ; then
-    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"    
-    else
-        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
-    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"   
-    fi
-    
-	if test "$use_pinnedmem" -eq 1  ; then
-		try_dflags="$try_dflags -D__CUDA_PINNED"
-	fi   
+	if test "$have_valid_cuda_compiler" -eq 1 
+	then 
 	
-    cuda_include="-I$cuda_path/include"
-    
-    if test "$use_debugcuda" -eq 1 ; then
-        try_dflags="$try_dflags -D__CUDA_DEBUG"
+	    AC_PATH_PROG(GNUCC, gcc, )
+	    if test -n "$gnucc"; then
+	        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gcc compiler missing in PATH (required for QE+GPU).])
+	    fi
+	    AC_PATH_PROG(GNUFC, gfortran, )
+	    if test -n "$gnufc"; then
+	        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gfortran compiler missing in PATH (required for QE+GPU).])
+	    fi
+	    
+	    # check for CUDA headers
+	    have_valid_cuda_header=0
+	    if test -e "$cuda_path/include/cuda.h"; then
+	        have_valid_cuda_header=1
+	    fi
+	
+	    if test "$have_valid_cuda_header" == 1  && test "$have_valid_cuda_compiler" == 1 ; then 
+	        # check for CUDA libs
+	        AC_LANG_PUSH(C)
+	        nvcc=$NVCC
+			
+	        try_libdirs="$cuda_path/lib64 /usr/lib64/nvidia /usr/local/cuda/lib64"
+	        try_libdirs="$try_libdirs $libdirs $ld_library_path"
+	        for dir in $try_libdirs
+	        do
+	            unset ac_cv_search_cudaGetDeviceCount # clear cached value
+	            unset ac_cv_search_cublasInit
+	            unset ac_cv_search_cufftPlan1d
+	            unset ac_cv_search_cuMemGetInfo_v2
+	            if test "$dir" = "none"
+	            then
+	                    try_loption=
+	            else                  
+	                    try_loption="-L$dir"
+	            fi          
+	            CFLAGS="$test_cflags"
+	            # $test_ldflags
+	            LDFLAGS="$try_loption"
+	            
+	            LIBS=""
+	            echo $ECHO_N "in $dir: " $ECHO_C                
+	            AC_SEARCH_LIBS(cudaGetDeviceCount,cudart, 
+	                  cuda_libs="$cuda_libs $LIBS",,)
+	            
+	            LIBS=""
+	            echo $ECHO_N "in $dir: " $ECHO_C    
+	            AC_SEARCH_LIBS(cublasInit,cublas, 
+	                  cuda_libs="$cuda_libs $LIBS",,)
+	            
+	            LIBS=""         
+	            echo $ECHO_N "in $dir: " $ECHO_C
+	            AC_SEARCH_LIBS(cufftPlan1d,cufft, 
+	                  cuda_libs="$cuda_libs $LIBS",,)                     
+	                          
+	            cuda_libs="$try_loption $cuda_libs"
+	            
+	            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && test "$ac_cv_search_cublasInit" != "no" && test "$ac_cv_search_cufftPlan1d" != "no"
+	            then                 
+	                
+	                try_dflags="$try_dflags -D__CUDA"    
+	                have_cuda=1
+	                break
+	            fi
+	        done    
+	        AC_LANG_POP(C)      
+	    else
+	        AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
+	    fi
+	fi
+	
+	if test "$use_cuda" -eq 1 && test "$have_cuda" -eq 0; then 
+	    AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
+	fi
+	
+	if test "$have_cuda" -eq 1
+	then
+	     
+	    # Empty inits... really necessary?
+	    magma_include=""
+	    magma_libs=""
+	    phigemm_include=""
+	    phigemm_libs=""
+	    magma_switch=0
+	    phigemm_switch=0
+	    cblas_switch=0
+	    
+	    if test "$use_debug" -eq 1; then
+	       nvccflags="-O0 -g" 
+	    else
+	       nvccflags="-O3"
+	    fi
+	    
+	    try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+	    
+	    if test "$use_fastcuda" -eq 1 ; then
+	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"    
+	    else
+	        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
+	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"   
+	    fi
+	    
+		if test "$use_pinnedmem" -eq 1  ; then
+			try_dflags="$try_dflags -D__CUDA_PINNED"
+		fi   
+		
+	    cuda_include="-I$cuda_path/include"
+	    
+	    if test "$use_debugcuda" -eq 1 ; then
+	        try_dflags="$try_dflags -D__CUDA_DEBUG"
+	    fi
+	    
+	# NOT YET READY FOR PRODUCTION    
+	#    if test "$use_preloadgpu" -eq 1; then
+	#        try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
+	#    fi          
+	    
+	    # phiGEMM 
+	    if test "$use_phigemm" -eq 1  ; then 
+	        phigemm_switch=1
+	        try_dflags="$try_dflags -D__PHIGEMM"
+	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
+	        phigemm_include="-I$topdir/phiGEMM/include"
+	        phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
+			
+			phigemm_cc=$cc
+			phigemm_fc=$f90
+			if test "$use_debug" -eq 1; then
+			    phigemm_ccflags="-g -O0 $try_fflags_openmp -fPIC"
+		        phigemm_ldflags="-g -O0 $try_fflags_openmp -fPIC"
+	        else
+			    phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
+		        phigemm_ldflags="-O3 $try_fflags_openmp -fPIC"            
+	        fi
+	
+	        # NVCC HOST-side compiler options
+	        case "$arch:$f90_version" in
+			*:ifort* )
+		        phigemm_ldsharedflag="--shared"
+	            phigemm_fflags="-module ../include/"
+			;;
+			*:pgf90 | cray*:pgf )
+		        phigemm_ldsharedflag="-shared"  
+		        phigemm_fflags="-module ../include/"      
+		        ;;
+		    *:gfortran )
+		        phigemm_ldsharedflag="-shared"  
+		        phigemm_fflags="-J../include/"      
+		        ;;
+			esac
+	    
+	        if test "$use_openmp" -eq 1 ; then	        
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-fPIC -fopenmp'"
+	        else
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-fPIC' "
+	        fi
+	        
+	        if test "$use_fastcuda" -eq 1 ; then
+	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
+	    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
+	    	fi
+	    	
+			if test "$use_pinnedmem" -eq 1  ; then
+	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+	        fi  
+	        	
+	        if test "$use_phigemmprofile" -eq 1; then
+	            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+	            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+	        fi
+	    fi
+	      
+	    # By default show all CUDA timing    
+	    # try_dflags="$try_dflags -D__CUDA_QE_TIMING"
+	            
+	    if test "$use_magma" -eq 1 ; then
+	        magma_switch=1
+	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
+	        magma_libs="$topdir/magma/lib/libmagma.a $topdir/magma/lib/libmagmablas.a $topdir/magma/lib/libmagma.a" 
+	        try_dflags="$try_dflags -D__MAGMA"
+			
+		    # GPU architecture
+		    case "$cuda_arch" in
+		    35 | 30 )
+		        magma_gpu_target=Kepler
+		        ;;
+		    20 | 21 )
+		        magma_gpu_target=Fermi
+		        ;;
+		    13 )
+		        magma_gpu_target=Tesla
+		        ;;        
+		    esac
+	
+	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
+	        # This does not work on CRAY
+		    have_cblas=0
+		    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0
+		    then
+		    	try_libdirs=""
+	            try_libdirs="$libdirs $ld_library_path $try_libdirs"
+		        for dir in $try_libdirs
+		        do
+		            unset ac_cv_search_cblas_dscal # clear cached value
+		        
+		            if test "$dir" = "none"
+		            then
+		                    try_loption=
+		            else                  
+		                    try_loption="-L$dir"
+		            fi          
+	                FFLAGS="$test_fflags"
+	                LDFLAGS="$test_ldflags $try_loption"
+	                LIBS=""
+		            
+		            LIBS=""
+		            echo $ECHO_N "in $dir: " $ECHO_C                
+		            AC_SEARCH_LIBS(cblas_dscal, cblas, 
+		                 have_cblas=1 magma_libs="$magma_libs $LIBS")	
+		            
+		            if test "$have_cblas" -eq 1
+		            then                 
+		                break
+		            fi
+		        done  
+		        	        
+		        if test "$have_cblas" -eq 0
+		        then                 
+		        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+		        	cblas_switch=1
+		        	have_cblas=1
+	            fi
+	        fi
+	                          
+	        # MAGMA requires additional flags...        
+	        case "$arch:$f90_version" in
+		        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+		            ldflags="$ldflags -zmuldefs"
+		            ;;
+		        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
+		            ldflags="$ldflags -Wl,-z,muldefs"
+		            ;;
+		        crayxt*:pgf* )
+		            ldflags="$ldflags -Wl,-z,muldefs"
+		            ;;            
+		        *:g95 )
+		            # replace with the correct one # ldflags="$ldflags -zmuldefs"
+		            ;;
+		        *:gfortran )
+		            ldflags="$ldflags -z muldefs"
+		            # If there are not external BLAS then CBLAS is necessary to 
+		            # link MAGMA to QE (NdFilippo)
+		            if test "$have_cblas" -eq 1 ; then
+		            	extlib_flags="$extlib_flags -fPIC"
+		            fi
+		            ;;
+	        esac
+	        
+	        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
+	        # interfaces. I hope to find a way to detect this case automatically
+	        # (NdFilippo)
+	        if test "$use_internal_cblas" -eq 1 ; then                 
+	        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
+	        	cblas_switch=1
+	        	have_cblas=1
+	        fi
+	        
+	    fi
+	    
+		# Enable Open ACC (now only for card with compute capaility 2.x)
+		if test "$use_openacc" -eq 1 ; then
+		    case "$arch:$f90_version" in
+		    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )
+		        if  test "$cuda_arch" = "20" ; then
+		            try_dflags="$try_dflags -D__OPENACC"
+		            fflags="$fflags -ta=host,nvidia:cc$cuda_arch -Minfo"
+		            f90flags="$f90flags -ta=host,nvidia:cc$cuda_arch -Minfo"
+		            ldflags="$ldflags -ta=host,nvidia:cc$cuda_arch -Minfo"
+		        fi      
+		        ;;
+		    esac
+		fi  
+	    
+	    try_iflags="$try_iflags $magma_include $phigemm_include $cuda_include"
+	    
+	    lapack_libs="$magma_libs $lapack_libs"
+	    blas_libs="$phigemm_libs $blas_libs"
+	        
+	    ld_libs="$cuda_libs $ld_libs"
+	    
+	    echo setting CUDA_LIBS... $cuda_libs
     fi
     
-# NOT YET READY FOR PRODUCTION    
-#    if test "$use_preloadgpu" -eq 1; then
-#        try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
-#    fi          
-    
-    # phiGEMM 
-    if test "$use_phigemm" -eq 1  ; then 
+else
+
+    if test "$use_phigemm" -eq 1; then 
+        
+        nvcc=$cc
+        nvccflags=$cflags
+    	
         phigemm_switch=1
         try_dflags="$try_dflags -D__PHIGEMM"
-        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
+        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES"        
         phigemm_include="-I$topdir/phiGEMM/include"
         phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
 		
@@ -2192,7 +2373,10 @@ then
 		    phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
 	        phigemm_ldflags="-O3 $try_fflags_openmp -fPIC"            
         fi
-
+        
+        phigemm_nvccflags=$phigemm_ccflags
+        phigemm_opts="$phigemm_opts -D__PHIGEMM_CPUONLY"
+    
         # NVCC HOST-side compiler options
         case "$arch:$f90_version" in
 		*:ifort* )
@@ -2208,141 +2392,14 @@ then
 	        phigemm_fflags="-J../include/"      
 	        ;;
 		esac
-    
-        if test "$use_fastcuda" -eq 1 ; then
-            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
-    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
-    	fi
-    	
-		if test "$use_pinnedmem" -eq 1  ; then
-        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-        fi  
-        	
+		
         if test "$use_phigemmprofile" -eq 1; then
             phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
             try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
         fi
-    fi
-      
-    # By default show all CUDA timing    
-    # try_dflags="$try_dflags -D__CUDA_QE_TIMING"
-            
-    if test "$use_magma" -eq 1 ; then
-        magma_switch=1
-        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
-        magma_libs="$topdir/magma/lib/libmagma.a $topdir/magma/lib/libmagmablas.a $topdir/magma/lib/libmagma.a" 
-        try_dflags="$try_dflags -D__MAGMA"
-		
-	    # GPU architecture
-	    case "$cuda_arch" in
-	    35 | 30 )
-	        magma_gpu_target=Kepler
-	        ;;
-	    20 | 21 )
-	        magma_gpu_target=Fermi
-	        ;;
-	    13 )
-	        magma_gpu_target=Tesla
-	        ;;        
-	    esac
-
-        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
-        # This does not work on CRAY
-	    have_cblas=0
-	    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0
-	    then
-	    	try_libdirs=""
-            try_libdirs="$libdirs $ld_library_path $try_libdirs"
-	        for dir in $try_libdirs
-	        do
-	            unset ac_cv_search_cblas_dscal # clear cached value
-	        
-	            if test "$dir" = "none"
-	            then
-	                    try_loption=
-	            else                  
-	                    try_loption="-L$dir"
-	            fi          
-                FFLAGS="$test_fflags"
-                LDFLAGS="$test_ldflags $try_loption"
-                LIBS=""
-	            
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C                
-	            AC_SEARCH_LIBS(cblas_dscal, cblas, 
-	                 have_cblas=1 magma_libs="$magma_libs $LIBS")	
-	            
-	            if test "$have_cblas" -eq 1
-	            then                 
-	                break
-	            fi
-	        done  
-	        	        
-	        if test "$have_cblas" -eq 0
-	        then                 
-	        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
-	        	cblas_switch=1
-	        	have_cblas=1
-            fi
-        fi
-                          
-        # MAGMA requires additional flags...        
-        case "$arch:$f90_version" in
-	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
-	            ldflags="$ldflags -zmuldefs"
-	            ;;
-	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-	            ldflags="$ldflags -Wl,-z,muldefs"
-	            ;;
-	        crayxt*:pgf* )
-	            ldflags="$ldflags -Wl,-z,muldefs"
-	            ;;            
-	        *:g95 )
-	            # replace with the correct one # ldflags="$ldflags -zmuldefs"
-	            ;;
-	        *:gfortran )
-	            ldflags="$ldflags -z muldefs"
-	            # If there are not external BLAS then CBLAS is necessary to 
-	            # link MAGMA to QE (NdFilippo)
-	            if test "$have_cblas" -eq 1 ; then
-	            	extlib_flags="$extlib_flags -fPIC"
-	            fi
-	            ;;
-        esac
         
-        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
-        # interfaces. I hope to find a way to detect this case automatically
-        # (NdFilippo)
-        if test "$use_internal_cblas" -eq 1 ; then                 
-        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
-        	cblas_switch=1
-        	have_cblas=1
-        fi
-        
-    fi
-    
-	# Enable Open ACC (now only for card with compute capaility 2.x)
-	if test "$use_openacc" -eq 1 ; then
-	    case "$arch:$f90_version" in
-	    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )
-	        if  test "$cuda_arch" = "20" ; then
-	            try_dflags="$try_dflags -D__OPENACC"
-	            fflags="$fflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-	            f90flags="$f90flags -ta=host,nvidia:cc$cuda_arch -Minfo"
-	            ldflags="$ldflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-	        fi      
-	        ;;
-	    esac
-	fi  
-    
-    try_iflags="$try_iflags $magma_include $phigemm_include $cuda_include"
-    
-    lapack_libs="$magma_libs $lapack_libs"
-    blas_libs="$phigemm_libs $blas_libs"
-        
-    ld_libs="$cuda_libs $ld_libs"
-    
-    echo setting CUDA_LIBS... $cuda_libs
+        blas_libs="$phigemm_libs $blas_libs"
+	fi
 fi
 
 # preprocessing flag for openmp (experimental)
@@ -2492,6 +2549,7 @@ AC_SUBST(phigemm_libs)
 AC_SUBST(phigemm_switch)
 AC_SUBST(phigemm_ccflags)
 AC_SUBST(phigemm_fflags)
+AC_SUBST(phigemm_nvccflags)
 AC_SUBST(phigemm_ldflags)
 AC_SUBST(phigemm_ldsharedflag)
 AC_SUBST(cblas_switch)

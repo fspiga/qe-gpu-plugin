@@ -17,8 +17,8 @@ endif
 libphiGEMM:
 ifeq ($(PHIGEMM_ENABLED),1) 
 	if test ! -d ../../phiGEMM ; then \
-	( gzip -dc ../archive/phiGEMM-v2.0.0rc1.tar.gz | \
-		(cd ../../; tar -xvf ./GPU/archive/phiGEMM-v2.0.0rc1.tar.gz )); fi
+	( gzip -dc ../archive/phiGEMM-v2.0.0rc2.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/phiGEMM-v2.0.0rc2.tar.gz )); fi
 	cp make_phiGEMM.inc ../../phiGEMM/make.inc;
 	cd ../../phiGEMM; $(MAKE) phigemm;
 endif
