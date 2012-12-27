@@ -35,7 +35,7 @@ default :
 ###########################################################
 # Main targets
 ###########################################################
-pw : libphiGEMM bindir mods liblapack libblas libs libiotk libenviron
+pw : bindir mods liblapack libblas libphiGEMM mods-hack libs libiotk libenviron
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
@@ -43,7 +43,7 @@ endif
 	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-cp : libphiGEMM bindir mods liblapack libblas libs libiotk
+cp : bindir mods liblapack libblas libphiGEMM mods-hack libs libiotk
 ifeq ($(PHIGEMM_ENABLED),1) 
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
@@ -108,6 +108,11 @@ ifeq ($(PHIGEMM_ENABLED),1)
 endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
+	
+mods-hack : mods
+	( cd GPU/Modules ; if test "$(MAKE)" = "" ; then make -f Makefile.cpu $(MFLAGS) TLDEPS= all ; \
+	else $(MAKE) -f Makefile.cpu $(MFLAGS) TLDEPS= all ; fi )
+
 libs : mods
 	( cd clib ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
