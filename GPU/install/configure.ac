@@ -2359,8 +2359,8 @@ else
         nvccflags=$cflags
     	
         phigemm_switch=1
-        try_dflags="$try_dflags -D__PHIGEMM"
-        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES"        
+        try_dflags="$try_dflags -D__PHIGEMM -D__PHIGEMM_CPUONLY"
+        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_CPUONLY"        
         phigemm_include="-I$topdir/phiGEMM/include"
         phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
 		
@@ -2375,8 +2375,7 @@ else
         fi
         
         phigemm_nvccflags=$phigemm_ccflags
-        phigemm_opts="$phigemm_opts -D__PHIGEMM_CPUONLY"
-    
+            
         # NVCC HOST-side compiler options
         case "$arch:$f90_version" in
 		*:ifort* )
@@ -2398,6 +2397,7 @@ else
             try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
         fi
         
+        try_iflags="$try_iflags $phigemm_include"
         blas_libs="$phigemm_libs $blas_libs"
 	fi
 fi
