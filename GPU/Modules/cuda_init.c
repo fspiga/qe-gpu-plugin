@@ -161,7 +161,7 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode){
 #endif
 
 #if defined(__PHIGEMM)
-extern "C" void initphigemm_(){
+void initphigemm_(){
 
 #if defined(__CUDA)
 
@@ -256,7 +256,7 @@ void initStreams_()
 #endif
 
 #if defined(__CUDA)
-extern "C" void allocatedevicememory_(){
+void allocatedevicememory_(){
 
 	int ierr, i;
 
@@ -281,7 +281,7 @@ extern "C" void allocatedevicememory_(){
 #endif
 
 #if defined(__CUDA)
-extern "C" void deallocatedevicememory_(){
+void deallocatedevicememory_(){
 
 	int ierr, i;
 
@@ -324,7 +324,7 @@ void destroyStreams_()
 }
 #endif
 
-extern "C" void initcudaenv_()
+void initcudaenv_()
 {
 	// In case of serial (default)
 	int lRankThisNode = 0, lSizeThisNode = 1, lRank_local = -1;
@@ -358,9 +358,9 @@ extern "C" void initcudaenv_()
 	return;
 }
 
-extern "C" void closecudaenv_()
+void closecudaenv_()
 {
-#if !defined(__CUDA_NOALLOC)
+#if defined(__CUDA) && !defined(__CUDA_NOALLOC)
 	deallocatedevicememory_();
 #endif
 
