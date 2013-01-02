@@ -213,7 +213,7 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	done
 endif  
 	for dir in \
-		CPV Modules PP PW \
+		GPU/Modules CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools \
 		dev-tools extlibs Environ \
