@@ -304,6 +304,32 @@ $ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 You can also specify more of these flags together.
 
 
+# Profiling capabilities (CPU-only)
+
+It is possible to use the QE-GPU package to extend the standard QE code and
+allow call-by-call profiling of GEMM operations also for CPU-only execution.
+
+$ cd GPU
+$ ./configure --enable-parallel --enable-openmp \
+  --disable-cuda --enable-phigemm --enable-profiling
+$ cd ..
+$ make -f Makefile.cpu all
+
+All the executables (like "pw.x") will appear under "bin/". You run your 
+calculation normally like the standard QE package. At the end of the execution 
+several files will be created in the same working directory. Example:
+
+-rw-r--r--  1 fspiga fislab  77572 2013-01-02 11:02 phigemm.profile.3.csv
+-rw-r--r--  1 fspiga fislab  66270 2013-01-02 11:02 phigemm.profile.2.csv
+-rw-r--r--  1 fspiga fislab  69142 2013-01-02 11:02 phigemm.profile.1.csv
+-rw-r--r--  1 fspiga fislab 105941 2013-01-02 11:02 phigemm.profile.0.csv
+
+The number indicates the MPI rank (within MPI_COMM_WORLD). If the number is 
+missing then the execution was serial. The files contains information in CSV
+about each GEMM operation performed. Calls are listed as they temporarly 
+occour during the execution.
+
+
 # Acknowledgments
 
 [2011-2012] The first phase of this work has been supported by the PRACE 1st 
