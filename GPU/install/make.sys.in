@@ -104,12 +104,17 @@ LD_LIBS        = @ld_libs@
 BLAS_LIBS      = @blas_libs@
 BLAS_LIBS_SWITCH = @blas_libs_switch@
 
+# OpenBLAS is used to exploit multi-core CPU if a multi-threaded BLAS
+# is not used or installed in the system (i.e. MKL is missing)
+OPENBLAS_ENABLED = @openblas_switch@
+
 # If you have nothing better, use the local copy :
 # LAPACK_LIBS = /your/path/to/espresso/lapack-3.2/lapack.a
 # LAPACK_LIBS_SWITCH = internal
 # For IBM machines with essl (-D__ESSL): load essl BEFORE lapack !
 # remember that LAPACK_LIBS precedes BLAS_LIBS in loading order
 
+# CBLAS is used in case the C interface for BLAS is missing (i.e. ACML)
 CBLAS_ENABLED = @cblas_switch@
 
 LAPACK_LIBS    = @lapack_libs@
@@ -150,8 +155,8 @@ FLIB_TARGETS   = all
 NVCC            = @nvcc@
 NVCCFLAGS       = @nvccflags@ 
 
-PHIGEMM_ENABLED = @phigemm_switch@
-MAGMA_ENABLED   = @magma_switch@
+PHIGEMM_ENABLED  = @phigemm_switch@
+MAGMA_ENABLED    = @magma_switch@
 
 LIBOBJS        = ../flib/ptools.a ../flib/flib.a ../clib/clib.a ../iotk/src/libiotk.a 
 LIBS           = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(FFT_LIBS) $(BLAS_LIBS) $(MPI_LIBS) $(MASS_LIBS) $(LD_LIBS)

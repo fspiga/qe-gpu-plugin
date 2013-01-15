@@ -9,8 +9,18 @@ include ../../make.sys
 #
 all:
 ifdef NVCC
+	$(MAKE) libOpenBLAS
 	$(MAKE) libphiGEMM
 	$(MAKE) libMAGMA
+endif
+
+# OpenBLAS
+libOpenBLAS:
+ifeq ($(OPENBLAS_ENABLED),1) 
+	if test ! -d ../../OpenBLAS ; then \
+	( gzip -dc ../archive/OpenBLAS-v0.2.5.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/OpenBLAS-v0.2.5.tar.gz )); fi
+	cd ../../OpenBLAS; make CC=$(CC) FC=$(F77) LIBNAMESUFFIX=qe libs;
 endif
 	
 # phiGEMM
@@ -44,6 +54,10 @@ endif
 ###################################
 # each lib independently
 
+libOpenBLAS_clean:
+	if test -d ../../OpenBLAS; then (cd ../../OpenBLAS; $(MAKE) clean); fi
+libOpenBLAS_veryclean:
+	if test -d ../../OpenBLAS; then (rm -R -f ../../OpenBLAS); fi
 libphiGEMM_clean:
 	if test -d ../../phiGEMM; then (cd ../../phiGEMM; $(MAKE) clean); fi
 libphiGEMM_veryclean:
@@ -59,5 +73,5 @@ libMAGMA_veryclean:
 	rm -f make_magma.inc
 
 # general cleaning
-clean: libphiGEMM_clean libMAGMA_clean
-veryclean: libphiGEMM_veryclean libMAGMA_veryclean
+clean: libOpenBLAS_clean libphiGEMM_clean libMAGMA_clean
+veryclean: libOpenBLAS_veryclean libphiGEMM_veryclean libMAGMA_veryclean

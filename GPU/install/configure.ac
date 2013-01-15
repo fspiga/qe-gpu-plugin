@@ -1632,10 +1632,20 @@ fi
 # settings above lapack tests, which would seem a more logical place)
 
 if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-    blas_libs="$topdir/BLAS/blas.a"
-    blas_libs_switch="internal"
+    if test "$use_openmp" -eq 1 ; then
+	    blas_libs_switch="internal"
+	    openblas_switch=1
+	    blas_libs="$topdir/OpenBLAS/libopenblas_qe.a"
+	    # workaround?
+	    use_internal_lapack=1
+    else
+    	blas_libs="$topdir/BLAS/blas.a"
+    	blas_libs_switch="internal"
+    	openblas_switch=0
+    fi
 else
     blas_libs_switch="external"
+    openblas_switch=0
 fi
 
 # no lapack library found, or incomplete lapack found (atlas, essl),
@@ -2255,7 +2265,7 @@ then
 	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
-		    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0
+		    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0 && test "$openblas_switch" -eq 0
 		    then
 		    	try_libdirs=""
 	            try_libdirs="$libdirs $ld_library_path $try_libdirs"
@@ -2515,6 +2525,7 @@ AC_SUBST(blas_libs)
 AC_SUBST(blas_libs_switch)
 AC_SUBST(lapack_libs)
 AC_SUBST(lapack_libs_switch)
+AC_SUBST(openblas_switch)
 AC_SUBST(fft_libs)
 AC_SUBST(mpi_libs)
 AC_SUBST(mass_libs)
