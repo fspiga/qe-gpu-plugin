@@ -129,6 +129,7 @@ PHOBJS = \
 ../../PHonon/PH/qdipol_cryst.o \
 ../../PHonon/PH/random_matrix.o \
 ../../PHonon/PH/read_wfc_rspace_and_fwfft.o \
+../../PHonon/PH/rotate_dvscf_star.o \
 ../../PHonon/PH/rotate_and_add_dyn.o \
 ../../PHonon/PH/run_pwscf.o \
 ../../PHonon/PH/save_ph_input.o \
@@ -207,7 +208,8 @@ LIBOBJS        = ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../i
 
 TLDEPS= bindir mods libs pw
 
-all : tldeps libs-ph ph-gpu.x dynmat-gpu.x matdyn-gpu.x q2r-gpu.x lambda-gpu.x 
+#all : tldeps libs-ph ph-gpu.x dynmat-gpu.x matdyn-gpu.x q2r-gpu.x lambda-gpu.x 
+all : tldeps libs-ph ph-gpu.x
 
 libs-ph : libph.a libphaux.a
 
@@ -216,25 +218,26 @@ ph-gpu.x : phonon.o libph.a $(PWOBJS) $(LIBOBJS)
 		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-dynmat-gpu.x : dynmat.o libphaux.a  libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ dynmat.o libphaux.a libph.a \
-		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
+# Temporary disabled
+#dynmat-gpu.x : dynmat.o libphaux.a  libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+#	$(LD) $(LDFLAGS) -o $@ dynmat.o libphaux.a libph.a \
+#		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
+#	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-matdyn-gpu.x : matdyn.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ matdyn.o libphaux.a libph.a \
-		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
+#matdyn-gpu.x : matdyn.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+#	$(LD) $(LDFLAGS) -o $@ matdyn.o libphaux.a libph.a \
+#		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
+#	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-q2r-gpu.x : q2r.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ q2r.o libphaux.a libph.a \
-		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
+#q2r-gpu.x : q2r.o libphaux.a libph.a $(PWOBJS)  $(MODULES) $(LIBOBJS)
+#	$(LD) $(LDFLAGS) -o $@ q2r.o libphaux.a libph.a \
+#		 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
+#	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
-lambda-gpu.x : lambda.o $(PWOBJS) $(QEMODS) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ lambda.o \
-                 $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
+#lambda-gpu.x : lambda.o $(PWOBJS) $(QEMODS) $(LIBOBJS)
+#	$(LD) $(LDFLAGS) -o $@ lambda.o \
+#                $(PWOBJS) $(QEMODS) $(LIBOBJS) $(LIBS)
+#	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 
 tldeps:
 	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
