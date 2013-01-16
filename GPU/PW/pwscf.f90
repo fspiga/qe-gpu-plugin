@@ -19,16 +19,14 @@ PROGRAM pwscf
   USE control_flags,    ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs
   USE force_mod,        ONLY : lforce, lstres, sigma
   USE environment,      ONLY : environment_start
-  USE check_stop,       ONLY : check_stop_init
+  USE check_stop,       ONLY : check_stop_init, check_stop_now
   USE mp_global,        ONLY : mp_startup, mp_global_end, intra_image_comm
-  USE mp_global,        ONLY : nimage, me_image, root_image, my_image_id
 #if defined(__MS2)
   USE ms2,              ONLY : MS2_enabled,                 &
                                ms2_initialization,    &
                                set_positions, return_forces
 #endif
   USE io_files,           ONLY : tmp_dir
-  USE image_io_routines,  ONLY : io_image_start
   USE xml_io_base,        ONLY : create_directory, change_directory
   USE read_input,         ONLY : read_input_file
   !
@@ -38,14 +36,7 @@ PROGRAM pwscf
   CHARACTER(len=256) :: dirname
   !
   CALL mp_startup ( )
-  ! reset IO nodes
-  ! (do this to make each "image head node" an ionode)
-  ! Has to be used ONLY to run nimage copies of pwscf
   !
-#ifdef __MPI
-  IF ( nimage > 1 ) CALL io_image_start( )
-#endif
-
   CALL environment_start ( 'PWSCF' )
   !
   IF ( ionode ) WRITE( unit = stdout, FMT = 9010 ) &
@@ -65,18 +56,6 @@ PROGRAM pwscf
   IF ( gamma_only ) WRITE( UNIT = stdout, &
      & FMT = '(/,5X,"gamma-point specific algorithms are used")' )
   !
-  IF( nimage > 1 ) THEN
-     !
-     ! ... When nimage are used, open a directory for each one
-     ! ...It has to be done here in order not to disturb NEB like calculations
-     !
-     WRITE( dirname, FMT = '( I5.5 )' ) my_image_id
-     tmp_dir = TRIM( tmp_dir )//TRIM( dirname )//'/'
-     CALL create_directory( tmp_dir )
-     CALL change_directory( tmp_dir )
-     !
-  END IF
-  !
   ! call to void routine for user defined / plugin patches initializations
   !
   CALL plugin_initialization()
@@ -94,6 +73,11 @@ PROGRAM pwscf
 #endif
   !
   CALL init_run()
+  !
+  IF ( check_stop_now() ) THEN
+     CALL punch( 'all' )
+     CALL stop_run( .TRUE. )
+  ENDIF
   !
   main_loop: DO
      !
