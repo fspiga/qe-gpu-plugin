@@ -33,7 +33,6 @@ NEBGPULIBS = \
 ../../NEB/src/path_read_cards_module.o \
 ../../NEB/src/path_read_namelists_module.o \
 ../../NEB/src/path_to_engine_fix_atom_pos.o \
-../../NEB/src/path_to_engine_mp.o \
 ../../NEB/src/path_variables.o \
 ../../NEB/src/set_defaults.o \
 ../../NEB/src/stop_run_path.o 
