@@ -14,13 +14,13 @@ Rebuild date: January 16, 2013
 Rebuild version: 2
 
 
-#  0 # What's new in this build
+*** 0. What's new in this build
 
 >> MAGMA works also using GPU with compute capabiity 3.0
 >> OpenBLAS included in QE-GPU (see IMPORTANT NOTE (4), section 3)
 
 
-#  1 # Requirements               
+*** 1. Requirements               
 
 >> Strongly suggested:
 - Intel compiler (versions above 11) or PGI compiler (tested up to 12.8)
@@ -41,14 +41,14 @@ Rebuild version: 2
 The code has always been tested on a 64bit systems.
 
 
-#  2 # Features not (yet) GPU accelerated in PWscf
+*** 2. Features not (yet) GPU accelerated in PWscf
 
 - iterative diagonalization of a complex hermitian matrix through 
   preconditioned conjugate gradient algorithm (rcgdiagg, ccgdiagg)
 - noncollinear case 
 
 
-#  3  How to compile 
+*** 3.  How to compile 
 
 (...after checkout the entire QE repository from SVN or 
    untar QE-GPU-5.0.2-build1.tar.gz in your working directory...)   
@@ -106,7 +106,7 @@ IMPORTANT NOTE (3): remember to have CUDA nvcc and CUDA libs properly set in
 IMPORTANT NOTE (4): if you do not have a multi-threaded BLAS library (because
                     you do not have MKL or AMCL or other vendor-specific 
                     library) you can exploit multi-threading at BLAS/LAPACK 
-                    level by using OpenBLAS[4]. OpenBLAS is compiled 
+                    level by using OpenBLAS[4,5]. OpenBLAS is compiled 
                     automatically if "--with-internal-blas" is specified.
 
 
@@ -216,7 +216,7 @@ For CRAY XK6/XK7 systems...
      --enable-magma --disable-profiling --enable-phigemm --enable-parallel ARCH=crayxt F90=ifort
 
 
-#  4 # How to run
+*** 4. How to run
 
 Nothing has changed. If the support to the GPU is enables you MUST remember to 
 specify few additional environmental variables required by the phiGEMM library 
@@ -250,7 +250,7 @@ IMPORTANT NOTE (3): the library auto-tune the split factor at runtime. You just
                     about the guess value leave the default.      
 
                 
-#  5 # Best Practices
+*** 5. Best Practices
 
 - NEVER oversubscribe too much the GPU! On HPC system equipped with NVIDIA 
   M20xx you might place 2 MPI process on the same card, no more. The best is 
@@ -299,13 +299,13 @@ mpirun -v -np 16 -npernode 4  -bysocket -bind-to-socket -display-map -report-bin
    
 
 
-#  6 # Trouble-makers. inconsistencies, etc: 
+*** 6. Trouble-makers. inconsistencies, etc: 
 
 - if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
   ignore MPI C++ bindings.
 
 
-#  7 # In case of CUDA/GPU code errors...
+*** 7. In case of CUDA/GPU code errors...
         
 It may happen that some ported routines fail. If this happen you can easily
 decide to run the code skipping that specific "GPU" part that produce some 
@@ -323,7 +323,7 @@ $ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 You can also specify more of these flags together.
 
 
-#  8 # Profiling capabilities (CPU-only)
+*** 8. Profiling capabilities (CPU-only)
 
 It is possible to use the QE-GPU package to extend the standard QE code and
 allow call-by-call profiling of GEMM operations also for CPU-only execution.
@@ -349,7 +349,7 @@ about each GEMM operation performed. Calls are listed as they temporarly
 occour during the execution.
 
 
-#  9 # References
+*** 9. References
 
 [1] P. Giannozzi et al., "QUANTUM ESPRESSO: a modular and open-source software 
     project for quantum simulations of materials", J. Phys. 
@@ -359,10 +359,13 @@ occour during the execution.
     Quantum ESPRESSO on hybrid systems.", 20th Euromicro International 
     Conference on Parallel, Distributed and Network-Based Processing 
     (PDP), 2012
-[4] URL: http://xianyi.github.com/OpenBLAS/
+[4] Z. Xianyi, W. Qian, Z. Yunquan, "Model-driven Level 3 BLAS Performance 
+    Optimization on Loongson 3A Processor", 2012 IEEE 18th International 
+    Conference on Parallel and Distributed Systems (ICPADS), 17-19 Dec. 2012.
+[5] URL: http://xianyi.github.com/OpenBLAS/
 
 
-# 10 # Acknowledgments
+*** 10. Acknowledgments
 
 [2011-2012] The first phase of this work has been supported by the PRACE 1st 
 Implementation Phase project, WP 7.5e "Programming Techniques for High 
