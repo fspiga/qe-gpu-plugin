@@ -102,17 +102,19 @@ cuda_init.o \
 cuda_header.o \
 fft_stick_cuda.o
 
-all : libqemodgpu.a 
+all : version libqemodgpu.a 
 
-#version.f90: version.f90.in
-#	- ( if test -x ../install/update_version ; then \
-#                       ../install/update_version; fi )
+version:
+	- ( if test -x ../install/update_gpu_version ; then \
+	../install/update_gpu_version; \
+	else if test ! -f ../include/gpu-version.h ; then \
+	cat ../include/gpu-version.h.in > ../include/gpu-version.h ; fi ; fi )	
 
 libqemodgpu.a: $(CUGPUOBJS) $(GPUMODULES)
 	$(AR) $(ARFLAGS) $@ $? $(MODULES)     
 	$(RANLIB) $@    
 
 clean :
-	- /bin/rm -f *.o *.a *.d *.i *~ *.F90 *.mod *.L
+	- /bin/rm -f *.o *.a *.d *.i *~ *.F90 *.mod *.L ../include/gpu-version.h
 
 #include make.depend

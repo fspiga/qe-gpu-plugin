@@ -1,0 +1,17 @@
+/*
+ * Copyright (C) 2001-2013 Quantum ESPRESSO group
+ *
+ * This file is distributed under the terms of the
+ * GNU General Public License. See the file `License'
+ * in the root directory of the present distribution,
+ * or http://www.gnu.org/copyleft/gpl.txt .
+ *
+ */
+
+#ifndef __QE_GPU_VERSION_H
+#define __QE_GPU_VERSION_H
+
+#define _TRANSLATE_(t) #t
+#define CURRENT_QE_VERSION _TRANSLATE_(unknown)
+
+#endif // __QE_GPU_VERSION_H

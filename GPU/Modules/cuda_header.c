@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "cuda_env.h"
+#include "gpu-version.h"
 
 void print_cuda_header_()
 {
@@ -51,7 +52,7 @@ void print_cuda_header_()
 #if defined(__PHIGEMM_CPUONLY) && defined(__PHIGEMM_PROFILE)
 	printf("       CPU-version with call-by-call GEMM profiling"); fflush(stdout);
 #else
-	printf("       GPU-accelerated Quantum ESPRESSO \n"); fflush(stdout);
+	printf("       GPU-accelerated Quantum ESPRESSO (svn rev. %s)\n", CURRENT_QE_VERSION); fflush(stdout);
 #if defined(__PARA) || defined(__OPENACC) || defined(__CUDA_PINNED) || !defined(__MAGMA) || defined(__USE_3D_FFT)
 	printf("       ");  fflush(stdout);
 #if defined(__PARA)
