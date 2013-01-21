@@ -47,7 +47,6 @@ MODULES = \
 ../../Modules/mm_dispersion.o \
 ../../Modules/mp_base.o \
 ../../Modules/mp_global.o \
-../../Modules/mp_image_global_module.o \
 ../../Modules/mp_wave.o \
 ../../Modules/noncol.o \
 ../../Modules/open_close_input_file.o \
