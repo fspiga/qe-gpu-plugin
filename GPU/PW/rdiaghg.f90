@@ -86,12 +86,16 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
 #if defined(__CUDA) && defined(__MAGMA)
      !
      ! ... check for optimal block size -> MAGMA hard-coded value = 32
-     nb = 32;
      !
-     lwork = 1 + 6 * n * nb + 2* n * n;
-     liwork = 5*n + 3
+     liwork = 6*n
      !
-     ALLOCATE ( iwork( liwork) )
+     IF ( all_eigenvalues ) THEN
+        lwork = 1 + 6 * n * 32 + 2* n * n;
+     ELSE
+        lwork = 1 + 6 * n + 2* n * n;
+     END IF
+     !
+     !liwork = 5*n + 3
      !
 #else
      !
@@ -107,6 +111,8 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
         lwork = ( nb + 3 )*n
         !
      END IF
+     !
+     liwork = 5*n + 3
      !
 #endif
      !
@@ -130,8 +136,9 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
         !
 #if defined(__CUDA) && defined(__MAGMA)
         !
-        !CALL DSYGVD( 1, 'V', 'U', n, v, ldh, s, ldh, e, work, lwork, iwork, liwork, info )
+        ALLOCATE( iwork( liwork ) )
         !
+        !CALL DSYGVD( 1, 'V', 'U', n, v, ldh, s, ldh, e, work, lwork, iwork, liwork, info )
         CALL magmaf_dsygvd( 1, 'V', 'U', n, v, ldh, s, ldh, e, work, lwork, iwork, liwork, info )
         !
 #else
@@ -147,46 +154,49 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
         !
         ! ... calculate only m lowest eigenvalues
         !
-#if defined(__CUDA) && defined(__MAGMA)
+        ALLOCATE( iwork( liwork ) )
         !
-        !ALLOCATE (vv(ldh, n) )
+#if defined(__CUDA) && defined(__MAGMA)
+!      subroutine magmaf_dsygvdx( itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, &
+!                                il, iu, m, w, work, lwork, &
+!                                iwork, liwork, info)
+        !
+!        ALLOCATE (vv(ldh, n) )
         allocation_size = ldh*n*sizeof(fp_kind)*4
         res = cudaHostAlloc ( cptr_vv, allocation_size, test_flag )
         CALL c_f_pointer ( cptr_vv, vv, (/ ldh, n /) )
         !
         vv(:,:) = h(:,:)
         !
-        CALL magmaf_dsygvd( 1, 'V', 'U', n, vv, ldh, s, ldh, e, work, lwork, iwork, liwork, info )
+        CALL magmaf_dsygvdx( 1, 'V', 'I', 'U', n, vv, ldh, s, ldh, &
+                             0.D0, 0.D0, 1, m, mm, e, &
+                             work, lwork, iwork, liwork, info )
         !
-        !CALL DSYGVD( 1, 'V', 'U', n, vv, ldh, s, ldh, e, work, lwork, iwork, liwork, info )
-        !
-        v(:,:) = vv(1:m, 1:m)
-        ! DEALLOCATE( vv)
+        v(:,:) = vv(:, 1:m)
         res = cudaFreeHost(cptr_vv)
+!        DEALLOCATE( vv)
         !
 #else
         !
-        ALLOCATE( iwork( 5*n ) )
         ALLOCATE( ifail( n ) )
         !
-        ! ... save the diagonal of input H (it will be overwritten)
-        !
         ALLOCATE( hdiag( n ) )
+        !
         DO i = 1, n
            hdiag(i) = h(i,i)
         END DO
         !
         abstol = 0.D0
-       ! abstol = 2.D0*DLAMCH( 'S' )
+        ! abstol = 2.D0*DLAMCH( 'S' )
         !
         CALL DSYGVX( 1, 'V', 'I', 'U', n, h, ldh, s, ldh, &
                      0.D0, 0.D0, 1, m, abstol, mm, e, v, ldh, &
                      work, lwork, iwork, ifail, info )
         !
         DEALLOCATE( ifail )
-        DEALLOCATE( iwork )
         !
         ! ... restore input H matrix from saved diagonal and lower triangle
+        ! (why call a generalized eigensolver IF at the end we enforce a sort of symmetry? NdFilippo)
         !
         DO i = 1, n
            h(i,i) = hdiag(i)
@@ -205,12 +215,16 @@ SUBROUTINE rdiaghg( n, m, h, s, ldh, e, v )
      END IF
      !
      DEALLOCATE( work )
-#if defined(__CUDA) && defined(__MAGMA)
-     DEALLOCATE( iwork )
-#endif
+     if ( allocated(iwork)) DEALLOCATE( iwork )
      !
-     CALL errore( 'rdiaghg', 'diagonalization (DSYGV*) failed', ABS( info ) )
-     !
+     IF ( info > n ) THEN
+        CALL errore( 'rdiaghg', 'S matrix not positive definite', ABS( info ) )
+     ELSE IF ( info > 0 ) THEN
+        CALL errore( 'rdiaghg', 'eigenvectors failed to converge', ABS( info ) )
+     ELSE IF ( info < 0 ) THEN
+        CALL errore( 'rdiaghg', 'incorrect call to DSYGV*', ABS( info ) )
+     END IF
+     
      ! ... restore input S matrix from saved diagonal and lower triangle
      !
      DO i = 1, n
