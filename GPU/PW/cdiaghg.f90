@@ -159,7 +159,7 @@ SUBROUTINE cdiaghg( n, m, h, s, ldh, e, v )
         ! ... calculate only m lowest eigenvalues
         !
         abstol = 0.D0
-       ! abstol = 2.D0*DLAMCH( 'S' )
+        ! abstol = 2.D0*DLAMCH( 'S' )
         !
         ! ... the following commented lines calculate optimal lwork
         !
