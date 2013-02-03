@@ -27,6 +27,9 @@
 .cu.o:
 	$(NVCC) $(NVCCFLAGS) -I../../include $(IFLAGS) $(DFLAGS)   -c $<
 
+# topdir for linking espresso libs with plugins
+TOPDIR = @topdir@
+
 @SET_MAKE@
 # DFLAGS  = precompilation options (possible arguments to -D and -U)
 #           used by the C compiler and preprocessor
@@ -163,6 +166,3 @@ LIBS           = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(FFT_LIBS) $(BLAS_LIBS) $(MPI
 
 # wget or curl - useful to download from network
 WGET = @wget@
-
-# topdir for linking espresso libs with plugins
-TOPDIR = @topdir@

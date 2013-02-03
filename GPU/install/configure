@@ -7921,7 +7921,6 @@ fi
 if test "$have_lapack" -eq 0 -o "$use_internal_lapack" -eq 1 ; then
     lapack_libs="$topdir/lapack-3.2/lapack.a"
     lapack_libs_switch="internal"
-    openblas_switch=0
 else
     if test "$have_essl" -eq 1 -o "$have_atlas" -eq 1 ; then
     # IBM essl or atlas: add missing lapack routines - must be loaded after lib
@@ -9027,7 +9026,7 @@ done
 # ELPA iff SCALAPACK
 elpa_libs_switch="disabled"
 if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then
-    scalapack_libs="../../ELPA/libelpa.a $scalapack_libs"
+    scalapack_libs="\$(TOPDIR)/ELPA/libelpa.a $scalapack_libs"
     try_dflags="$try_dflags -D__ELPA"
     elpa_libs_switch="enabled"
 fi
