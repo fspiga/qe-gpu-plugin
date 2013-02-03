@@ -54,9 +54,7 @@ PROGRAM phonon
   USE el_phon,         ONLY : elph, elph_mat, elph_simple
   USE output,          ONLY : fildrho
   USE check_stop,      ONLY : check_stop_init
-  USE ph_restart,      ONLY : ph_writefile
   USE mp_global,       ONLY: mp_startup, nimage
-  USE image_io_routines, ONLY : io_image_start
   USE environment,     ONLY: environment_start
 
   !
@@ -71,9 +69,6 @@ PROGRAM phonon
   !
   CALL mp_startup ( start_images=.true. )
   !
-#ifdef __MPI
-  IF (nimage>1) CALL io_image_start()
-#endif
   CALL environment_start ( code )
   !
   ! ... and begin with the initialization part
@@ -97,7 +92,7 @@ PROGRAM phonon
      !
      !  If necessary the bands are recalculated
      !
-     IF (setup_pw) CALL run_pwscf(do_band)
+     IF (setup_pw) CALL run_pwscf(do_band, iq)
      !
      !  Initialize the quantities which do not depend on
      !  the linear response of the system
@@ -149,8 +144,6 @@ PROGRAM phonon
      CALL clean_pw_ph(iq)
      !
   END DO
-
-  CALL ph_writefile('init',0)
   !
   IF (bands_computed) CALL print_clock_pw()
   !
