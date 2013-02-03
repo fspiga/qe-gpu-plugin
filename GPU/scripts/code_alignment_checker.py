@@ -23,4 +23,5 @@ for file in filenames.keys():
      file_to_check = os.path.abspath(filenames[file]['original'])
      hash_original = hashlib.md5( open( file_to_check , 'r').read()).hexdigest()
      if (hash_original != filenames[file]['hash']):
-          print os.path.basename(file_to_check) + " is *NOT* aligned, please manually check."
+	  print "The corresponding GPU version of " + file_to_check + " is *NOT* aligned, please manually check."
+          #print os.path.basename(file_to_check) + " is *NOT* aligned, please manually check."
