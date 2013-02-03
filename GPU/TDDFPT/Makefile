@@ -43,7 +43,9 @@ LRGPUOBJS= \
 ../../TDDFPT/src/print_clock_lr.o \
 ../../TDDFPT/src/sd0psi.o \
 ../../TDDFPT/src/lr_set_boxes_density.o \
-../../TDDFPT/src/lr_init_nfo.o 
+../../TDDFPT/src/lr_init_nfo.o \
+../../TDDFPT/src/lr_exx_kernel.o 
+
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA pw-gpu ph
  

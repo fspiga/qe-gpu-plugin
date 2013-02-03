@@ -37,7 +37,6 @@ MODULES = \
 ../../Modules/funct.o \
 ../../Modules/generate_function.o \
 ../../Modules/griddim.o \
-../../Modules/image_io_routines.o \
 ../../Modules/input_parameters.o \
 ../../Modules/io_files.o \
 ../../Modules/io_global.o  \
@@ -48,6 +47,13 @@ MODULES = \
 ../../Modules/mp_base.o \
 ../../Modules/mp_global.o \
 ../../Modules/mp_wave.o \
+../../Modules/mp_world.o \
+../../Modules/mp_images.o \
+../../Modules/mp_pots.o \
+../../Modules/mp_pools.o \
+../../Modules/mp_bands.o \
+../../Modules/mp_diag.o \
+../../Modules/command_line_options.o \
 ../../Modules/noncol.o \
 ../../Modules/open_close_input_file.o \
 ../../Modules/parallel_include.o \
@@ -104,6 +110,7 @@ fft_stick_cuda.o
 
 all : version libqemodgpu.a 
 
+## Mimic CPU-only version
 version:
 	- ( if test -x ../install/update_gpu_version ; then \
 	../install/update_gpu_version; \

@@ -36,6 +36,7 @@ PHOBJS = \
 ../../PHonon/PH/cgsolve_all.o \
 ../../PHonon/PH/cgsolve_all_imfreq.o \
 ../../PHonon/PH/ch_psi_all.o \
+../../PHonon/PH/check_if_partial_dyn.o \
 ../../PHonon/PH/check_initial_status.o \
 ../../PHonon/PH/check_q_points_sym.o \
 ../../PHonon/PH/check_restart_recover.o \
@@ -131,6 +132,7 @@ PHOBJS = \
 ../../PHonon/PH/read_wfc_rspace_and_fwfft.o \
 ../../PHonon/PH/rotate_dvscf_star.o \
 ../../PHonon/PH/rotate_and_add_dyn.o \
+../../PHonon/PH/rotate_pattern_add.o \
 ../../PHonon/PH/run_pwscf.o \
 ../../PHonon/PH/save_ph_input.o \
 ../../PHonon/PH/set_asr_c.o \
@@ -161,6 +163,7 @@ PHOBJS = \
 ../../PHonon/PH/symdynph_gq.o \
 ../../PHonon/PH/syme.o \
 ../../PHonon/PH/symm.o \
+../../PHonon/PH/symmorphic_or_nzb.o \
 ../../PHonon/PH/transform_int_so.o \
 ../../PHonon/PH/transform_int_nc.o \
 ../../PHonon/PH/transform_alphasum_nc.o \
