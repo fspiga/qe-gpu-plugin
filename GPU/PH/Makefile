@@ -173,6 +173,7 @@ PHOBJS = \
 ../../PHonon/PH/tra_write_matrix.o \
 ../../PHonon/PH/trntnsc.o \
 ../../PHonon/PH/write_epsilon_and_zeu.o \
+../../PHonon/PH/write_qplot_data.o \
 ../../PHonon/PH/write_matrix.o \
 ../../PHonon/PH/write_modes.o \
 ../../PHonon/PH/write_rec.o \

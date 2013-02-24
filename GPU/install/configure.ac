@@ -312,7 +312,7 @@ then
                 *-ibm-aix* )            arch=aix    ;;
                 sparc-sun-* )           arch=sparc  ;;
                 i386-pc-solaris* )      arch=solaris;;
-                i686-apple-darwin* )    arch=mac686 ;;
+                i*86-apple-darwin* )    arch=mac686 ;;
                 *-pc-cygwin )           arch=cygwin ;;
                 sx*-nec* )              arch=necsx  ;;
                 powerpc64-*-linux-gnu ) arch=ppc64  ;;
@@ -2449,7 +2449,7 @@ if test "$ranlib" != "echo"
 then
    AC_CHECK_PROG(ranlib,ranlib,ranlib,echo)
 fi
-# MacOs walkaround for ranlib
+# MacOs workaround for ranlib
 if test "$arch" == "mac686"; then
    if test "$ranlib" == "ranlib"; then
       ranlib="ranlib -c"

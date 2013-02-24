@@ -252,13 +252,18 @@ TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviro
 
 LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
-all : tldeps pw-gpu.x
+all : tldeps pw-gpu.x manypw-gpu.x
 
 pw-gpu.x : pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	   pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
+manypw-gpu.x : manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
+	$(LD) $(LDFLAGS) -o $@ \
+	manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	- ( cd ../../bin; ln -fs ../PW/src/$@ . )
+	
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
 	$(AR) $(ARFLAGS) $@ $? $(PWOBJS)
 	$(RANLIB) $@
