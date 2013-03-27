@@ -32,8 +32,6 @@
       "./GPU/PW/h_psi.f90" : { "original" : "./PW/src/h_psi.f90", "hash" : "c87465c6cf1f91930f7d23e8215e7173"},
       "./GPU/PW/Makefile" : { "original" : "./PW/src/Makefile", "hash" : "436f72c0fbc57a3022b97ff2fe808dbf"},
       "./GPU/PW/newd.f90" : { "original" : "./PW/src/newd.f90", "hash" : "732fb109355c46a36f5ecdd7b0077a75"},
-      "./GPU/PW/pwscf.f90" : { "original" : "./PW/src/pwscf.f90", "hash" : "fbcd7905959b9c4dd658dfb4d0d7f127"},
-      "./GPU/PW/manypy.f90" : { "original" : "./PW/src/manypy.f90", "hash" : "73983bbed6e3056f9b82e679ae2c25a6"},
       "./GPU/PW/rdiaghg.f90" : { "original" : "./PW/src/rdiaghg.f90", "hash" : "d1808b39640c984c10f2c44eb7c0962a"}, 
       "./GPU/PW/regterg.f90" : { "original" : "./PW/src/regterg.f90", "hash" : "f9b36eb5e76273e206cd9fe43ff23317"},
       "./GPU/TDDFPT/lr_main.f90" : { "original" : "./TDDFPT/src/lr_main.f90", "hash" : "408e8e0e02812b246acaf6d27cc8003e"}

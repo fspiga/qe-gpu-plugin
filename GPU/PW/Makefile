@@ -167,6 +167,7 @@ PWOBJS = \
 ../../PW/src/rotate_wfc_k.o \
 ../../PW/src/rotate_wfc_gamma.o \
 ../../PW/src/ruotaijk.o \
+../../PW/src/run_pwscf.o \
 ../../PW/src/s_1psi.o \
 ../../PW/src/s_psi.o \
 ../../PW/src/save_in_cbands.o \
@@ -254,12 +255,12 @@ LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src
 
 all : tldeps pw-gpu.x manypw-gpu.x
 
-pw-gpu.x : pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
+pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	   pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
-manypw-gpu.x : manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
+manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../PW/src/$@ . )
