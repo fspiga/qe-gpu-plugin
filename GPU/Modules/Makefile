@@ -103,9 +103,9 @@ MODULES = \
 
 CUGPUOBJS = \
 cuda_mem_alloc.o \
+cuda_header.o \
 cuda_env_para.o \
 cuda_init.o \
-cuda_header.o \
 fft_stick_cuda.o
 
 all : version libqemodgpu.a 

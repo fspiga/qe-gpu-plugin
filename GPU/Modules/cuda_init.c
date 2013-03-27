@@ -18,13 +18,9 @@
 #include <sys/time.h>
 #endif
 
-#if defined(__PHIGEMM)
-#include "phigemm.h"
-#endif
+#include "cuda_env.h"
 
 #if defined(__CUDA)
-
-#include "cuda_env.h"
 
 qeCudaMemDevPtr qe_dev_scratch;
 qeCudaMemDevPtr qe_dev_zero_scratch;

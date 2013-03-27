@@ -22,6 +22,10 @@
 #ifndef __QE_CUDA_ENVIRONMENT_H
 #define __QE_CUDA_ENVIRONMENT_H
 
+#if defined(__PHIGEMM)
+#include "phigemm.h"
+#endif
+
 #if defined(__CUDA)
 
 #define qe_compute_num_blocks(N, THREADS) N / THREADS + (N % THREADS == 0 ? 0 : 1 )
@@ -133,23 +137,20 @@ extern void mybarrier_();
 
 extern void print_cuda_header_();
 #endif
+
+
+#if defined(__CUDA)
 /*
- * These routines are exactly the same in "cutil_inline_runtime.h" but,
- * replicating them here, we remove the annoying dependency to CUTIL & SDK (Filippo)
- *
  * We define these calls here, so the user doesn't need to include __FILE__ and __LINE__
  * The advantage is the developers gets to use the inline function so they can debug
  */
-
-#if defined(__CUDA)
 
 #define qecudaGenericErr(err, routine, msg)  __qecudaGenericErr(err, routine, msg, __FILE__, __LINE__)
 #define qecudaSafeCall(err)  __qecudaSafeCall(err, __FILE__, __LINE__)
 #define qecudaGetLastError(msg)  __qecudaGetLastError(msg, __FILE__, __LINE__)
 #define qecheck_cufft_call(err) __qecheck_cufft_call(err, __FILE__, __LINE__)
 
-
-inline void __qecudaGenericErr( cudaError_t err, char* routine, char* msg, const char *file, const int line )
+static inline void __qecudaGenericErr( cudaError_t err, char* routine, char* msg, const char *file, const int line )
 {
 	if(err != cudaSuccess) {
 		printf("[%s:%d] qecudaGenericErr() Runtime %s : %s (%s).\n",
@@ -158,7 +159,7 @@ inline void __qecudaGenericErr( cudaError_t err, char* routine, char* msg, const
 	}
 }
 
-inline void __qecudaSafeCall( cudaError_t err, const char *file, const int line )
+static inline void __qecudaSafeCall( cudaError_t err, const char *file, const int line )
 {
     if( cudaSuccess != err) {
 		printf("[%s:%d] qecudaSafeCall() Runtime API error : %s.\n",
@@ -167,7 +168,7 @@ inline void __qecudaSafeCall( cudaError_t err, const char *file, const int line 
     }
 }
 
-inline void __qecudaGetLastError(const char *errorMessage, const char *file, const int line )
+static inline void __qecudaGetLastError(const char *errorMessage, const char *file, const int line )
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err) {
@@ -177,7 +178,7 @@ inline void __qecudaGetLastError(const char *errorMessage, const char *file, con
     }
 }
 
-inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, const int line )
+static inline void __qecheck_cufft_call(  cufftResult cufft_err, const char *file, const int line )
 {
 	switch ( cufft_err ) {
 
