@@ -183,9 +183,7 @@ else
 endif
 
 liblapack: touch-dummy
-ifeq ($(OPENBLAS_ENABLED),0) 
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@
-endif
 
 libelpa: touch-dummy
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@
