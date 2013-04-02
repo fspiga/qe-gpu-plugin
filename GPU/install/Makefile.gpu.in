@@ -12,9 +12,8 @@ default :
 	@echo '  ph-gpu       phonon code, Gamma-only version and third-order derivatives'
 	@echo '  neb-gpu      code for Nudged Elastic Band method'
 	@echo '  cp-gpu       CP code: CP MD with ultrasoft pseudopotentials'
-	@echo '  tddfpt-gpu   time dependent dft code'
 	@echo '  pwall-gpu    same as "make pw-gpu ph-gpu neb-gpu"'
-	@echo '  all-gpu      same as "make pwall-gpu cp-gpu tddfpt-gpu"'
+	@echo '  all-gpu      same as "make pwall-gpu cp-gpu"'
 	@echo '  clean        remove executables and objects'
 	@echo '  clean-gpu    remove executables and objects (GPU-only section)'
 	@echo '  veryclean    revert distribution to the original status'
@@ -24,10 +23,6 @@ default :
 ###########################################################
 
 # Redirect to GPU build
-#pw : bindir mods liblapack libblas libs libiotk libenviron
-#	if test -d PW ; then \
-#	( cd PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-#	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 pw	: pw-gpu
 
 pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron  
@@ -57,8 +52,6 @@ endif
 
 
 # Redirect to GPU build
-#ph : bindir mods libs pw-gpu
-#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
 ph	: ph-gpu
 
 ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
@@ -86,63 +79,49 @@ neb-gpu : bindir mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 	( cd GPU/NEB ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
 	
-# Redirect to GPU build
 #tddfpt : bindir mods libs pw ph
 #	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-tddfpt-gpu : bindir mods libs libphiGEMM libMAGMA gpu-mods libs pw-gpu ph
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-tddfpt
-ifeq ($(PHIGEMM_ENABLED),1) 
-	grep -rl -E 'gemm|GEMM' ./TDDFPT/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
-endif
-	if test -d TDDFPT ; then \
-	( cd TDDFPT/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libtddfpt.a ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= libtddfpt.a ; fi ) ; fi
-	if test -d GPU/TDDFPT ; then \
-	( cd GPU/TDDFPT ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
-	
-	
-pp : bindir mods libs pw
-	if test -d PP ; then \
-	( cd PP ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+#pp : bindir mods libs pw
+#	if test -d PP ; then \
+#	( cd PP ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+#	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-pwcond : bindir mods libs pw pp
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#pwcond : bindir mods libs pw pp
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-acfdt : bindir mods libs pw ph
-	if test -d ACFDT ; then \
-	( cd ACFDT ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+#acfdt : bindir mods libs pw ph
+#	if test -d ACFDT ; then \
+#	( cd ACFDT ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+#	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-gipaw : pw neb
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#gipaw : pw neb
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-ld1 : bindir liblapack libblas mods libs
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#ld1 : bindir liblapack libblas mods libs
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-upf : mods libs
-	if test -d upftools ; then \
-	( cd upftools ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+#upf : mods libs
+#	if test -d upftools ; then \
+#	( cd upftools ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
+#	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
-pw_export : libiotk bindir mods libs pw
-	if test -d PP ; then \
-	( cd PP ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= pw_export.x ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= pw_export.x ; fi ) ; fi
+#pw_export : libiotk bindir mods libs pw
+#	if test -d PP ; then \
+#	( cd PP ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= pw_export.x ; \
+#	else $(MAKE) $(MFLAGS) TLDEPS= pw_export.x ; fi ) ; fi
 
-xspectra : bindir mods libs pw
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#xspectra : bindir mods libs pw
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
-gui : touch-dummy
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
+#gui : touch-dummy
+#	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
 
 #pwall : pw-gpu neb ph pp pwcond acfdt
 pwall-gpu : pw-gpu neb-gpu ph-gpu
 
 #all   : pwall cp ld1 upf tddfpt
-all-gpu   : pwall-gpu cp-gpu tddfpt-gpu
+all-gpu   : pwall-gpu cp-gpu
 
 
 ###########################################################
@@ -273,7 +252,7 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	done
 endif  
 	for dir in \
-		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
+		GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
 		CPV Modules PP PW \
 		ACFDT \
 		clib flib pwtools upftools \
@@ -296,7 +275,7 @@ endif
 clean-gpu :
 	touch make.sys
 	for dir in \
-		GPU/TDDFPT GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
+		GPU/NEB GPU/PW GPU/Modules GPU/PH GPU/CPV \
 	; do \
 	    if test -d $$dir ; then \
 		( cd $$dir ; \
