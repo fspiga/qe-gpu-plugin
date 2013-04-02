@@ -2249,8 +2249,12 @@ then
 	        fi  
 	        	
 	        if test "$use_phigemmprofile" -eq 1; then
-	            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-	            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+	            if test "$f90_version" = "gfortran" ; then
+                    AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
+                else
+	                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+	                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+	            fi
 	        fi
 	    fi
 	      
@@ -2417,8 +2421,12 @@ else
 		esac
 		
         if test "$use_phigemmprofile" -eq 1; then
-            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+            if test "$f90_version" = "gfortran" ; then
+                AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
+            else
+                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+            fi
         fi
         
         try_iflags="$try_iflags $phigemm_include"
