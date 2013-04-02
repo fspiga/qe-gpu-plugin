@@ -780,11 +780,11 @@ sparc:f90 )
 crayxt*:cray* )
         try_fflags_nomain=""
         #NOTE: by default OpenMP is always ON (see crayftn man page)
-        try_fflags_openmp="-O omp"
+        try_fflags_openmp="-homp"
         try_fflags="-O2 -s real64"
-        try_f90flags="-O3 -s real64 -f free"
+        try_f90flags="-O3,fp3 -s real64 -f free -h negmesg"
         try_fflags_noopt="-O0"
-        try_ldflags_openmp="-O omp"
+        try_ldflags_openmp="-homp"
         try_ldflags="-v -s real64"
         try_ldflags_static="-static"
         #try_dflags="$try_dflags -D__CRAY"
