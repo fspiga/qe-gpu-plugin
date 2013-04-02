@@ -67,7 +67,7 @@ double cuda_cclock(void)
 
 
 #if defined(__CUDA)
-void gpubinding_(int lRankThisNode, int lSizeThisNode){
+extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 	int lNumDevicesThisNode = 0;
 	int i;
@@ -157,7 +157,7 @@ void gpubinding_(int lRankThisNode, int lSizeThisNode){
 #endif
 
 #if defined(__PHIGEMM)
-void initphigemm_(){
+extern "C" void initphigemm_(){
 
 #if defined(__CUDA)
 
@@ -181,7 +181,7 @@ void initphigemm_(){
 
 
 #if defined(__CUDA)
-void detectdevicememory_(){
+extern "C" void detectdevicememory_(){
 
 	int ierr = 0;
 	int i;
@@ -232,7 +232,7 @@ void detectdevicememory_(){
 #endif
 
 #if defined(__CUDA)
-void initStreams_()
+extern "C" void initStreams_()
 {
 	int ierr, i;
 
@@ -252,7 +252,7 @@ void initStreams_()
 #endif
 
 #if defined(__CUDA)
-void allocatedevicememory_(){
+extern "C" void allocatedevicememory_(){
 
 	int ierr, i;
 
@@ -277,7 +277,7 @@ void allocatedevicememory_(){
 #endif
 
 #if defined(__CUDA)
-void deallocatedevicememory_(){
+extern "C" void deallocatedevicememory_(){
 
 	int ierr, i;
 
@@ -301,7 +301,7 @@ void deallocatedevicememory_(){
 #endif
 
 #if defined(__CUDA)
-void destroyStreams_()
+extern "C" void destroyStreams_()
 {
 	int ierr, i;
 
@@ -320,7 +320,7 @@ void destroyStreams_()
 }
 #endif
 
-void initcudaenv_()
+extern "C" void initcudaenv_()
 {
 	// In case of serial (default)
 	int lRankThisNode = 0, lSizeThisNode = 1, lRank_local = -1;
@@ -354,7 +354,7 @@ void initcudaenv_()
 	return;
 }
 
-void closecudaenv_()
+extern "C" void closecudaenv_()
 {
 #if defined(__CUDA) && !defined(__CUDA_NOALLOC)
 	deallocatedevicememory_();

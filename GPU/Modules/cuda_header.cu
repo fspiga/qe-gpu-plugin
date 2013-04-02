@@ -14,7 +14,7 @@
 #include "cuda_env.h"
 #include "gpu-version.h"
 
-void print_cuda_header_()
+extern "C" void print_cuda_header_()
 {
 	// Print GPU memory allocation information on stdout
 #if defined(__CUDA_DEBUG)

@@ -121,11 +121,11 @@ extern long procs_per_gpu;
 
 extern long lRank;
 
-extern size_t initCudaEnv();
-extern void closeCudaEnv();
+extern "C" size_t initCudaEnv();
+extern "C" void closeCudaEnv();
 #if defined(__CUDA)
-extern void deAllocateDeviceMemory();
-extern void allocateDeviceMemory();
+extern "C" void deAllocateDeviceMemory();
+extern "C" void allocateDeviceMemory();
 #endif
 void initPhigemm();
 
@@ -133,9 +133,9 @@ void initPhigemm();
 void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
 
 #if defined(__CUDA)
-extern void mybarrier_();
+extern "C" void mybarrier_();
 
-extern void print_cuda_header_();
+extern "C" void print_cuda_header_();
 #endif
 
 
