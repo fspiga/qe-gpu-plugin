@@ -130,7 +130,7 @@ extern "C" void allocateDeviceMemory();
 void initPhigemm();
 
 // Auxiliary functions
-void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
+extern "C" void paralleldetect_(int * lRankThisNode_ptr, int * lSizeThisNode_ptr , int * lRank_ptr);
 
 #if defined(__CUDA)
 extern "C" void mybarrier_();
