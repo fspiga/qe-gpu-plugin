@@ -2284,11 +2284,16 @@ then
 			*:ifort* )
 		        phigemm_ldsharedflag="--shared"
 	            phigemm_fflags="-module ../include/"
-			;;
+			    ;;
 			*:pgf90 | cray*:pgf )
 		        phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-module ../include/"      
 		        ;;
+		    crayxt*:cray* )
+				phigemm_ldsharedflag="-shared"
+				phigemm_fflags="-em -J../include/"
+				phigemm_ccflags="$phigemm_ccflags -shared"
+				;;		    
 		    *:gfortran )
 		        phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-J../include/"      
@@ -2296,9 +2301,9 @@ then
 			esac
 	    
 	        if test "$use_openmp" -eq 1 ; then	        
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-fPIC -fopenmp'"
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
 	        else
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-fPIC' "
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC' "
 	        fi
 	        
 	        if test "$use_fastcuda" -eq 1 ; then
