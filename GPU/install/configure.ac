@@ -89,12 +89,12 @@ AC_ARG_WITH(gpu_arch,
     
 AC_ARG_WITH(scalapack,
    [AS_HELP_STRING([--with-scalapack],
-       [use scalapack if available (default: yes)])],
+       [(yes|no|intel) Use scalapack if available. Set to "intel" to use Intel MPI and blacs (default: use openMPI)])],
    [if  test "$withval" = "yes" ; then
       with_scalapack=1
    elif  test "$withval" = "intel" ; then
       with_scalapack=2
-   else
+   elif  test "$withval" = "no" ; then
       with_scalapack=0
    fi],
    [with_scalapack=1])
@@ -692,7 +692,7 @@ ia32:pgf* | ia64:pgf* | x86_64:pgf* )
         try_ldflags=""
         try_ldflags_openmp="-mp"
         try_ldflags_static="-Bstatic"
-        try_dflags="$try_dflags -D__PGI -D__IOTK_WORKAROUND1"
+        try_dflags="$try_dflags -D__PGI"
         have_cpp=0
         ;;
 ia32:path* | ia64:path* | x86_64:path* )
@@ -781,13 +781,15 @@ crayxt*:cray* )
         try_fflags_nomain=""
         #NOTE: by default OpenMP is always ON (see crayftn man page)
         try_fflags_openmp="-homp"
-        try_fflags="-O2 -s real64"
-        try_f90flags="-O3,fp3 -s real64 -f free -h negmesg"
+        try_fflags="-O2"
+        #NOTE: add '-rm' to get messages from crayftn about why
+        #      optimizations have not been applied
+        try_f90flags="-O3,fp3 -f free"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-homp"
-        try_ldflags="-v -s real64"
+        try_ldflags="-v"
         try_ldflags_static="-static"
-        #try_dflags="$try_dflags -D__CRAY"
+        try_dflags="$try_dflags -D__CRAY"
         have_cpp=0
         ;;
 crayxt*:pgf* )
@@ -1096,7 +1098,8 @@ then
                 # check for mkl (in several directories)
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/64
                              /opt/intel/mkl/*/lib/64
-                             /opt/intel/mkl*/lib/64"
+                             /opt/intel/mkl*/lib/64
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -1116,19 +1119,37 @@ then
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   AC_SEARCH_LIBS(dgemm, mkl_intel_ipf,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_sequential -lmkl_core)
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf_ipf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel_ipf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         else
-			   AC_SEARCH_LIBS(dgemm, mkl_intel_ipf,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_intel_thread -lmkl_core)
+                           if test "$f90" = "g95" -o"$f90" = "gfortran"; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf_ipf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel_ipf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         fi
                         if test "$ac_cv_search_dgemm" != "no"
                         then break ; fi
@@ -1168,7 +1189,8 @@ then
         x86_64:* )
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/em64t
                              /opt/intel/mkl/*/lib/em64t
-                             /opt/intel/mkl*/lib/em64t"
+                             /opt/intel/mkl*/lib/em64t
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -1188,19 +1210,37 @@ then
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   AC_SEARCH_LIBS(dgemm, mkl_intel_lp64,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_sequential -lmkl_core)
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf_lp64, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel_lp64, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         else
-			   AC_SEARCH_LIBS(dgemm, mkl_intel_lp64,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_intel_thread -lmkl_core)
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf_lp64, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel_lp64, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         fi
                        
                         # Testing for ACML... STATIC linking (disable cross-compiling for a while...)
@@ -1230,7 +1270,8 @@ then
                 # check for mkl (in several directories)
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/32
                              /opt/intel/mkl/*/lib/32
-                             /opt/intel/mkl*/lib/32"
+                             /opt/intel/mkl*/lib/32
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -1250,19 +1291,37 @@ then
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   AC_SEARCH_LIBS(dgemm, mkl_intel,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_sequential -lmkl_core)
+                           if test "$f90" = "g95" -o "$f90" = "gfortran"; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         else
-			   AC_SEARCH_LIBS(dgemm, mkl_intel,
-                                       have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags",
-                                       echo "MKL not found",
-                                       -lmkl_intel_thread -lmkl_core)
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      AC_SEARCH_LIBS(dgemm, mkl_gf, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   else
+     			      AC_SEARCH_LIBS(dgemm, mkl_intel, 
+                                 have_blas=1 have_mkl=1 
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags",
+                                 echo "MKL not found",
+                                 -lmkl_sequential -lmkl_core)
+			   fi
                         fi
                         
                         # Testing for ACML... why not? 
@@ -1362,7 +1421,7 @@ then
                 fi
                 # OBM:Yet another work-around if the above search 
                 # returns "none required" 
-                if test "$ac_cv_search_dgemm" == "none required"
+                if test "$ac_cv_search_dgemm" = "none required"
                 then
                     echo "There is no need for -lessl in this machine"
                     have_essl=1
@@ -1400,10 +1459,12 @@ then
 		fi
                 ;;
 	mac686:ifort* )
-                #This solution is tested with MacOs 10.6 and Intel 11.1 
+                #This solution is tested with MacOs 10.6 and Intel 11.1
+                #..and now MacOs 10.8.3 and Intel 13 
                 try_libdirs="/Developer/opt/intel/Compiler/*/*/Frameworks/mkl/lib/universal
                              /opt/intel/Compiler/*/*/Frameworks/mkl/lib/universal
-                             /opt/intel/mkl*/lib/em64t"
+                             /opt/intel/mkl*/lib/em64t
+                             /opt/intel/mkl/lib"
 		try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
 		for dir in none $try_libdirs

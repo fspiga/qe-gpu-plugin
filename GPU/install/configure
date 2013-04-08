@@ -1454,7 +1454,9 @@ Optional Packages:
   --with-cuda-dir=<path>  specify CUDA installation directory (default is
                           /usr/local/cuda/)
   --with-gpu-arch=<arch>  specify the GPU target architecture (default: 20)
-  --with-scalapack        use scalapack if available (default: yes)
+  --with-scalapack        (yes|no|intel) Use scalapack if available. Set to
+                          "intel" to use Intel MPI and blacs (default: use
+                          openMPI)
   --with-elpa             use elpa if available (default: no)
   --with-internal-blas    compile with internal blas (default: no)
   --with-internal-cblas   compile with internal cblas (default: no -- for CRAY
@@ -2039,7 +2041,7 @@ if test "${with_scalapack+set}" = set; then
       with_scalapack=1
    elif  test "$withval" = "intel" ; then
       with_scalapack=2
-   else
+   elif  test "$withval" = "no" ; then
       with_scalapack=0
    fi
 else
@@ -5807,7 +5809,7 @@ ia32:pgf* | ia64:pgf* | x86_64:pgf* )
         try_ldflags=""
         try_ldflags_openmp="-mp"
         try_ldflags_static="-Bstatic"
-        try_dflags="$try_dflags -D__PGI -D__IOTK_WORKAROUND1"
+        try_dflags="$try_dflags -D__PGI"
         have_cpp=0
         ;;
 ia32:path* | ia64:path* | x86_64:path* )
@@ -5896,13 +5898,15 @@ crayxt*:cray* )
         try_fflags_nomain=""
         #NOTE: by default OpenMP is always ON (see crayftn man page)
         try_fflags_openmp="-homp"
-        try_fflags="-O2 -s real64"
-        try_f90flags="-O3,fp3 -s real64 -f free -h negmesg"
+        try_fflags="-O2"
+        #NOTE: add '-rm' to get messages from crayftn about why
+        #      optimizations have not been applied
+        try_f90flags="-O3,fp3 -f free"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-homp"
-        try_ldflags="-v -s real64"
+        try_ldflags="-v"
         try_ldflags_static="-static"
-        #try_dflags="$try_dflags -D__CRAY"
+        try_dflags="$try_dflags -D__CRAY"
         have_cpp=0
         ;;
 crayxt*:pgf* )
@@ -7237,7 +7241,8 @@ fi
                 # check for mkl (in several directories)
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/64
                              /opt/intel/mkl/*/lib/64
-                             /opt/intel/mkl*/lib/64"
+                             /opt/intel/mkl*/lib/64
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -7257,7 +7262,83 @@ fi
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_gf_ipf; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7325,14 +7406,16 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   fi
                         else
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o"$f90" = "gfortran"; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7343,12 +7426,12 @@ cat >conftest.$ac_ext <<_ACEOF
       call dgemm
       end
 _ACEOF
-for ac_lib in '' mkl_intel_ipf; do
+for ac_lib in '' mkl_gf_ipf; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -lmkl_intel_thread -lmkl_core $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
   fi
   rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -7400,12 +7483,88 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_intel_ipf; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   fi
                         fi
                         if test "$ac_cv_search_dgemm" != "no"
                         then break ; fi
@@ -7514,7 +7673,8 @@ fi
         x86_64:* )
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/em64t
                              /opt/intel/mkl/*/lib/em64t
-                             /opt/intel/mkl*/lib/em64t"
+                             /opt/intel/mkl*/lib/em64t
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -7534,7 +7694,83 @@ fi
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_gf_lp64; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7602,14 +7838,16 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   fi
                         else
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7620,12 +7858,12 @@ cat >conftest.$ac_ext <<_ACEOF
       call dgemm
       end
 _ACEOF
-for ac_lib in '' mkl_intel_lp64; do
+for ac_lib in '' mkl_gf_lp64; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -lmkl_intel_thread -lmkl_core $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
   fi
   rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -7677,12 +7915,88 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_intel_lp64; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   fi
                         fi
 
                         # Testing for ACML... STATIC linking (disable cross-compiling for a while...)
@@ -7760,7 +8074,8 @@ fi
                 # check for mkl (in several directories)
                 try_libdirs="/opt/intel/Compiler/*/*/mkl/lib/32
                              /opt/intel/mkl/*/lib/32
-                             /opt/intel/mkl*/lib/32"
+                             /opt/intel/mkl*/lib/32
+                             /opt/intel/mkl/lib"
                 try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
                 for dir in none $try_libdirs
@@ -7780,7 +8095,83 @@ fi
                         # should work for recent MKL versions only
                         #
                         if test "$use_openmp" -eq 0; then
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o "$f90" = "gfortran"; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_gf; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7848,14 +8239,16 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_sequential -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   fi
                         else
-			   { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+                           if test "$f90" = "g95" -o "$f90" = "gfortran" ; then
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
 $as_echo_n "checking for library containing dgemm... " >&6; }
 if test "${ac_cv_search_dgemm+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7866,12 +8259,12 @@ cat >conftest.$ac_ext <<_ACEOF
       call dgemm
       end
 _ACEOF
-for ac_lib in '' mkl_intel; do
+for ac_lib in '' mkl_gf; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -lmkl_intel_thread -lmkl_core $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
   fi
   rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -7923,12 +8316,88 @@ ac_res=$ac_cv_search_dgemm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   have_blas=1 have_mkl=1
-                                       blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
-                                       ldflags="$MKL_FLAGS $ldflags"
+                                 blas_libs="$try_loption $LIBS -lmkl_gnu_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
 else
   echo "MKL not found"
 fi
 
+			   else
+     			      { $as_echo "$as_me:$LINENO: checking for library containing dgemm" >&5
+$as_echo_n "checking for library containing dgemm... " >&6; }
+if test "${ac_cv_search_dgemm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+for ac_lib in '' mkl_intel; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lmkl_sequential -lmkl_core $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_f77_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_search_dgemm=$ac_res
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext
+  if test "${ac_cv_search_dgemm+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_dgemm+set}" = set; then
+  :
+else
+  ac_cv_search_dgemm=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_dgemm" >&5
+$as_echo "$ac_cv_search_dgemm" >&6; }
+ac_res=$ac_cv_search_dgemm
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_blas=1 have_mkl=1
+                                 blas_libs="$try_loption $LIBS -lmkl_intel_thread -lmkl_core"
+                                 ldflags="$MKL_FLAGS $ldflags"
+else
+  echo "MKL not found"
+fi
+
+			   fi
                         fi
 
                         # Testing for ACML... why not?
@@ -8352,7 +8821,7 @@ fi
                 fi
                 # OBM:Yet another work-around if the above search
                 # returns "none required"
-                if test "$ac_cv_search_dgemm" == "none required"
+                if test "$ac_cv_search_dgemm" = "none required"
                 then
                     echo "There is no need for -lessl in this machine"
                     have_essl=1
@@ -8391,9 +8860,11 @@ fi
                 ;;
 	mac686:ifort* )
                 #This solution is tested with MacOs 10.6 and Intel 11.1
+                #..and now MacOs 10.8.3 and Intel 13
                 try_libdirs="/Developer/opt/intel/Compiler/*/*/Frameworks/mkl/lib/universal
                              /opt/intel/Compiler/*/*/Frameworks/mkl/lib/universal
-                             /opt/intel/mkl*/lib/em64t"
+                             /opt/intel/mkl*/lib/em64t
+                             /opt/intel/mkl/lib"
 		try_libdirs="$libdirs $try_libdirs $ld_library_path"
 
 		for dir in none $try_libdirs
