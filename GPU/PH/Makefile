@@ -133,7 +133,7 @@ PHOBJS = \
 ../../PHonon/PH/rotate_dvscf_star.o \
 ../../PHonon/PH/rotate_and_add_dyn.o \
 ../../PHonon/PH/rotate_pattern_add.o \
-../../PHonon/PH/run_pwscf.o \
+../../PHonon/PH/run_nscf.o \
 ../../PHonon/PH/save_ph_input.o \
 ../../PHonon/PH/set_asr_c.o \
 ../../PHonon/PH/set_defaults_pw.o \
@@ -233,7 +233,7 @@ libphaux.a : $(PHGPUAUXOBJS)
 	$(RANLIB) $@
 
 clean :
-	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
+	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L *.lst
 	- /bin/rm -rf ../../bin/ph-gpu.x ../../bin/dynmat-gpu.x ../../bin/matdyn-gpu.x \
 	../../bin/q2r-gpu.x ../../bin/lambda-gpu.x ../../bin/fqha-gpu.x
 

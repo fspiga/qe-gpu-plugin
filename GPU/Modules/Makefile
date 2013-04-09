@@ -105,8 +105,8 @@ CUGPUOBJS = \
 cuda_mem_alloc.o \
 cuda_header.o \
 cuda_env_para.o \
-cuda_init.o \
-fft_stick_cuda.o
+cuda_init.o
+#fft_stick_cuda.o
 
 all : version libqemodgpu.a 
 
@@ -122,6 +122,7 @@ libqemodgpu.a: $(CUGPUOBJS) $(GPUMODULES)
 	$(RANLIB) $@    
 
 clean :
-	- /bin/rm -f *.o *.a *.d *.i *~ *.F90 *.mod *.L ../include/gpu-version.h
+	- /bin/rm -f *.o *.a *.d *.i *~ *.F90 *.mod *.L *.lst 
+	- /bin/rm ../include/.gpu-version.h.tmp ../include/gpu-version.h 
 
 #include make.depend

@@ -257,12 +257,12 @@ all : tldeps pw-gpu.x manypw-gpu.x
 
 pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
-	   pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	   ../../PW/src/pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
-	manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	 ../../PW/src/manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../PW/src/$@ . )
 	
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
@@ -273,7 +273,7 @@ tldeps:
 	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
 
 clean :
-	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L
+	- /bin/rm -f *.x *.o *.a *~ *.F90 *.d *.mod *.i *.L *.lst
 
 #include make.depend
 
