@@ -263,7 +263,7 @@ pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	 ../../PW/src/manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
-	- ( cd ../../bin; ln -fs ../PW/src/$@ . )
+	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 	
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
 	$(AR) $(ARFLAGS) $@ $? $(PWOBJS)
