@@ -159,9 +159,7 @@ PWOBJS = \
 ../../PW/src/read_file.o \
 ../../PW/src/remove_atomic_rho.o \
 ../../PW/src/report_mag.o \
-../../PW/src/restart_from_file.o \
 ../../PW/src/restart_in_electrons.o \
-../../PW/src/restart_in_ions.o \
 ../../PW/src/rho2zeta.o \
 ../../PW/src/rotate_wfc.o \
 ../../PW/src/rotate_wfc_k.o \

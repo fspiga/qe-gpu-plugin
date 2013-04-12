@@ -1258,11 +1258,11 @@ then
                         fi
                         cross_compiling=yes
                         
-                        if test "$have_blas" -eq 1
-                        then break ; fi 
+                        # if test "$have_blas" -eq 1
+                        # then break ; fi 
  
-                        # if test "$ac_cv_search_dgemm" != "no"
-                        # then break ; fi
+                        if test "$ac_cv_search_dgemm" != "no"
+                        then break ; fi
                 done
                 ;;
 
@@ -1340,11 +1340,11 @@ then
                         fi
                         cross_compiling=yes
                         
-                        if test "$have_blas" -eq 1
-                        then break ; fi 
+                        # if test "$have_blas" -eq 1
+                        # then break ; fi 
  
-                        # if test "$ac_cv_search_dgemm" != "no"
-                        # then break ; fi
+                        if test "$ac_cv_search_dgemm" != "no"
+                        then break ; fi
 
                 done
                 ;;
@@ -2539,8 +2539,8 @@ then
    AC_CHECK_PROG(ranlib,ranlib,ranlib,echo)
 fi
 # MacOs workaround for ranlib
-if test "$arch" == "mac686"; then
-   if test "$ranlib" == "ranlib"; then
+if test "$arch" = "mac686"; then
+   if test "$ranlib" = "ranlib"; then
       ranlib="ranlib -c"
    fi
 fi
