@@ -9,18 +9,20 @@ MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Mod
 
 PWGPUOBJS = \
 addusdens_gpu.o \
-add_vuspsi.o \
 newq_compute_gpu.o \
-cdiaghg.o \
+cdiaghg_gpu.o \
 vloc_psi_gpu.o \
-rdiaghg.o \
-cegterg.o \
-regterg.o \
-c_bands.o \
-data_structure.o
+rdiaghg_gpu.o 
+#add_vuspsi.o \
+#cegterg.o \
+#regterg.o \
+#data_structure.o
 
 
 PWOBJS = \
+../../PW/src/cegterg.o \
+../../PW/src/regterg.o \
+../../PW/src/data_structure.o \
 ../../PW/src/a2fmod.o \
 ../../PW/src/add_bfield.o \
 ../../PW/src/add_efield.o \
@@ -29,6 +31,7 @@ PWOBJS = \
 ../../PW/src/addusdens.o \
 ../../PW/src/addusforce.o \
 ../../PW/src/addusstress.o \
+../../PW/src/add_vuspsi.o \
 ../../PW/src/allocate_fft.o \
 ../../PW/src/allocate_fft_custom.o \
 ../../PW/src/allocate_locpot.o \
@@ -44,9 +47,11 @@ PWOBJS = \
 ../../PW/src/bp_qvan3.o \
 ../../PW/src/bp_strings.o \
 ../../PW/src/buffers.o \
+../../PW/src/c_bands.o \
 ../../PW/src/c_phase_field.o \
 ../../PW/src/ccgdiagg.o \
 ../../PW/src/cdiagh.o \
+../../PW/src/cdiaghg.o \
 ../../PW/src/clean_pw.o \
 ../../PW/src/close_files.o \
 ../../PW/src/compute_becsum.o \
@@ -159,6 +164,7 @@ PWOBJS = \
 ../../PW/src/qvan2.o \
 ../../PW/src/rcgdiagg.o \
 ../../PW/src/rdiagh.o \
+../../PW/src/rdiaghg.o \
 ../../PW/src/read_conf_from_file.o \
 ../../PW/src/read_file.o \
 ../../PW/src/remove_atomic_rho.o \
