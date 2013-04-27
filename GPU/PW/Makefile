@@ -117,6 +117,7 @@ PWOBJS = \
 ../../PW/src/start_k.o \
 ../../PW/src/kpoint_grid.o \
 ../../PW/src/lchk_tauxk.o \
+../../PW/src/ldaU.o \
 ../../PW/src/make_pointlists.o \
 ../../PW/src/makov_payne.o \
 ../../PW/src/martyna_tuckerman.o \
@@ -170,7 +171,6 @@ PWOBJS = \
 ../../PW/src/s_psi.o \
 ../../PW/src/save_in_cbands.o \
 ../../PW/src/save_in_electrons.o \
-../../PW/src/save_in_ions.o \
 ../../PW/src/scale_h.o \
 ../../PW/src/scf_mod.o \
 ../../PW/src/set_kplusq.o \
