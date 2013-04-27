@@ -8,11 +8,11 @@ include ../../make.sys
 MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../Modules $(MOD_FLAG). 
 
 PWGPUOBJS = \
-addusdens.o \
+addusdens_gpu.o \
 add_vuspsi.o \
-newd.o \
+newq_compute_gpu.o \
 cdiaghg.o \
-h_psi.o \
+vloc_psi_gpu.o \
 rdiaghg.o \
 cegterg.o \
 regterg.o \
@@ -26,6 +26,7 @@ PWOBJS = \
 ../../PW/src/add_efield.o \
 ../../PW/src/add_paw_to_deeq.o \
 ../../PW/src/add_vhub_to_deeq.o \
+../../PW/src/addusdens.o \
 ../../PW/src/addusforce.o \
 ../../PW/src/addusstress.o \
 ../../PW/src/allocate_fft.o \
@@ -98,6 +99,7 @@ PWOBJS = \
 ../../PW/src/g2_kin.o \
 ../../PW/src/h_epsi_her_apply.o \
 ../../PW/src/h_epsi_her_set.o \
+../../PW/src/h_psi.o \
 ../../PW/src/h_1psi.o \
 ../../PW/src/h_psi_meta.o \
 ../../PW/src/hinit0.o \
@@ -127,6 +129,7 @@ PWOBJS = \
 ../../PW/src/ms2.o \
 ../../PW/src/multable.o \
 ../../PW/src/n_plane_waves.o \
+../../PW/src/newd.o \
 ../../PW/src/new_ns.o \
 ../../PW/src/new_occ.o \
 ../../PW/src/ns_adj.o \
@@ -255,12 +258,12 @@ all : tldeps pw-gpu.x manypw-gpu.x
 
 pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
-	   ../../PW/src/pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	 pwscf.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
-	 ../../PW/src/manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	 manypw.o $(PWOBJS) libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 	
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)

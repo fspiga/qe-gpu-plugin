@@ -30,8 +30,8 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
-	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libpw.a ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libpw.a ; fi ) ; fi
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi

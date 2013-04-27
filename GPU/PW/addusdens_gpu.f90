@@ -8,42 +8,13 @@
 !
 !
 !----------------------------------------------------------------------
-SUBROUTINE addusdens(rho)
-  !----------------------------------------------------------------------
-  !
-  USE realus,               ONLY : addusdens_r
-  USE control_flags,        ONLY : tqr
-  USE noncollin_module,     ONLY : nspin_mag
-  USE fft_base,             ONLY : dfftp
-  USE kinds,                ONLY : DP
-  !
-  IMPLICIT NONE
-  !
-  !
-  REAL(kind=dp), intent(inout) :: rho(dfftp%nnr,nspin_mag)
-  !
-  IF ( tqr ) THEN
-     CALL addusdens_r(rho,.true.)
-  ELSE
-     CALL addusdens_g(rho)
-  END IF
-  !
-  RETURN
-  !
-END SUBROUTINE addusdens
-!
-!----------------------------------------------------------------------
-subroutine addusdens_g(rho)
+subroutine addusdens_g_gpu(rho)
   !----------------------------------------------------------------------
   !
   !  This routine adds to the charge density the part which is due to
   !  the US augmentation.
   !
-
-#if (defined __CUDA && !defined __DISABLE_CUDA_ADDUSDENS)
   USE lsda_mod,             ONLY : nspin
-#endif
-
   USE kinds,                ONLY : DP
   USE ions_base,            ONLY : nat, ntyp => nsp, ityp
   USE fft_base,             ONLY : dfftp
@@ -77,10 +48,7 @@ subroutine addusdens_g(rho)
   ! work space for rho(G,nspin)
   ! Fourier transform of q
   !
-
-#if defined(__CUDA) && !defined(__DISABLE_CUDA_ADDUSDENS)
   INTEGER, EXTERNAL :: addusdens_cuda
-#endif
 
   if (.not.okvan) return
 
@@ -99,7 +67,7 @@ subroutine addusdens_g(rho)
   do nt = 1, ntyp
      if ( upf(nt)%tvanp ) then
         ijh = 0
-#if defined(__CUDA) && !defined(__DISABLE_CUDA_ADDUSDENS)
+        !
 		first_becsum = nhm * (nhm + 1)/2
 		!
 #if defined(__CUDA_QE_TIMING)
@@ -112,12 +80,6 @@ subroutine addusdens_g(rho)
   		!
 #if defined(__CUDA_QE_TIMING)
         CALL stop_clock( 'cu:addusdens' )
-#endif
-        !
-#else
-        ! if err = 0 menas that the CUDA version of addusdens was able to run
-        ! (the problem fit the GPU memory)
-        err = 1
 #endif
         !
         IF (err .EQ. 1) THEN
@@ -152,7 +114,9 @@ subroutine addusdens_g(rho)
 	              enddo
 	           enddo
 	        enddo
+            !
         ENDIF
+        !
      endif
   enddo
   !
@@ -173,5 +137,5 @@ subroutine addusdens_g(rho)
 
   call stop_clock ('addusdens')
   return
-end subroutine addusdens_g
+end subroutine addusdens_g_gpu
 
