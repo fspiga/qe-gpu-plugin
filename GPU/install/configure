@@ -11988,6 +11988,24 @@ $as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
 	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"
 	    fi
 
+        case "$arch:$f90_version" in
+	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+	            ldflags="$ldflags -zmuldefs"
+	            ;;
+	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;
+	        crayxt*:pgf* )
+	            ldflags="$ldflags -Wl,-z,muldefs"
+	            ;;
+	        *:g95 )
+	            # replace with the correct one # ldflags="$ldflags -zmuldefs"
+	            ;;
+	        *:gfortran )
+	            ldflags="$ldflags -z muldefs"
+	            ;;
+        esac
+
 		if test "$use_pinnedmem" -eq 1  ; then
 			try_dflags="$try_dflags -D__CUDA_PINNED"
 		fi
@@ -12195,32 +12213,13 @@ fi
 		        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a"
 		        	cblas_switch=1
 		        	have_cblas=1
+		        	case "$arch:$f90_version" in
+				        *:gfortran )
+	           				extlib_flags="$extlib_flags -fPIC"
+				            ;;
+			        esac
 	            fi
 	        fi
-
-	        # MAGMA requires additional flags...
-	        case "$arch:$f90_version" in
-		        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
-		            ldflags="$ldflags -zmuldefs"
-		            ;;
-		        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-		            ldflags="$ldflags -Wl,-z,muldefs"
-		            ;;
-		        crayxt*:pgf* )
-		            ldflags="$ldflags -Wl,-z,muldefs"
-		            ;;
-		        *:g95 )
-		            # replace with the correct one # ldflags="$ldflags -zmuldefs"
-		            ;;
-		        *:gfortran )
-		            ldflags="$ldflags -z muldefs"
-		            # If there are not external BLAS then CBLAS is necessary to
-		            # link MAGMA to QE (NdFilippo)
-		            if test "$have_cblas" -eq 1 ; then
-		            	extlib_flags="$extlib_flags -fPIC"
-		            fi
-		            ;;
-	        esac
 
 	        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
 	        # interfaces. I hope to find a way to detect this case automatically
