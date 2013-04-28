@@ -38,6 +38,8 @@ SUBROUTINE rdiaghg_gpu( n, m, h, s, ldh, e, v )
   REAL(DP), INTENT(OUT) :: v(ldh,m)
     ! eigenvectors (column-wise)
   !
+#if defined(__MAGMA)
+  !
   INTEGER               :: i, j, lwork, nb, mm, info, liwork
     ! mm = number of calculated eigenvectors
   REAL(DP)              :: abstol
@@ -185,6 +187,8 @@ SUBROUTINE rdiaghg_gpu( n, m, h, s, ldh, e, v )
 !$OMP END PARALLEL
   !
   CALL stop_clock( 'rdiaghg' )
+  !
+#endif
   !
   RETURN
   !

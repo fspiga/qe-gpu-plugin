@@ -35,7 +35,7 @@ vloc_psi_gamma_cuda_opt2.o \
 nls_precompute.o \
 fft_plans_mgn.o
 
-QEMODS=../Modules/libqemodgpu.a
+QEMODS=../../Modules/libqemod.a ../Modules/libqemodgpu.a
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviron
 

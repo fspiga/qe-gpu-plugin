@@ -39,6 +39,8 @@ SUBROUTINE cdiaghg_gpu( n, m, h, s, ldh, e, v )
   COMPLEX(DP), INTENT(OUT) :: v(ldh,m)
     ! eigenvectors (column-wise)
   !
+#if defined(__MAGMA)
+  !
   INTEGER                  :: lwork, nb, mm, info, i, j, liwork, lrwork
     ! mm = number of calculated eigenvectors
   REAL(DP)                 :: abstol
@@ -212,6 +214,8 @@ SUBROUTINE cdiaghg_gpu( n, m, h, s, ldh, e, v )
 !$OMP END PARALLEL
   !
   CALL stop_clock( 'cdiaghg' )
+  !
+#endif
   !
   RETURN
   !
