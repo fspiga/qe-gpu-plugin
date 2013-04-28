@@ -44,8 +44,8 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d CPV ; then \
-	( cd CPV/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+	( cd CPV/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libcp.a ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libcp.a ; fi ) ; fi
 	if test -d GPU/CPV ; then \
 	( cd GPU/CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
@@ -60,8 +60,8 @@ ifeq ($(PHIGEMM_ENABLED),1)
 	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PHonon ; then \
-	( cd PHonon/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+	( cd PHonon/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libs-ph ; \
+	else $(MAKE) $(MFLAGS) TLDEPS= libs-ph ; fi ) ; fi
 	if test -d GPU/PH ; then \
 	( cd GPU/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
