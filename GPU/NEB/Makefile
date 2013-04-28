@@ -14,7 +14,7 @@ LIBOBJS= ../../iotk/src/libiotk.a ../../flib/flib.a \
 # Still empty...
 #NEBGPUOBJS =  
 
-QEGPUMODS=../Modules/libqemodgpu.a
+QEGPUMODS=../../Modules/libqemod.a  ../Modules/libqemodgpu.a
 PWMODS=../../PW/src/libpw.a ../PW/libpwgpu.a
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas pw-gpu
