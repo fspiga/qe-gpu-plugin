@@ -31,5 +31,5 @@ while s.strip()!='':
 	try:
 		s=raw_input()
 	except:
-		exit()
-exit()
+		sys.exit()
+sys.exit()

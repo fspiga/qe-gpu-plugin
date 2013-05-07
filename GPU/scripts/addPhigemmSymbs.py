@@ -65,4 +65,7 @@ while s.strip()!='':
 	try:
 		s=raw_input()
 	except:
-		exit()
+		sys.exit()
+
+# Necessary?
+sys.exit()
