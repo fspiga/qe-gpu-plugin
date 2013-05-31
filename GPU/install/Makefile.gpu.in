@@ -35,6 +35,9 @@ endif
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+ifeq ($(PHIGEMM_ENABLED),1)
+	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+endif
 
 # Redirect to GPU build	
 cp	: cp-gpu
@@ -49,6 +52,9 @@ endif
 	if test -d GPU/CPV ; then \
 	( cd GPU/CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
+ifeq ($(PHIGEMM_ENABLED),1)
+	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+endif
 
 
 # Redirect to GPU build
@@ -65,6 +71,9 @@ endif
 	if test -d GPU/PH ; then \
 	( cd GPU/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
+ifeq ($(PHIGEMM_ENABLED),1)
+	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+endif
 		
 #neb : bindir mods libs pw
 #	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile $@
@@ -94,6 +103,10 @@ ifeq ($(PHIGEMM_ENABLED),1)
 endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
+ifeq ($(PHIGEMM_ENABLED),1)
+	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
+endif	
+
 libs : mods
 	( cd clib ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
@@ -204,13 +217,6 @@ links : bindir
 # remove object files and executables
 clean : clean-gpu
 	touch make.sys
-ifeq ($(PHIGEMM_ENABLED),1)
-	for dir in \
-		CPV/src PHonon/PH PW/src Modules \
-	; do \
-	    grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
-	done
-endif  
 	for dir in \
 		CPV Modules PW PH NEB \
 		clib flib upftools \
@@ -260,7 +266,7 @@ distclean veryclean : clean
 	- for dir in Doc; do \
 	    test -d $$dir && ( cd $$dir ; $(MAKE) $(MFLAGS) TLDEPS= clean ) \
 	done
-	- rm -rf make.sys
+	- rm -rf make.sys Makefile.gpu
 
 
 #########################################################

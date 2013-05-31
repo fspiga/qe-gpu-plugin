@@ -5,8 +5,8 @@
 # or http://www.gnu.org/copyleft/gpl.txt .
 #
 # Author: Filippo Spiga (spiga.filippo@gmail.com)
-# Date: June 14, 2012
-# Version: 1.1
+# Date: May 31, 2013
+# Version: 1.2
 
 import os
 import os.path
@@ -18,15 +18,14 @@ while s.strip()!='':
 	input_file = os.path.abspath(s)
 	backup_file = os.path.join(os.path.dirname(input_file), '.' + os.path.basename(input_file) + '.orig')
 	
-        print input_file+": ",
-	
 	if os.path.exists(backup_file) :
 		# restore original
 		os.rename(backup_file, input_file) 
 		
-		print "restored."
+		# output disabled 
+		# print input_file + ":"restored."
 	else:
-		print "skipped (do a manual check)."
+		print input_file + ": skipped (do a manual check)."
 	
 	try:
 		s=raw_input()
