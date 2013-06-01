@@ -18,6 +18,7 @@ TLDEPS= bindir mods libs pw
 all : tldeps ph-gpu.x
 
 ph-gpu.x : ../../PHonon/PH/phonon.o ../../PHonon/PH/libph.a $(PWMODS) $(LIBOBJS)
+	if [ ! -f ./phonon.o ]; then cp ../../PHonon/PH/phonon.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ ../../PHonon/PH/phonon.o ../../PHonon/PH/libph.a \
 		 $(PWMODS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )

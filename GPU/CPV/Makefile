@@ -17,6 +17,7 @@ all : cp-gpu
 cp-gpu : tldeps cp-gpu.x 
 
 cp-gpu.x : ../../CPV/src/cprstart.o $(QEMODS) $(LIBOBJS)
+	if [ ! -f ./cprstart.o ]; then cp ../../CPV/src/cprstart.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ cprstart.o \
 		../../CPV/src/libcp.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/CPV/$@ . )

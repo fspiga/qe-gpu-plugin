@@ -22,6 +22,7 @@ TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas pw-gpu
 all : tldeps neb-gpu.x
 
 neb-gpu.x : ../../NEB/src/neb.o ../../NEB/src/libneb.a $(LIBOBJS) $(PWMODS) $(QEGPUMODS)
+	if [ ! -f ./neb.o ]; then cp ../../NEB/src/neb.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
 	neb.o ../../NEB/src/libneb.a  $(PWMODS) $(QEGPUMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/NEB/$@ . )
