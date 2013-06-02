@@ -356,7 +356,6 @@ aix )
 crayxt* )
         try_f90="ftn"
         try_mpif90="ftn"
-        try_dflags="-D__CRAY"
         ;;
 mac686 | cygwin )
         try_f90="ifort $try_f90"
@@ -805,11 +804,13 @@ crayxt*:pgf* )
         have_cpp=1
         ;;
 crayxt*:pathf* )
+# Deprecated?
         try_fflags="-march=auto -O2 -cpp"
         try_f90flags="\$(FFLAGS)"
         try_fflags_noopt="-O0"
         try_ldflags=""
         try_ldflags_static="-static"
+        try_dflags="$try_dflags -D__PATHSCALE"
         have_cpp=1
         ;;
 necsx:* )
@@ -2247,13 +2248,13 @@ then
 	    fi
 	    
         case "$arch:$f90_version" in
-	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort*  )
+	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort* | crayxt*:ifort* )
 	            ldflags="$ldflags -zmuldefs"
 	            ;;
 	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
 	            ldflags="$ldflags -Wl,-z,muldefs"
 	            ;;
-	        crayxt*:pgf* )
+	        crayxt*:pgf* | crayxt*:cray* )
 	            ldflags="$ldflags -Wl,-z,muldefs"
 	            ;;            
 	        *:g95 )
