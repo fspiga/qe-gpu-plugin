@@ -86,32 +86,43 @@ subroutine addusdens_g_gpu(rho)
 		    !
 	        do ih = 1, nh (nt)
 	           do jh = ih, nh (nt)
+	              !
 #ifdef DEBUG_ADDUSDENS
-	              call start_clock ('addus:qvan2')
+                  call start_clock ('addus:qvan2')
 #endif
-	              call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+                  call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
 #ifdef DEBUG_ADDUSDENS
-	              call stop_clock ('addus:qvan2')
+                  call stop_clock ('addus:qvan2')
 #endif
-	              ijh = ijh + 1
-	              do na = 1, nat
-	                 if (ityp (na) .eq. nt) then
-	                    !
-	                    !  Multiply becsum and qg with the correct structure factor
-	                    !
-	                    do is = 1, nspin_mag
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig, skk)
-	                       do ig = 1, ngm
-	                          skk = eigts1 (mill (1,ig), na) * &
-	                                eigts2 (mill (2,ig), na) * &
-	                                eigts3 (mill (3,ig), na)
-	                          aux(ig,is)=aux(ig,is) + qgm(ig)*skk*becsum(ijh,na,is)
-	                       enddo
-!$OMP END PARALLEL DO
-	                    enddo
+                  !
+                  ijh = ijh + 1
+                  do na = 1, nat
+                     if (ityp (na) .eq.nt) then
                         !
-	                 endif
-	              enddo
+                        !  Multiply becsum and qg with the correct structure factor
+                        tbecsum(1:nspin_mag) = becsum(ijh,na,1:nspin_mag)
+                        !
+#ifdef DEBUG_ADDUSDENS
+                        call start_clock ('addus:aux')
+#endif
+                        !
+                        do is = 1, nspin_mag
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(skk, ig)
+                           do ig = 1, ngm
+                              skk = eigts1 (mill (1,ig), na) * &
+                                    eigts2 (mill (2,ig), na) * &
+                                    eigts3 (mill (3,ig), na)
+                              aux(ig,is)=aux(ig,is) + qgm(ig)*skk*tbecsum(is)
+                           enddo
+!$OMP END PARALLEL DO
+                        enddo
+                        !
+#ifdef DEBUG_ADDUSDENS
+                        call stop_clock ('addus:aux')
+#endif
+                        !
+                     endif
+                  enddo
 	           enddo
 	        enddo
             !
