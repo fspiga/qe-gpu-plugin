@@ -40,6 +40,7 @@ MODULE cuda_mem_alloc
 	END INTERFACE
 
 END MODULE cuda_mem_alloc
+
 #else
 
 module cuda_mem_alloc

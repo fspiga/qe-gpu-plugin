@@ -32,14 +32,16 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
     hosts(lRank)=hostname(1:namelength)
 
-
-!    do i=0, nProcs -1
-!     call mpi_bcast(hosts(i),MPI_MAX_PROCESSOR_NAME ,&
-!                       mpi_character ,i, mpi_comm_world ,ierr)
-!    enddo
-
+    ! TODO: Add a note here
+#if defined (__CUDA_WORKAROUND1)
+    do i=0, nProcs -1
+     call mpi_bcast(hosts(i),MPI_MAX_PROCESSOR_NAME ,&
+                       mpi_character ,i, mpi_comm_world ,ierr)
+    enddo
+#else
     CALL mpi_allgather(hostname, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, &
             hosts, MPI_MAX_PROCESSOR_NAME, MPI_CHARACTER, mpi_comm_world, ierr)
+#endif
 
     allocate( marked_hosts(0:nProcs -1) )
 
