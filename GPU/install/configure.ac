@@ -788,19 +788,19 @@ crayxt*:cray* )
         try_ldflags_openmp="-homp"
         try_ldflags="-v"
         try_ldflags_static="-static"
-        try_dflags="$try_dflags -D__CRAY"
+        try_dflags="$try_dflags -D__CRAY -D__IOTK_SAFEST"
         have_cpp=0
         ;;
 crayxt*:pgf* )
 # see comment above for pgf*
 	    try_fflags_nomain="-Mnomain"
-        try_fflags_openmp="-mp"
+        try_fflags_openmp="-mp=nonuma"
         try_fflags="-O3 -r8"
         try_f90flags="-fast -Mcache_align -r8 -Mpreprocess"
         try_fflags_noopt="-O0"
-        try_ldflags_openmp="-mp"
+        try_ldflags_openmp="-mp=nonuma"
         try_ldflags="-v"
-        try_dflags="$try_dflags -D__PGI -D__IOTK_WORKAROUND1"
+        try_dflags="$try_dflags -D__PGI -D__IOTK_SAFEST"
         have_cpp=1
         ;;
 crayxt*:pathf* )
@@ -810,7 +810,7 @@ crayxt*:pathf* )
         try_fflags_noopt="-O0"
         try_ldflags=""
         try_ldflags_static="-static"
-        try_dflags="$try_dflags -D__PATHSCALE"
+        try_dflags="$try_dflags -D__PATHSCALE -D__IOTK_SAFEST"
         have_cpp=1
         ;;
 necsx:* )
