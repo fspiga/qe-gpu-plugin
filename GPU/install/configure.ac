@@ -683,10 +683,14 @@ ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort* | crayxt*:ifort* )
         pre_fdflags="-fpp "
         ;;
 ia32:pgf* | ia64:pgf* | x86_64:pgf* )
+        if test "$use_debug" -eq 1; then
+            try_fflags="-fast -r8"
+        else
+            try_fflags="-O0 -g -r8"
+        fi
 	    try_fflags_nomain="-Mnomain"
-        try_fflags="-fast -r8"
         try_fflags_openmp="-mp"
-        try_f90flags="-fast -r8 -Mcache_align"
+        try_f90flags="\$(FFLAGS) -Mcache_align"
         try_fflags_noopt="-O0"
         try_ldflags=""
         try_ldflags_openmp="-mp"
@@ -777,28 +781,36 @@ sparc:f90 )
         have_cpp=0
         ;;
 crayxt*:cray* )
+        if test "$use_debug" -eq 1; then
+            try_fflags="-O3,fp3"
+        else
+            try_fflags="-O0 -g"
+        fi
         try_fflags_nomain=""
         #NOTE: by default OpenMP is always ON (see crayftn man page)
         try_fflags_openmp="-homp"
-        try_fflags="-O2"
         #NOTE: add '-rm' to get messages from crayftn about why
         #      optimizations have not been applied
-        try_f90flags="-O3,fp3 -f free"
+        try_f90flags="\$(FFLAGS) -f free"
         try_fflags_noopt="-O0"
         try_ldflags_openmp="-homp"
-        try_ldflags="-v"
+        try_ldflags="-v -Wl,-z,muldefs"
         try_ldflags_static="-static"
         try_dflags="$try_dflags -D__CRAY -D__IOTK_SAFEST"
         have_cpp=0
         ;;
 crayxt*:pgf* )
 # see comment above for pgf*
+        if test "$use_debug" -eq 1; then
+            try_fflags="-O3 -r8"
+        else
+            try_fflags="-O0 -g -r8"
+        fi
 	    try_fflags_nomain="-Mnomain"
-        try_fflags_openmp="-mp=nonuma"
-        try_fflags="-O3 -r8"
-        try_f90flags="-fast -Mcache_align -r8 -Mpreprocess"
+        try_fflags_openmp="-mp"
+        try_f90flags="\$(FFLAGS) -Mcache_align -Mpreprocess"
         try_fflags_noopt="-O0"
-        try_ldflags_openmp="-mp=nonuma"
+        try_ldflags_openmp="-mp"
         try_ldflags="-v"
         try_dflags="$try_dflags -D__PGI -D__IOTK_SAFEST"
         have_cpp=1
