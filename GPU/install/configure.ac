@@ -2258,28 +2258,10 @@ then
 	        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
 	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"   
 	    fi
-	    
-        case "$arch:$f90_version" in
-	        ia32:ifort* | ia64:ifort* | x86_64:ifort* | mac686:ifort* | crayxt*:ifort* )
-	            ldflags="$ldflags -zmuldefs"
-	            ;;
-	        ia32:pgf* | ia64:pgf* | x86_64:pgf* )
-	            ldflags="$ldflags -Wl,-z,muldefs"
-	            ;;
-	        crayxt*:pgf* | crayxt*:cray* )
-	            ldflags="$ldflags -Wl,-z,muldefs"
-	            ;;            
-	        *:g95 )
-	            # replace with the correct one # ldflags="$ldflags -zmuldefs"
-	            ;;
-	        *:gfortran )
-	            ldflags="$ldflags -z muldefs"
-	            ;;
-        esac
-	        
-		if test "$use_pinnedmem" -eq 1  ; then
-			try_dflags="$try_dflags -D__CUDA_PINNED"
-		fi   
+	   
+            if test "$use_pinnedmem" -eq 1  ; then
+                try_dflags="$try_dflags -D__CUDA_PINNED"
+            fi   
 		
 	    cuda_include="-I$cuda_path/include"
 	    
@@ -2287,10 +2269,10 @@ then
 	        try_dflags="$try_dflags -D__CUDA_DEBUG"
 	    fi
 	    
-	# NOT YET READY FOR PRODUCTION    
-	#    if test "$use_preloadgpu" -eq 1; then
-	#        try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
-	#    fi          
+            # NOT YET READY FOR PRODUCTION    
+            # if test "$use_preloadgpu" -eq 1; then
+            #    try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
+            # fi          
 	    
 	    # phiGEMM 
 	    if test "$use_phigemm" -eq 1  ; then 
@@ -2362,7 +2344,7 @@ then
 	    if test "$use_magma" -eq 1 ; then
 	        magma_switch=1
 	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
-	        magma_libs="$topdir/magma/lib/libmagma.a $topdir/magma/lib/libmagmablas.a $topdir/magma/lib/libmagma.a" 
+	        magma_libs="$topdir/magma/lib/libmagma.a " 
 	        try_dflags="$try_dflags -D__MAGMA"
 			
 		    # GPU architecture
