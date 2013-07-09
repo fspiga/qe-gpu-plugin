@@ -12,7 +12,8 @@ addusdens_gpu.o \
 newq_compute_gpu.o \
 cdiaghg_gpu.o \
 vloc_psi_gpu.o \
-rdiaghg_gpu.o 
+rdiaghg_gpu.o \
+qvan2_gpu.o 
 #add_vuspsi.o \
 #cegterg.o \
 #regterg.o \
@@ -23,7 +24,8 @@ CUGPUOBJS = \
 addusdens_cuda.o \
 vloc_psi_k_cuda.o \
 vloc_psi_gamma_cuda.o \
-newd_cuda.o
+newd_cuda.o \
+qvan2_cuda.o
 
 # Optimized, experimental (opt : -D__CUDA_NOALLOC needed)
 #                         (opt2: -D__CUDA_PRELOAD -D__CUDA_NOALLOC needed)
@@ -44,15 +46,13 @@ LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src
 all : tldeps pw-gpu.x manypw-gpu.x
 
 pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
-	if [ ! -f ./pwscf.o ]; then cp ../../PW/src/pwscf.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
-	 pwscf.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	../../PW/src/pwscf.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
-	if [ ! -f ./manypw.o ]; then cp ../../PW/src/manypw.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
-	 manypw.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	../../PW/src/manypw.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 	
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
