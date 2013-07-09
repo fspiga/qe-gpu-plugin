@@ -62,7 +62,6 @@ $ make -f Makefile.gpu all-gpu
 
 "*-gpu.x" executables will be placed under bin/ (like "pw-gpu.x")
 
-
 Additional options for QE-GPU are:
 
 --enable-cuda           : turn on the GPU support
