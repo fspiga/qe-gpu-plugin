@@ -46,15 +46,17 @@ LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src
 all : tldeps pw-gpu.x manypw-gpu.x
 
 pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
+	if [ ! -f ./pwscf.o ]; then cp ../../PW/src/pwscf.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
-	../../PW/src/pwscf.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	 pwscf.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
+	if [ ! -f ./manypw.o ]; then cp ../../PW/src/manypw.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
-	../../PW/src/manypw.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
+	 manypw.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
-	
+
 libpwgpu.a : $(PWGPUOBJS) $(CUGPUOBJS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
