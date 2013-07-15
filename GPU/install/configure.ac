@@ -138,6 +138,17 @@ AC_ARG_WITH(internal-lapack,
       use_internal_lapack=0
    fi],
    [use_internal_lapack=0])
+
+AC_ARG_WITH(openblas,
+   [AS_HELP_STRING([--with-openblas],
+       [self-compile and link against Open BLAS (default: no)])],
+    [if   test "$withval" = "yes" ; then
+      use_openblas=1
+   else
+      use_openblas=0
+   fi],
+   [use_openblas=0])
+
 # -----------------------------
 # more options 
 # ----------------------------
@@ -782,9 +793,9 @@ sparc:f90 )
         ;;
 crayxt*:cray* )
         if test "$use_debug" -eq 1; then
-            try_fflags="-O3,fp3"
-        else
             try_fflags="-O0 -g"
+        else
+            try_fflags="-O3,fp3"
         fi
         try_fflags_nomain=""
         #NOTE: by default OpenMP is always ON (see crayftn man page)
@@ -802,15 +813,15 @@ crayxt*:cray* )
 crayxt*:pgf* )
 # see comment above for pgf*
         if test "$use_debug" -eq 1; then
-            try_fflags="-O3 -r8"
-        else
             try_fflags="-O0 -g -r8"
+        else
+            try_fflags="-fast -r8"
         fi
 	    try_fflags_nomain="-Mnomain"
-        try_fflags_openmp="-mp"
+        try_fflags_openmp="-mp=nonuma"
         try_f90flags="\$(FFLAGS) -Mcache_align -Mpreprocess"
         try_fflags_noopt="-O0"
-        try_ldflags_openmp="-mp"
+        try_ldflags_openmp="-mp=nonuma"
         try_ldflags="-v"
         try_dflags="$try_dflags -D__PGI -D__IOTK_SAFEST"
         have_cpp=1
@@ -1721,15 +1732,19 @@ fi
 # settings above lapack tests, which would seem a more logical place)
 
 if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-    if test "$use_openmp" -eq 1 ; then
-	    blas_libs_switch="internal"
-	    openblas_switch=1
-	    blas_libs="$topdir/OpenBLAS/libopenblas_qe.a"
-	    # workaround?
-	    use_internal_lapack=1
+    blas_libs_switch="internal"
+
+    # OpenBLAS is a repleacement for GOTO BLAS. It is multi-threading and
+    # if has specific optimized kernels for some architecture. It also
+    # include LAPACK.
+    if test "$use_openblas" -eq 1 && test "$use_openmp" -eq 1
+    then
+	openblas_switch=1
+	blas_libs="$topdir/OpenBLAS/libopenblas_qe.a"
+	# workaround?
+	use_internal_lapack=1
     else
     	blas_libs="$topdir/BLAS/blas.a"
-    	blas_libs_switch="internal"
     	openblas_switch=0
     fi
 else
