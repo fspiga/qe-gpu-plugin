@@ -21,8 +21,9 @@ SUBROUTINE newq_compute_gpu(vr,deeq,skip_vltot)
                                    eigts1, eigts2, eigts3, nl
   USE lsda_mod,             ONLY : nspin
   USE scf,                  ONLY : vltot
-  USE uspp,                 ONLY : okvan, indv
-  USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
+  USE uspp,                 ONLY : okvan, indv, nlx, lpl, lpx, ap, nhtolm !LDB added nhtolm, lpl, lpx and ap for debug/optimization
+  USE us,                   ONLY : dq, qrad 
+  USE uspp_param,           ONLY : upf, lmaxq, nh, nhm, nbetam ! LDB added nbetam for debuggin
   USE control_flags,        ONLY : gamma_only
   USE wavefunctions_module, ONLY : psic
   USE spin_orb,             ONLY : lspinorb, domag
@@ -57,6 +58,12 @@ SUBROUTINE newq_compute_gpu(vr,deeq,skip_vltot)
 
   INTEGER, EXTERNAL :: newd_cuda
   INTEGER :: err
+
+  INTEGER, SAVE :: file_inx = 0
+  CHARACTER(LEN=32) :: filename
+  LOGICAL :: file_exists
+  INTEGER :: junk_nt
+  INTEGER :: nh_size
 
   IF ( gamma_only ) THEN
      !
@@ -111,11 +118,127 @@ SUBROUTINE newq_compute_gpu(vr,deeq,skip_vltot)
 #if defined(__CUDA_QE_TIMING)
         CALL start_clock( 'cu:newd' )
 #endif
+#if defined(__WRITE_UNIT_TEST_DATA)
+        file_inx = file_inx + 1
+        print *, "size(nh) = ", size(nh,1)
+        print *, "nr1 = ", dfftp%nr1
+        print *, "nr2 = ", dfftp%nr2
+        print *, "nr3 = ", dfftp%nr3
+        print *, "na = ", na
+        print *, "nh = ", nh
+        print *, "fact = ", fact
+        print *, "nt = ", nt
+        print *, "nat = ", nat
+        print *, "ngm = ", ngm
+        print *, "nhm = ", nhm
+        print *, "nspin = ", nspin
+        print *, "nspin_mag = ", nspin_mag
+        print *, "lmaxq = ", lmaxq
+        !print *, "qmod = ", qmod
+        
+        WRITE(filename, "(A10,I0.3,A4)"), "newd_input", file_inx, ".bin"
+
+        INQUIRE(FILE=filename, EXIST=file_exists)
+        IF (.not.file_exists) then 
+          OPEN(UNIT= 11, STATUS = 'REPLACE', FILE = filename, FORM='UNFORMATTED') 
+          !ALLOCATE( aux( ngm, nspin_mag ),  qmod( ngm ), ylmk0( ngm, lmaxq*lmaxq ) )
+          PRINT *, "Writing ", filename
+          WRITE(11) size(nh)
+          WRITE(11) dfftp%nr1
+          WRITE(11) dfftp%nr2
+          WRITE(11) dfftp%nr3
+          WRITE(11) na
+          WRITE(11) nh
+          WRITE(11) fact
+          WRITE(11) nt
+          WRITE(11) nat
+          WRITE(11) ngm
+          WRITE(11) nhm
+          WRITE(11) nspin
+          WRITE(11) nspin_mag
+          WRITE(11) lmaxq
+          WRITE(11) qmod
+          WRITE(11) ylmk0
+          WRITE(11) eigts1
+          WRITE(11) eigts2
+          WRITE(11) eigts3
+          WRITE(11) mill
+          WRITE(11) deeq
+          WRITE(11) ityp
+          WRITE(11) omega
+          WRITE(11) flag
+          WRITE(11) aux
+
+          WRITE(11) SIZE(indv,1)
+          WRITE(11) SIZE(indv,2)
+          WRITE(11) indv
+     
+          WRITE(11) SIZE(nhtolm,1)
+          WRITE(11) SIZE(nhtolm,2)
+          WRITE(11) nhtolm
+     
+          WRITE(11) SIZE(qrad,1)
+          WRITE(11) SIZE(qrad,2)
+          WRITE(11) SIZE(qrad,3)
+          WRITE(11) SIZE(qrad,4)
+          WRITE(11) qrad
+
+          WRITE(11) lpx
+          WRITE(11) lpl
+          WRITE(11) ap
+
+          WRITE(11) nbetam
+   
+          CLOSE(11)
+          
+        ELSE
+          OPEN(UNIT= 11, STATUS = 'OLD', FILE = filename, FORM='UNFORMATTED') 
+          PRINT *, "Reading from ", filename
+          READ(11) nh_size
+          READ(11) dfftp%nr1
+          READ(11) dfftp%nr2
+          READ(11) dfftp%nr3
+          READ(11) na
+          READ(11) nh
+          READ(11) fact
+          READ(11) junk_nt
+          READ(11) nat
+          READ(11) ngm
+          READ(11) nhm
+          READ(11) nspin
+          READ(11) nspin_mag
+          READ(11) lmaxq
+          READ(11) qmod
+          READ(11) ylmk0
+          READ(11) eigts1
+          READ(11) eigts2
+          READ(11) eigts3
+          READ(11) mill
+          READ(11) deeq
+          READ(11) ityp
+          READ(11) omega
+          READ(11) flag
+          READ(11) aux
+
+          PRINT *, "qmod(",size(qmod),")"
+          PRINT *, "ylmk0(",size(ylmk0,1),",",size(ylmk0,2),")"
+          PRINT *, "eigts1(",size(eigts1),")"
+          PRINT *, "eigts2(",size(eigts2),")"
+          PRINT *, "eigts3(",size(eigts3),")"
+          PRINT *, "mill(",size(mill,1),",",size(mill,2),")"
+          PRINT *, "deeq(",size(deeq,1),",",size(deeq,2),",",size(deeq,3),",",size(deeq,4),")"
+          PRINT *, "aux(",size(aux,1),",",size(aux,2),")"
+     
+          CLOSE(11)
+        ENDIF
         !
+#endif !defined(__WRITE_UNIT_TEST_DATA)
         err = newd_cuda( dfftp%nr1, dfftp%nr2, dfftp%nr3, na, nh, fact, &
             nt, nat, ngm, nhm, nspin, qmod, ylmk0, &
             eigts1, eigts2, eigts3, mill(1,:), mill(2,:), mill(3,:), &
-            deeq, ityp, omega, flag, aux, nspin_mag);
+            deeq, ityp, omega, flag, aux, nspin_mag, qrad, &
+            size(qrad,1), size(qrad,2), size(qrad,3), size(qrad,4), lmaxq, &
+            nlx, dq, indv, nhtolm, nbetam, lpx, lpl, ap, size(ap,1))
         !
 #if defined(__CUDA_QE_TIMING)
         CALL stop_clock( 'cu:newd' )

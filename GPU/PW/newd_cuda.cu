@@ -190,9 +190,9 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
    void *qrad_D, *qmod_D, *ylmk0_D;
 
-	double * qgm_na, * qgm;
+	double * qgm;
 
-   int ih, jh, jjh, iih, is, number_of_block;
+   int ih, jh, jjh, iih;
 	double fact = (* ptr_fact);
 	int nt = (* ptr_nt);
 	int na = (* ptr_na);
@@ -221,8 +221,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 	dim3 threads2_deepq( __CUDA_TxB_NEWD_DEEPQ__ );
 	dim3 grid2_deepq( qe_compute_num_blocks( nspin_mag, threads2_deepq.x));
-
-   double * qgm_H;
 
    cudaEvent_t estart, eend;
    cudaEventCreate(&estart);
@@ -419,13 +417,15 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 #endif
 
-#if 0
+#if 1
    float elapsed;
    cudaEventRecord(eend);
    cudaEventSynchronize(eend);
    cudaEventElapsedTime(&elapsed, estart, eend);
    printf("Newd elapsed time: %f\n", elapsed);
 #endif
+   cudaEventDestroy(estart);
+   cudaEventDestroy(eend);
 
 #if defined(__CUDA_DEBUG)
 	printf("\n[NEWD] Exit \n");fflush(stdout);

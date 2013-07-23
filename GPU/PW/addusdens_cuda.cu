@@ -100,7 +100,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 		double * ylmk0, double * eigts1, double * eigts2, double * eigts3, int * ig1, int * ig2,
 		int * ig3, double * aux, double * becsum, int * ityp, int * ptr_nspin_mag, int * ptr_nspin,
       double * qrad, int * ptr_qrad_s1, int * ptr_qrad_s2, int * ptr_qrad_s3, int * ptr_qrad_s4,
-      int * ptr_lmaxq, int * ptr_nlx, int * ptr_dq, int * indv, int * nhtolm, int * ptr_nbetam,
+      int * ptr_lmaxq, int * ptr_nlx, double * ptr_dq, int * indv, int * nhtolm, int * ptr_nbetam,
       int * lpx, int * lpl, double * ap, int * ptr_ap_s1, int * ptr_nhm)
 {
 	int ijh, ih, jh, na, iih, jjh, iit;
@@ -127,7 +127,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
    int qrad_s4 = (* ptr_qrad_s4);
    int lmaxq = (* ptr_lmaxq);
    int nlx = (* ptr_nlx);
-   int dq = (* ptr_dq);
+   double dq = (* ptr_dq);
    int nbetam = (* ptr_nbetam);
    int ap_s1 = (* ptr_ap_s1);
    int nhm = (* ptr_nhm);
@@ -163,38 +163,38 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	}
 #endif
 
-   int n_streams = MAX_STREAMS+1;
+	int n_streams = MAX_STREAMS+1;
 	size_t shift;
-   do {
-      shift = 0;
-      n_streams--;
-	   aux_D = (char*) qe_dev_scratch[0] + shift;
-	   shift += ( ngm * nspin_mag * 2 )*sizeof(double);
-	   becsum_D = (char*) qe_dev_scratch[0] + shift;
-	   shift += ( first_becsum * nat * nspin )*sizeof(double);
-	   qgm_D = (char*) qe_dev_scratch[0] + shift;
-	   shift += ( ngm * 2 )*sizeof(double)* n_streams;
-	   eigts1_D = (char*) qe_dev_scratch[0] + shift;
-	   shift += ( ( ( nr1 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-   	eigts2_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( ( ( nr2 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-   	eigts3_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( ( ( nr3 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
-   	ig1_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-   	ig2_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
-   	ig3_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
+	do {
+		shift = 0;
+		n_streams--;
+		aux_D = (char*) qe_dev_scratch[0] + shift;
+		shift += ( ngm * nspin_mag * 2 )*sizeof(double);
+		becsum_D = (char*) qe_dev_scratch[0] + shift;
+		shift += ( first_becsum * nat * nspin )*sizeof(double);
+		qgm_D = (char*) qe_dev_scratch[0] + shift;
+		shift += ( ngm * 2 )*sizeof(double)* n_streams;
+		eigts1_D = (char*) qe_dev_scratch[0] + shift;
+		shift += ( ( ( nr1 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
+   		eigts2_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( ( ( nr2 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
+   		eigts3_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( ( ( nr3 * 2 + 1 ) * nat ) * 2 )*sizeof(double);
+   		ig1_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
+   		ig2_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
+   		ig3_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( (ngm%2==0) ? ngm : ngm+1 )*sizeof(int);
 #if _CUDA_QVAN_
-      qrad_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( qrad_s1 * qrad_s2 * qrad_s3 * qrad_s4 )*sizeof(double);
-      qmod_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( ngm ) *sizeof(double);
-      ylmk0_D = (char*) qe_dev_scratch[0] + shift;
-   	shift += ( ngm * lmaxq * lmaxq )*sizeof(double);
+		qrad_D = (char*) qe_dev_scratch[0] + shift;
+   		shift += ( qrad_s1 * qrad_s2 * qrad_s3 * qrad_s4 )*sizeof(double);
+		qmod_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( ngm ) *sizeof(double);
+		ylmk0_D = (char*) qe_dev_scratch[0] + shift;
+	   	shift += ( ngm * lmaxq * lmaxq )*sizeof(double);
 #endif
-   } while ( shift > qe_gpu_mem_unused[0] );
+	} while ( shift > qe_gpu_mem_unused[0] );
    
 	// 	shift contains the amount of byte required on the GPU to compute
 	if ( shift > qe_gpu_mem_unused[0] ) {
@@ -210,7 +210,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 		return 1;
 	}
 
-   qecudaSafeCall( cudaHostAlloc( (void**) &qgm_H, ngm * 2 * sizeof(double) * n_streams, cudaHostAllocDefault ) );
+	qecudaSafeCall( cudaHostAlloc( (void**) &qgm_H, ngm * 2 * sizeof(double) * n_streams, cudaHostAllocDefault ) );
 	qecudaSafeCall( cudaMemcpy( (double *) aux_D, aux,  sizeof( double ) * ( ngm * nspin_mag * 2 ), cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( (double *) becsum_D, becsum,  sizeof( double ) * ( first_becsum * nat * nspin ), cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( ig1_D, ig1,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
@@ -228,23 +228,23 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 
 	ijh = 0;
 
-   int this_stream = -1;
+	int this_stream = -1;
 	for( ih = 0, iih = 1; ih < nh[nt - 1]; ih++, iih++) {
 		for( jh = ih, jjh = iih; jh < nh[nt - 1]; jh++, jjh++, ijh++ ) {
-         this_stream = (this_stream+1)%n_streams;
+			this_stream = (this_stream+1)%n_streams;
  
 
-         qecudaSafeCall( cudaStreamSynchronize( usdensStreams[ this_stream ] ) );
+			qecudaSafeCall( cudaStreamSynchronize( usdensStreams[ this_stream ] ) );
 #if _CUDA_QVAN_
-         qvan2_cuda(ngm, iih, jjh, nt, (double *)qmod_D, (double*)qgm_D + ngm * 2 * this_stream, 
-                    (double *)ylmk0_D, ngm, nlx-1, dq, (double *)qrad_D, qrad_s1, qrad_s2, qrad_s3, indv,
-                    nhm, nhtolm, nhm, nbetam, lpx, nlx, lpl, nlx, nlx, ap, ap_s1, nlx, 
-                    usdensStreams[this_stream] );
+			qvan2_cuda(ngm, iih, jjh, nt, (double *)qmod_D, (double*)qgm_D + ngm * 2 * this_stream, 
+			           (double *)ylmk0_D, ngm, nlx-1, dq, (double *)qrad_D, qrad_s1, qrad_s2, qrad_s3, indv,
+			           nhm, nhtolm, nhm, nbetam, lpx, nlx, lpl, nlx, nlx, ap, ap_s1, nlx, 
+			           usdensStreams[this_stream] );
 
 #else
-         debugMark<1><<<1,1,0,usdensStreams[ this_stream ]>>>();
+			debugMark<1><<<1,1,0,usdensStreams[ this_stream ]>>>();
 			qvan2_(ptr_ngm, &iih, &jjh, ptr_nt, qmod, qgm_H + ngm * 2 * this_stream, ylmk0);
-         debugMark<1><<<1,1,0,usdensStreams[ this_stream ]>>>();
+			debugMark<1><<<1,1,0,usdensStreams[ this_stream ]>>>();
 			// Protective guard....
 			//cudaDeviceSynchronize();
 
@@ -272,10 +272,10 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 		}
 	}
 
-   for (this_stream = 0; this_stream < n_streams; this_stream++) {
-      qecudaSafeCall( cudaStreamSynchronize(usdensStreams[ this_stream ]) );
-      qecudaSafeCall( cudaStreamDestroy(usdensStreams[ this_stream ]) );
-   }
+	for (this_stream = 0; this_stream < n_streams; this_stream++) {
+		qecudaSafeCall( cudaStreamSynchronize(usdensStreams[ this_stream ]) );
+		qecudaSafeCall( cudaStreamDestroy(usdensStreams[ this_stream ]) );
+	}
 	qecudaSafeCall( cudaMemcpy( aux, (double *) aux_D, sizeof( double ) * ( ngm * nspin_mag * 2 ), cudaMemcpyDeviceToHost ) );
 
 #if defined(__CUDA_NOALLOC)
@@ -292,6 +292,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
 
+        cudaFreeHost(qgm_H);
 #endif
 	return 0;
 }
