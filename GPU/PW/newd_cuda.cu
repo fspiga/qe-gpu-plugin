@@ -115,8 +115,13 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
 		ind_eigts2 = ( ( ( nr2 + ig2[global_index] ) + ( na * ( nr2 * 2 + 1 ) ) ) * 1 );
 		ind_eigts3 = ( ( ( nr3 + ig3[global_index] ) + ( na * ( nr3 * 2 + 1 ) ) ) * 1 );
 
+#if defined(__GPU_NVIDIA_35)
       sup_prod_1 = cuCmul( __ldg(&eigts1[ ind_eigts1 ] ), __ldg(&eigts2[ ind_eigts2 ] ) );
       sup_prod_2 = cuCmul( sup_prod_1, __ldg(&eigts3[ ind_eigts3 ] ) );
+#else
+      sup_prod_1 = cuCmul( eigts1[ ind_eigts1], eigts2[ ind_eigts2] );
+      sup_prod_2 = cuCmul( sup_prod_1, eigts3[ ind_eigts3 ] );
+#endif
       out = cuCmul( sup_prod_2, qgm[ global_index ] );
       qgm_na[ global_index ] = out;
    }
