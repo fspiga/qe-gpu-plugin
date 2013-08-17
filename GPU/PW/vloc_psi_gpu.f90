@@ -34,8 +34,7 @@ SUBROUTINE vloc_psi_gamma_gpu(lda, n, m, psi, v, hpsi)
   !
   INTEGER :: ierr
   !
-!#if defined(__WRITE_UNIT_TEST_DATA)
-#if 1
+#if defined(__WRITE_UNIT_TEST_DATA)
   INTEGER, SAVE :: file_inx = 0
   CHARACTER(LEN=32) :: filename
   LOGICAL :: file_exists
@@ -109,8 +108,7 @@ SUBROUTINE vloc_psi_k_gpu(lda, n, m, psi, v, hpsi)
   !
   INTEGER :: ierr
   !
-!#if defined(__WRITE_UNIT_TEST_DATA)
-#if 1
+#if defined(__WRITE_UNIT_TEST_DATA)
   INTEGER, SAVE :: file_inx = 0
   CHARACTER(LEN=32) :: filename
   LOGICAL :: file_exists
