@@ -37,7 +37,7 @@ default :
 # Main targets
 ###########################################################
 pw : bindir mods liblapack libblas libphiGEMM mods-hack libs libiotk libenviron
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
@@ -45,7 +45,7 @@ endif
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
 
 cp : bindir mods liblapack libblas libphiGEMM mods-hack libs libiotk
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d CPV ; then \
@@ -104,7 +104,7 @@ all   : pwall cp ld1 upf tddfpt
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 mods : libiotk libelpa
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
@@ -132,7 +132,7 @@ bindir :
 ############################################################
 
 libphiGEMM: touch-dummy
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile $@
 else
 	$(dummy-variable)
@@ -209,7 +209,7 @@ links : bindir
 # remove object files and executables
 clean :
 	touch make.sys 
-ifeq ($(PHIGEMM_ENABLED),1)
+ifeq ($(PHIGEMM_INTERNAL),1)
 	for dir in \
 		CPV/src PW/src Modules \
 	; do \

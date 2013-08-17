@@ -26,7 +26,7 @@ default :
 pw	: pw-gpu
 
 pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron  
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
@@ -35,7 +35,7 @@ endif
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
-ifeq ($(PHIGEMM_ENABLED),1)
+ifeq ($(PHIGEMM_INTERNAL),1)
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif
 
@@ -43,7 +43,7 @@ endif
 cp	: cp-gpu
 
 cp-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d CPV ; then \
@@ -52,7 +52,7 @@ endif
 	if test -d GPU/CPV ; then \
 	( cd GPU/CPV ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
-ifeq ($(PHIGEMM_ENABLED),1)
+ifeq ($(PHIGEMM_INTERNAL),1)
 	grep -rl -E 'gemm|GEMM' ./CPV/src/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif
 
@@ -62,7 +62,7 @@ ph	: ph-gpu
 
 ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PHonon ; then \
@@ -71,7 +71,7 @@ endif
 	if test -d GPU/PH ; then \
 	( cd GPU/PH ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi	
-ifeq ($(PHIGEMM_ENABLED),1)
+ifeq ($(PHIGEMM_INTERNAL),1)
 	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif
 		
@@ -98,12 +98,12 @@ all-gpu   : pwall-gpu cp-gpu
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 mods : libiotk libelpa
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
-ifeq ($(PHIGEMM_ENABLED),1)
+ifeq ($(PHIGEMM_INTERNAL),1)
 	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py
 endif	
 
@@ -151,14 +151,14 @@ libiotk: touch-dummy
 #############################################################
 
 libphiGEMM: touch-dummy
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile $@
 else
 	$(dummy-variable)
 endif
 
 libMAGMA: touch-dummy
-ifeq ($(MAGMA_ENABLED),1) 
+ifeq ($(MAGMA_INTERNAL),1) 
 	cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile $@
 else
 	$(dummy-variable)

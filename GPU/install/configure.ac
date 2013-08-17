@@ -1,4 +1,4 @@
-AC_INIT(ESPRESSO, 5.0.2, , espresso)
+AC_INIT(ESPRESSO, 5.0.3, , espresso)
 # ----------------------------
 # Non-standard precious variables
 # ----------------------------
@@ -193,35 +193,36 @@ AC_ARG_ENABLE(pinned_mem,
    fi],
    [use_pinnedmem=0])
    
-AC_ARG_ENABLE(magma, 
-   [AS_HELP_STRING([--enable-magma],
-       [enable MAGMA (default: no)])],
-   [if  test "$enableval" = "yes" ; then
-      use_magma=1
+AC_ARG_WITH(magma,
+   [AS_HELP_STRING([--with-magma],
+       [(yes|no|<path>) Use MAGMA. Self-compile or a <path> can be specified (default: no)])],
+   [if  test "$withval" = "yes" ; then
+      with_magma=1
+   elif  test "$withval" = "no" ; then
+      with_magma=0
    else
-      use_magma=0
+      with_magma=2
+      with_magma_path="$withval"
    fi],
-   [use_magma=0])
+   [with_magma=0])
 
-AC_ARG_ENABLE(phigemm, 
-   [AS_HELP_STRING([--enable-phigemm],
-       [enable phiGEMM (default: yes)])],
-   [if  test "$enableval" = "yes" ; then
-      use_phigemm=1
+AC_ARG_WITH(phigemm,
+   [AS_HELP_STRING([--with-phigemm],
+       [(yes|no|<path>|profile) Use PHIGEMM. Self-compile or a <path> can be specified (default: yes)])],
+   [if  test "$withval" = "yes" ; then
+      with_phigemm=1
+      phigemm_profiling=0
+   elif  test "$withval" = "no" ; then
+      with_phigemm=0
+      phigemm_profiling=0
+   elif  test "$withval" = "profile" ; then
+      with_phigemm=1
+      phigemm_profiling=1
    else
-      use_phigemm=0
+      with_phigemm=2
+      with_phigemm_path="$withval"
    fi],
-   [use_phigemm=1])
-               
-AC_ARG_ENABLE(profiling,
-   [AS_HELP_STRING([--enable-profiling],
-       [enable the profiling of phiGEMM calls (default: no)])],
-   [if   test "$enableval" = "yes" ; then
-      use_phigemmprofile=1
-   else
-      use_phigemmprofile=0
-   fi],
-   [use_phigemmprofile=0])
+   [with_phigemm=1])
    
 # DISABLED
 #AC_ARG_ENABLE(data_preload,
@@ -2289,8 +2290,8 @@ then
             #    try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
             # fi          
 	    
-	    # phiGEMM 
-	    if test "$use_phigemm" -eq 1  ; then 
+	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
+	    if test "$with_phigemm" -eq 1  ; then 
 	        phigemm_switch=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
 	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
@@ -2343,7 +2344,7 @@ then
 	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
 	        fi  
 	        	
-	        if test "$use_phigemmprofile" -eq 1; then
+	        if test "$phigemm_profiling" -eq 1; then
 	            if test "$f90_version" = "gfortran" ; then
                     AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
                 else
@@ -2352,11 +2353,21 @@ then
 	            fi
 	        fi
 	    fi
-	      
+	    
+	    # phiGEMM - EXTERNAL, assumed well-compiled (no profiling)     
+	    if test "$with_phigemm" -eq 2  ; then 
+	        phigemm_switch=0
+	        try_dflags="$try_dflags -D__PHIGEMM"
+	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
+	        phigemm_include="-I$with_phigemm_path/include"
+	        phigemm_libs="$with_phigemm_path/lib/libphigemm.a "    
+	    fi
+	    	    
 	    # By default show all CUDA timing    
 	    # try_dflags="$try_dflags -D__CUDA_QE_TIMING"
-	            
-	    if test "$use_magma" -eq 1 ; then
+	    
+	    # MAGMA - INTERNAL, self-compiled        
+	    if test "$with_magma" -eq 1 ; then
 	        magma_switch=1
 	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
 	        magma_libs="$topdir/magma/lib/libmagma.a " 
@@ -2374,7 +2385,6 @@ then
 		        magma_gpu_target=Tesla
 		        ;;        
 		    esac
-	
 	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
@@ -2405,8 +2415,7 @@ then
 		            then                 
 		                break
 		            fi
-		        done  
-		        	        
+		        done          	        
 		        if test "$have_cblas" -eq 0
 		        then                 
 		        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
@@ -2418,8 +2427,7 @@ then
 				            ;;
 			        esac
 	            fi
-	        fi
-							        
+	        fi							        
 	        # This if CRAY and LibSCi are used, LibSCi does not contains CBLAS
 	        # interfaces. I hope to find a way to detect this case automatically
 	        # (NdFilippo)
@@ -2427,8 +2435,16 @@ then
 	        	magma_libs="$magma_libs $topdir/CBLAS/lib/cblas.a" 
 	        	cblas_switch=1
 	        	have_cblas=1
-	        fi
-	        
+	        fi	        
+	    fi
+	    
+	    
+	    # MAGMA - EXTERNAL, assumed well-compiled and all dependency linked (CBLAS)    
+	    if test "$with_magma" -eq 2 ; then
+	        magma_switch=0
+	        magma_include="-I$with_magma_path/include -I$with_magma_path/quark/include"
+	        magma_libs="$with_magma_path/lib/libmagma.a " 
+	        try_dflags="$try_dflags -D__MAGMA" 
 	    fi
 	    
 		# Enable Open ACC (now only for card with compute capaility 2.x)
@@ -2457,7 +2473,7 @@ then
     
 else
 
-    if test "$use_phigemm" -eq 1; then 
+    if test "$with_phigemm" -eq 1; then 
         
         nvcc=$cc
         nvccflags=$cflags
@@ -2496,7 +2512,7 @@ else
 	        ;;
 		esac
 		
-        if test "$use_phigemmprofile" -eq 1; then
+        if test "$phigemm_profiling" -eq 1; then
             if test "$f90_version" = "gfortran" ; then
                 AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
             else

@@ -109,7 +109,7 @@ BLAS_LIBS_SWITCH = @blas_libs_switch@
 
 # OpenBLAS is used to exploit multi-core CPU if a multi-threaded BLAS
 # is not used or installed in the system (i.e. MKL is missing)
-OPENBLAS_ENABLED = @openblas_switch@
+OPENBLAS_INTERNAL = @openblas_switch@
 
 # If you have nothing better, use the local copy :
 # LAPACK_LIBS = /your/path/to/espresso/lapack-3.2/lapack.a
@@ -155,11 +155,11 @@ RANLIB         = @ranlib@
 FLIB_TARGETS   = all
 
 # CUDA section (flags temporary hard-coded)
-NVCC            = @nvcc@
-NVCCFLAGS       = @nvccflags@ 
+NVCC             = @nvcc@
+NVCCFLAGS        = @nvccflags@ 
 
-PHIGEMM_ENABLED  = @phigemm_switch@
-MAGMA_ENABLED    = @magma_switch@
+PHIGEMM_INTERNAL = @phigemm_switch@
+MAGMA_INTERNAL   = @magma_switch@
 
 LIBOBJS        = ../flib/ptools.a ../flib/flib.a ../clib/clib.a ../iotk/src/libiotk.a 
 LIBS           = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(FFT_LIBS) $(BLAS_LIBS) $(MPI_LIBS) $(MASS_LIBS) $(LD_LIBS)
