@@ -1,7 +1,8 @@
 declare -a makescript
-makescript_lenght=12
-QEDIR='/gpfs/scratch/userinternal/acv0/Filippo_scratch/espresso'
-QEVERSION='QE5-GPU-INTEL-CUDA_42'
+makescript_lenght=4
+QEDIRPATH='/local/fs395'
+QEDIRNAME='espresso'
+QEVERSION='QE-SVN'
 
 makescript[1]=$(cat <<EOF
 make distclean
