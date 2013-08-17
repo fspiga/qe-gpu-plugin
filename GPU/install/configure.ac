@@ -2682,6 +2682,7 @@ AC_SUBST(magma_switch)
 AC_SUBST(magma_gpu_target)
 
 AC_CONFIG_HEADERS([../include/c_defs.h:../include/c_defs.h.in])
+AC_CONFIG_HEADERS([./include/c_defs.h:./include/c_defs.h.in])
 AC_CONFIG_FILES(make.sys)
 AC_CONFIG_FILES(configure.msg)
 
