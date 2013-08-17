@@ -146,7 +146,7 @@ make -f Makefile.gpu distclean
 cd GPU/
 ./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm --disable-profiling  
 cd ../
-make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_only-PHIGEMM.x
 
 make -f Makefile.gpu distclean
@@ -160,22 +160,29 @@ make -f Makefile.gpu distclean
 cd GPU/
 ./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --disable-phigemm --disable-profiling
 cd ../
-make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_only-MAGMA.x
 
 make -f Makefile.gpu distclean
 cd GPU/
 ./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
 cd ../
-make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_only-NEWD.x
 
 make -f Makefile.gpu distclean
 cd GPU/
 ./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
 cd ../
-make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD" pw-gpu
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_only-ADDUSDENS.x
+
+make -f Makefile.gpu distclean
+cd GPU/
+./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
+cd ../
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_NEWD" pw-gpu
+cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_only-VLOCPSI.x
 
 fi;
 fi;
@@ -257,6 +264,13 @@ cd GPU/
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_excluding-ADDUSDENS.x
+
+make -f Makefile.gpu distclean
+cd GPU/
+./configure --disable-parallel --enable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm --disable-profiling
+cd ../
+make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI" pw-gpu
+cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-omp-gpu_excluding-VLOCPSI.x
 
 fi;
 fi;
