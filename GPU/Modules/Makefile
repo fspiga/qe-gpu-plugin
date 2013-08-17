@@ -9,7 +9,8 @@ MODGPUOBJS = \
 cuda_mem_alloc.o \
 cuda_header.o \
 cuda_env_para.o \
-cuda_init.o
+cuda_init.o \
+fftw3_cuda.o
 #fft_stick_cuda.o \
 #fft_scalar.o
 
