@@ -16,7 +16,7 @@ endif
 
 # OpenBLAS
 libOpenBLAS:
-ifeq ($(OPENBLAS_ENABLED),1) 
+ifeq ($(OPENBLAS_INTERNAL),1) 
 	if test ! -d ../../OpenBLAS ; then \
 	( gzip -dc ../archive/OpenBLAS-v0.2.6.tar.gz | \
 		(cd ../../; tar -xvf ./GPU/archive/OpenBLAS-v0.2.6.tar.gz )); fi
@@ -26,7 +26,7 @@ endif
 	
 # phiGEMM
 libphiGEMM:
-ifeq ($(PHIGEMM_ENABLED),1) 
+ifeq ($(PHIGEMM_INTERNAL),1) 
 	if test ! -d ../../phiGEMM ; then \
 	( gzip -dc ../archive/phiGEMM-v2.0.0rc2.tar.gz | \
 		(cd ../../; tar -xvf ./GPU/archive/phiGEMM-v2.0.0rc2.tar.gz )); fi
@@ -36,16 +36,16 @@ endif
 
 # MAGMA (+ CBLAS if necessary)
 libMAGMA:
-ifeq ($(CBLAS_ENABLED),1) 
+ifeq ($(CBLAS_INTERNAL),1) 
 	if test ! -d ../../CBLAS ; then \
 	( gzip -dc ../archive/cblas.tar.gz | (cd ../../; tar -xvf ./GPU/archive/cblas.tar.gz )); fi
 	cp make_cblas.inc ../../CBLAS/Makefile.in;
 	cd ../../CBLAS; $(MAKE) alllib;
 endif
-ifeq ($(MAGMA_ENABLED),1) 
+ifeq ($(MAGMA_INTERNAL),1) 
 	if test ! -d ../../magma ; then \
-	( gzip -dc ../archive/magma-1.4.0-beta.tar.gz | \
-		(cd ../../; tar -xvf ./GPU/archive/magma-1.4.0-beta.tar.gz; )); fi
+	( gzip -dc ../archive/magma-1.4.0.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/magma-1.4.0.tar.gz; )); fi
 	cp make_magma.inc ../../magma/make.inc;
 	cd ../../magma; $(MAKE) lib;
 endif
