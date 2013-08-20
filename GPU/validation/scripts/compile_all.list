@@ -14,7 +14,7 @@ EOF
 makescript[2]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu.x
@@ -48,7 +48,7 @@ EOF
 makescript[6]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu.x
@@ -58,7 +58,7 @@ EOF
 makescript[7]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --with-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  --with-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu-scalapack.x
@@ -68,7 +68,7 @@ EOF
 makescript[8]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --with-scalapack --disable-profiling --with-elpa
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  --with-scalapack  --with-elpa
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu-elpa.x
@@ -78,7 +78,7 @@ EOF
 makescript[9]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm  --without-scalapack --disable-profiling   --with-internal-cblas
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm  --without-scalapack    --with-internal-cblas
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu-magma.x
@@ -88,7 +88,7 @@ EOF
 makescript[10]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm --disable-profiling  
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm   
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-PHIGEMM.x
@@ -98,7 +98,7 @@ EOF
 makescript[11]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm --enable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm=profile
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-PHIGEMM-profiling.x
@@ -108,7 +108,7 @@ EOF
 makescript[12]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --disable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --without-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-MAGMA.x
@@ -118,7 +118,7 @@ EOF
 makescript[13]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --without-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-NEWD.x
@@ -128,7 +128,7 @@ EOF
 makescript[14]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --without-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-ADDUSDENS.x
@@ -138,7 +138,7 @@ EOF
 makescript[15]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --without-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_only-VLOCPSI.x
@@ -148,7 +148,7 @@ EOF
 makescript[16]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --without-scalapack --disable-profiling  
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  --without-scalapack   
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_only-PHIGEMM.x
@@ -158,7 +158,7 @@ EOF
 makescript[17]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --without-scalapack --enable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm=profile  --without-scalapack
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_only-PHIGEMM-profiling.x
@@ -168,7 +168,7 @@ EOF
 makescript[18]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --disable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --without-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_only-MAGMA.x
@@ -178,7 +178,7 @@ EOF
 makescript[19]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --without-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_only-NEWD.x
@@ -188,7 +188,7 @@ EOF
 makescript[20]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --disable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --without-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_only-ADDUSDENS.x
@@ -198,7 +198,7 @@ EOF
 makescript[21]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --disable-phigemm --disable-profiling  
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --without-phigemm   
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_excluding-PHIGEMM.x
@@ -208,7 +208,7 @@ EOF
 makescript[22]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_excluding-MAGMA.x
@@ -218,7 +218,7 @@ EOF
 makescript[23]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_excluding-NEWD.x
@@ -228,7 +228,7 @@ EOF
 makescript[24]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_excluding-ADDUSDENS.x
@@ -238,7 +238,7 @@ EOF
 makescript[25]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm --disable-profiling
+./configure --disable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_VLOCPSI" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-gpu_excluding-VLOCPSI.x
@@ -248,7 +248,7 @@ EOF
 makescript[26]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --disable-phigemm  --without-scalapack --disable-profiling  
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --without-phigemm  --without-scalapack   
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_excluding-PHIGEMM.x
@@ -258,7 +258,7 @@ EOF
 makescript[27]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --disable-magma --enable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --without-magma --with-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_excluding-MAGMA.x
@@ -268,7 +268,7 @@ EOF
 makescript[28]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_NEWD" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_excluding-NEWD.x
@@ -278,7 +278,7 @@ EOF
 makescript[29]=$(cat <<EOF
 make -f Makefile.gpu distclean
 cd GPU/
-./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --enable-magma --enable-phigemm  --without-scalapack --disable-profiling
+./configure --enable-parallel --disable-openmp --enable-cuda --with-gpu-arch=35 --with-cuda-dir=${CUDA_HOME} --with-magma --with-phigemm  --without-scalapack 
 cd ../
 make -f Makefile.gpu MANUAL_DFLAGS="-D__CLOCK_SECONDS -D__PW_TRACK_ELECTRON_STEPS -D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 cp GPU/PW/pw-gpu.x ${FINALDIR}/pw-mpi-gpu_excluding-ADDUSDENS.x
