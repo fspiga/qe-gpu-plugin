@@ -145,7 +145,6 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 #if defined(__CUDA_DEBUG)
 	printf("\n[ADDUSDENS] Enter \n");fflush(stdout);
 #endif
-	printf("\n[ADDUSDENS] Enter \n");fflush(stdout);
 
 	if ( grid2_aux.x > __CUDA_MAXNUMBLOCKS__) {
 		fprintf( stderr, "\n[ADDUSDENS] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_aux.x );
