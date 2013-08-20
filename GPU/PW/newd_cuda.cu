@@ -106,7 +106,8 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
    cuDoubleComplex out;
 
    cuDoubleComplex tmp[_N_BINS];
-   double __shared__ sdata[_N_BINS][__CUDA_TxB_NEWD_QGM__];
+   extern __shared__ double sdata[];
+   // double __shared__ sdata[_N_BINS][TxB_NEWD_QGM];
    int is, parity;
 
 	if( global_index < ngm ){
@@ -115,7 +116,7 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
 		ind_eigts2 = ( ( ( nr2 + ig2[global_index] ) + ( na * ( nr2 * 2 + 1 ) ) ) * 1 );
 		ind_eigts3 = ( ( ( nr3 + ig3[global_index] ) + ( na * ( nr3 * 2 + 1 ) ) ) * 1 );
 
-#if defined(__GPU_NVIDIA_35)
+#if ( __CUDA_ARCH__ >= 350 )
       sup_prod_1 = cuCmul( __ldg(&eigts1[ ind_eigts1 ] ), __ldg(&eigts2[ ind_eigts2 ] ) );
       sup_prod_2 = cuCmul( sup_prod_1, __ldg(&eigts3[ ind_eigts3 ] ) );
 #else
@@ -129,23 +130,25 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
    //dot product with aux, for each spin mag
    parity = 0;
    int tid = threadIdx.x + blockDim.x * threadIdx.y;
-   #pragma unroll _N_BINS
-   for (is = 0; is < nspin_mag; is++) {
 
+#if ( __CUDA_ARCH__ >= 200 )
+#pragma unroll _N_BINS
+#endif
+   for (is = 0; is < nspin_mag; is++) {
       if( global_index < ngm ){
          tmp[parity] = aux[ is * ngm + global_index ];
-         sdata[parity][tid] = out.x * tmp[parity].x + out.y * tmp[parity].y;
+         sdata[blockDim.y*tid + parity] = out.x * tmp[parity].x + out.y * tmp[parity].y;
 	   } else {
-         sdata[parity][tid] = 0.0;
+         sdata[blockDim.y*tid + parity] = 0.0;
       }
       __syncthreads();
       for (unsigned int s = blockDim.x/2; s>0; s >>= 1) {
          if (tid<s)
-            sdata[parity][tid] += sdata[parity][tid+s];
+            sdata[blockDim.y*tid + parity] += sdata[blockDim.y*(tid+s) + parity];
          __syncthreads();
       }
       if (tid == 0) {
-         atomicAdd(&dtmp[is], sdata[parity][tid]);
+         atomicAdd(&dtmp[is], sdata[blockDim.y*tid + parity]);
       }
       parity = (parity+1)%_N_BINS;
    }
@@ -221,10 +224,10 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
    int nbetam = (* ptr_nbetam);
    int ap_s1 = (* ptr_ap_s1);
 
-	dim3 threads2_qgm( __CUDA_TxB_NEWD_QGM__ );
+	dim3 threads2_qgm(qe_gpu_kernel_launch[0].__CUDA_TxB_NEWD_QGM );
 	dim3 grid2_qgm( qe_compute_num_blocks( (nspin_mag * ngm ), threads2_qgm.x) );
 
-	dim3 threads2_deepq( __CUDA_TxB_NEWD_DEEPQ__ );
+	dim3 threads2_deepq(qe_gpu_kernel_launch[0].__CUDA_TxB_NEWD_DEEPQ );
 	dim3 grid2_deepq( qe_compute_num_blocks( nspin_mag, threads2_deepq.x));
 
    cudaEvent_t estart, eend;
@@ -243,8 +246,8 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	printf("\n[NEWD] Enter \n");fflush(stdout);
 #endif
 
-	if ( grid2_qgm.x > __CUDA_MAXNUMBLOCKS__) {
-		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", (nspin_mag * ngm * 2 / __CUDA_TxB_NEWD_QGM__) );
+	if ( grid2_qgm.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
+		fprintf( stderr, "\n[NEWD] kernel_compute_qgm_na cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_qgm.x  );
 		return 1;
 	}
 
@@ -369,7 +372,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 				if( ityp[na] == nt ) {
 
-					kernel_compute_qgm_na_new<<< grid2_qgm, threads2_qgm, 0, newdcudaStreams[ this_stream ] >>>(
+					kernel_compute_qgm_na_new<<< grid2_qgm, threads2_qgm, _N_BINS*(qe_gpu_kernel_launch[0].__CUDA_TxB_NEWD_QGM)*sizeof(double), newdcudaStreams[ this_stream ] >>>(
 							(cuDoubleComplex *) eigts1_D, (cuDoubleComplex *) eigts2_D, (cuDoubleComplex *) eigts3_D,
 							(int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (cuDoubleComplex *) qgm_D + ngm * this_stream,
 							nr1, nr2, nr3, na, ngm, (cuDoubleComplex *) aux_D, nspin_mag, 
@@ -397,12 +400,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
    }
 	qecudaSafeCall( cudaMemcpy( deeq, (double *) deeq_D, sizeof( double ) * ( nhm * nhm * nat * nspin ), cudaMemcpyDeviceToHost ) );
 
-#if 0
-   for (int q = 0; q < nhm * nhm * nat * nspin; q++) {
-      printf("deeq [%d] = %25.8e\n", q, deeq[q]);
-   }
-#endif
-   
 
 	cudaFreeHost(qgm);
 
@@ -421,7 +418,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 #endif
 
-#if 1
+#if 0
    float elapsed;
    cudaEventRecord(eend);
    cudaEventSynchronize(eend);

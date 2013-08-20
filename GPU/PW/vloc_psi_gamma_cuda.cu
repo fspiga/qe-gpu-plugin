@@ -139,13 +139,13 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 #endif
 	int size_psic = nr1s * nr2s * nr3s;
 
-	dim3 threads2_psic(__CUDA_TxB_VLOCPSI_PSIC__);
+	dim3 threads2_psic(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PSIC);
 	dim3 grid2_psic( qe_compute_num_blocks(n, threads2_psic.x) );
 
-	dim3 threads2_prod(__CUDA_TxB_VLOCPSI_PROD__);
+	dim3 threads2_prod(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PROD);
 	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
 
-	dim3 threads2_hpsi(__CUDA_TxB_VLOCPSI_HPSI__);
+	dim3 threads2_hpsi(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_HPSI);
 	dim3 grid2_hpsi( qe_compute_num_blocks(n, threads2_hpsi.x) );
 
 #if defined(__CUDA_DEBUG)
@@ -158,17 +158,17 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	else
 		m_fake = m + 1;
 
-	if ( grid2_psic.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_psic.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_init_psic cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_psic.x );
 		return 1;
 	}
 
-	if ( grid2_prod.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_prod.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_prod.x );
 		return 1;
 	}
 
-	if ( grid2_hpsi.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_hpsi.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_save_hpsi cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_hpsi.x );
 		return 1;
 	}
@@ -298,13 +298,13 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 	int dim_multiplepsic, n_singlepsic, n_multiplepsic, size_multiplepsic, v_size;
 	int m_fake, m_buf, i, j;
 
-	dim3 threads2_psic(__CUDA_TxB_VLOCPSI_PSIC__);
+	dim3 threads2_psic(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PSIC);
 	dim3 grid2_psic( qe_compute_num_blocks(n, threads2_psic.x) );
 
-	dim3 threads2_prod(__CUDA_TxB_VLOCPSI_PROD__);
+	dim3 threads2_prod(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PROD);
 	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
 
-	dim3 threads2_hpsi(__CUDA_TxB_VLOCPSI_HPSI__);
+	dim3 threads2_hpsi(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_HPSI);
 	dim3 grid2_hpsi( qe_compute_num_blocks(n, grid2_hpsi.x) );
 
 	psic_D = (cufftDoubleComplex * ) qe_dev_scratch[0];
@@ -318,7 +318,7 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 		m_fake = m_buf/2;
 	}
 
-	dim_multiplepsic = __NUM_FFT_MULTIPLAN__;
+	dim_multiplepsic = qe_gpu_kernel_launch[0].__NUM_FFT_MULTIPLAN;
 	n_multiplepsic = m_fake/dim_multiplepsic;
 	n_singlepsic = m_fake%dim_multiplepsic;
 

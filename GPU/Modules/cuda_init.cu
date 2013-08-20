@@ -45,6 +45,8 @@ long ngpus_used;
 long ngpus_per_process;
 long procs_per_gpu;
 
+qe_gpu_kernel_specs qe_gpu_kernel_launch[MAX_QE_GPUS];
+
 #endif
 
 long lRank;
@@ -67,6 +69,29 @@ double cuda_cclock(void)
 
 
 #if defined(__CUDA)
+
+void update_gpu_kernel_specs ( qe_gpu_kernel_specs * input,
+		int i_cc, int i_THREADPERBLOCK, int i_MAXNUMBLOCKS,
+		int i_NUM_FFT_MULTIPLAN, int i_CUDA_TxB_ADDUSDENS_COMPUTE_AUX,
+		int i_CUDA_TxB_VLOCPSI_BUILD_PSIC, int i_CUDA_TxB_VLOCPSI_PSIC,
+		int i_CUDA_TxB_VLOCPSI_PROD, int i_CUDA_TxB_VLOCPSI_HPSI,
+		int i_CUDA_TxB_NEWD_QGM, int i_CUDA_TxB_NEWD_DEEPQ)
+{
+	input->__cc = i_cc;
+	input->__THREADPERBLOCK = i_THREADPERBLOCK;
+	input->__MAXNUMBLOCKS = i_MAXNUMBLOCKS;
+	input->__NUM_FFT_MULTIPLAN = i_NUM_FFT_MULTIPLAN;
+	input->__CUDA_TxB_ADDUSDENS_COMPUTE_AUX = i_CUDA_TxB_ADDUSDENS_COMPUTE_AUX;
+	input->__CUDA_TxB_VLOCPSI_BUILD_PSIC = i_CUDA_TxB_VLOCPSI_BUILD_PSIC;
+	input->__CUDA_TxB_VLOCPSI_PSIC = i_CUDA_TxB_VLOCPSI_PSIC;
+	input->__CUDA_TxB_VLOCPSI_PROD = i_CUDA_TxB_VLOCPSI_PROD;
+	input->__CUDA_TxB_VLOCPSI_HPSI = i_CUDA_TxB_VLOCPSI_HPSI;
+	input->__CUDA_TxB_NEWD_QGM = i_CUDA_TxB_NEWD_QGM;
+	input->__CUDA_TxB_NEWD_DEEPQ = i_CUDA_TxB_NEWD_DEEPQ;
+
+	return;
+}
+
 extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 	int lNumDevicesThisNode = 0;
@@ -320,6 +345,61 @@ extern "C" void destroyStreams_()
 }
 #endif
 
+extern "C" void query_gpu_specs_(int lRankThisNode)
+{
+    cudaDeviceProp deviceProp;
+    int i;
+
+	for (i = 0; i < ngpus_per_process; i++) {
+
+		if ( cudaSetDevice(qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaSetDevice(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+
+		if ( cudaGetDeviceProperties(&deviceProp, qe_gpu_bonded[i]) != cudaSuccess) {
+			printf("*** ERROR *** cudaGetDeviceProperties(%d) failed!", qe_gpu_bonded[i] ); fflush(stdout);
+			exit(EXIT_FAILURE);
+		}
+
+        int cc = deviceProp.major*10 + deviceProp.minor;
+        switch (cc) {
+			case 13:
+				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+						deviceProp.maxThreadsPerBlock, 65535, 4, 256, 128, 256, 256, 256, 256, 256);
+				break;
+			case 20:
+				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+						deviceProp.maxThreadsPerBlock, 65535, 4, 768, 128, 64, 128, 448, 512, 512);
+				break;
+			case 21:
+				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+						deviceProp.maxThreadsPerBlock, 65535, 4, 768, 128, 64, 128, 448, 512, 512);
+				break;
+			case 30:
+				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+						deviceProp.maxThreadsPerBlock, 65535, 4, 128, 128, 256, 512, 256, 512, 512);
+				break;
+			case 35:
+				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+						deviceProp.maxThreadsPerBlock, 65535, 4, 128, 128, 256, 512, 256, 512, 512);
+				break;
+			default:
+				printf("*** ERROR *** something went wrong inside query_gpu_specs! (rank %d)",lRankThisNode ); fflush(stdout);
+				exit(EXIT_FAILURE);
+				break;
+        }
+	}
+
+#if defined(__CUDA_DEBUG)
+	for (i = 0; i < ngpus_per_process; i++) {
+		printf("[rank %d]  CUDA Capability Major/Minor version number:    %d.%d\n", lRankThisNode, qe_gpu_kernel_launch[i].__cc_major, qe_gpu_kernel_launch[i].__cc_minor);
+	}
+#endif
+
+    return;
+}
+
 extern "C" void initcudaenv_()
 {
 	// In case of serial (default)
@@ -332,6 +412,8 @@ extern "C" void initcudaenv_()
 
 #if defined(__CUDA)
 	gpubinding_(lRankThisNode, lSizeThisNode);
+
+	query_gpu_specs_(lRankThisNode);
 
 	detectdevicememory_();
 

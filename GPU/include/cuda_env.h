@@ -30,58 +30,6 @@
 
 #define qe_compute_num_blocks(N, THREADS) N / THREADS + (N % THREADS == 0 ? 0 : 1 )
 
-#if defined(__GPU_NVIDIA_20) || defined(__GPU_NVIDIA_21)
-
-#define __CUDA_THREADPERBLOCK__ 512
-#define __CUDA_MAXNUMBLOCKS__ 65535
-
-#define __NUM_FFT_MULTIPLAN__ 4
-
-#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 768
-#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
-#define __CUDA_TxB_VLOCPSI_PSIC__ 64
-#define __CUDA_TxB_VLOCPSI_PROD__ 128
-#define __CUDA_TxB_VLOCPSI_HPSI__ 448
-#define __CUDA_TxB_NEWD_QGM__ 512
-#define __CUDA_TxB_NEWD_DEEPQ__ 512
-
-#elif defined(__GPU_NVIDIA_30) || defined(__GPU_NVIDIA_35)
-
-#define __CUDA_THREADPERBLOCK__ 512
-// __CUDA_MAXNUMBLOCKS__ can be much much higher!
-#define __CUDA_MAXNUMBLOCKS__ 65535
-
-#define __NUM_FFT_MULTIPLAN__ 4
-
-#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ 128
-#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
-#define __CUDA_TxB_VLOCPSI_PSIC__ 256
-#define __CUDA_TxB_VLOCPSI_PROD__ 512
-#define __CUDA_TxB_VLOCPSI_HPSI__ 256
-#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
-
-#else
-
-/* This is __GPU_NVIDIA_13
- * NOTE: if lower than cc13 is not a valid GPU
- */
-
-#define __CUDA_THREADPERBLOCK__ 256
-#define __CUDA_MAXNUMBLOCKS__ 65535
-
-#define __NUM_FFT_MULTIPLAN__ 4
-
-#define __CUDA_TxB_ADDUSDENS_COMPUTE_AUX__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_BUILD_PSIC__ 128
-#define __CUDA_TxB_VLOCPSI_PSIC__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_PROD__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_VLOCPSI_HPSI__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_NEWD_QGM__ __CUDA_THREADPERBLOCK__
-#define __CUDA_TxB_NEWD_DEEPQ__ __CUDA_THREADPERBLOCK__
-
-#endif
-
 #if defined(__CUDA_NOALLOC)
 #define __SCALING_MEM_FACTOR__ 0.99
 #else
@@ -94,6 +42,22 @@ typedef void* qeCudaMemDevPtr[MAX_QE_GPUS];
 typedef size_t qeCudaMemSizes[MAX_QE_GPUS];
 typedef int qeCudaDevicesBond[MAX_QE_GPUS];
 
+typedef struct qe_gpu_kernel_specs_t
+{
+	int __cc;
+	int __THREADPERBLOCK;
+	int __MAXNUMBLOCKS;
+	int __NUM_FFT_MULTIPLAN;
+	int __CUDA_TxB_ADDUSDENS_COMPUTE_AUX;
+	int __CUDA_TxB_VLOCPSI_BUILD_PSIC;
+	int __CUDA_TxB_VLOCPSI_PSIC;
+	int __CUDA_TxB_VLOCPSI_PROD;
+	int __CUDA_TxB_VLOCPSI_HPSI;
+	int __CUDA_TxB_NEWD_QGM;
+	int __CUDA_TxB_NEWD_DEEPQ;
+} qe_gpu_kernel_specs;
+
+extern qe_gpu_kernel_specs qe_gpu_kernel_launch[MAX_QE_GPUS];
 
 extern qeCudaMemDevPtr qe_dev_scratch;
 extern qeCudaMemDevPtr qe_dev_zero_scratch;

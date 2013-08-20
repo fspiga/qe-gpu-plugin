@@ -96,10 +96,10 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	int size_psic = nr1s * nr2s * nr3s;
 	int ibnd;
 
-	dim3 threads2_psic(__CUDA_TxB_VLOCPSI_PSIC__);
+	dim3 threads2_psic(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PSIC);
 	dim3 grid2_psic( qe_compute_num_blocks(n, threads2_psic.x) );
 
-	dim3 threads2_prod(__CUDA_TxB_VLOCPSI_PROD__);
+	dim3 threads2_prod(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PROD);
 	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
 
 #if defined(__CUDA_DEBUG)
@@ -111,12 +111,12 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 	for ( int q = 0; q < MAX_STREAMS; q++ ) 
 		cudaStreamCreate( &vlocpsiStreams[q] );
 
-	if ( grid2_psic.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_psic.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[VLOC_PSI_K] kernel_init_psic_k cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_psic.x );
 		return 1;
 	}
 
-	if ( grid2_prod.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_prod.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[VLOC_PSI_K] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_prod.x );
 		return 1;
 	}
@@ -286,15 +286,15 @@ extern "C" void vloc_psi_multiplan_cuda_k_(  int * ptr_lda, int * ptr_nrxxs, int
 
 	size_t buffer_size = 0L;
 
-	dim3 threads2_psic(__CUDA_TxB_VLOCPSI_PSIC__);
+	dim3 threads2_psic(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PSIC);
 	dim3 grid2_psic( qe_compute_num_blocks(n, threads2_psic.x) );
 
-	dim3 threads2_prod(__CUDA_TxB_VLOCPSI_PROD__);
+	dim3 threads2_prod(qe_gpu_kernel_launch[0].__CUDA_TxB_VLOCPSI_PROD);
 	dim3 grid2_prod( qe_compute_num_blocks((nrxxs * 2), threads2_prod.x) );
 
 	cudaSetDevice(qe_gpu_bonded[0]);
 
-	dim_multiplepsic = __NUM_FFT_MULTIPLAN__;
+	dim_multiplepsic = qe_gpu_kernel_launch[0].__NUM_FFT_MULTIPLAN;
 
 	n_multiplepsic = m/dim_multiplepsic;
 	n_singlepsic = m%dim_multiplepsic;

@@ -132,7 +132,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
    int ap_s1 = (* ptr_ap_s1);
    int nhm = (* ptr_nhm);
 
-	dim3 threads2_aux(__CUDA_TxB_ADDUSDENS_COMPUTE_AUX__);
+	dim3 threads2_aux(qe_gpu_kernel_launch[0].__CUDA_TxB_ADDUSDENS_COMPUTE_AUX);
 	dim3 grid2_aux( qe_compute_num_blocks(ngm, threads2_aux.x) );
 
 #define MAX_STREAMS 4
@@ -146,7 +146,7 @@ extern "C" int addusdens_cuda_(int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int 
 	printf("\n[ADDUSDENS] Enter \n");fflush(stdout);
 #endif
 
-	if ( grid2_aux.x > __CUDA_MAXNUMBLOCKS__) {
+	if ( grid2_aux.x > qe_gpu_kernel_launch[0].__MAXNUMBLOCKS) {
 		fprintf( stderr, "\n[ADDUSDENS] kernel_compute_aux cannot run, blocks requested ( %d ) > blocks allowed!!!", grid2_aux.x );
 		return 1;
 	}
