@@ -698,8 +698,6 @@ cflags
 cc
 wget
 ranlib
-GNUFC
-GNUCC
 NVCC
 FLIBS
 SET_MAKE
@@ -2205,17 +2203,6 @@ else
   with_phigemm=1
 fi
 
-
-# DISABLED
-#AC_ARG_ENABLE(data_preload,
-#   [AS_HELP_STRING([--enable-data-preload],
-#       [enable the pre-loading of data structures on GPU memory (default: no)])],
-#   [if   test "$enableval" = "yes" ; then
-#      use_preloadgpu=1
-#   else
-#      use_preloadgpu=0
-#   fi],
-#   [use_preloadgpu=0])
 
 # Check whether --enable-fast_cuda was given.
 if test "${enable_fast_cuda+set}" = set; then
@@ -11497,10 +11484,8 @@ echo setting SCALAPACK_LIBS... $scalapack_libs
 # CUDA
 if test "$use_cuda" -eq 1
 then
-
-    # check for CUDA bin
-
     have_valid_cuda_compiler=1
+
 
     # Extract the first word of "nvcc", so it can be a program name with args.
 set dummy nvcc; ac_word=$2
@@ -11544,457 +11529,156 @@ fi
 
     if test -n "$nvcc"; then
         have_valid_cuda_compiler=0
+        { $as_echo "$as_me:$LINENO: WARNING: CUDA has not been detected" >&5
+$as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
     fi
+
+    #AC_CHECK_LIB([cudart], [cuInit], AC_MSG_RESULT([FOUND cuda.so]), AC_MSG_FAILURE([NOT FOUND cuda.so]), [])
 
 	if test "$have_valid_cuda_compiler" -eq 1
 	then
 
-	    # Extract the first word of "gcc", so it can be a program name with args.
-set dummy gcc; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_GNUCC+set}" = set; then
+if test "${ac_cv_header_cuda+set}" = set; then
+  { $as_echo "$as_me:$LINENO: checking for cuda" >&5
+$as_echo_n "checking for cuda... " >&6; }
+if test "${ac_cv_header_cuda+set}" = set; then
   $as_echo_n "(cached) " >&6
-else
-  case $GNUCC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GNUCC="$GNUCC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GNUCC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
 fi
-GNUCC=$ac_cv_path_GNUCC
-if test -n "$GNUCC"; then
-  { $as_echo "$as_me:$LINENO: result: $GNUCC" >&5
-$as_echo "$GNUCC" >&6; }
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_cuda" >&5
+$as_echo "$ac_cv_header_cuda" >&6; }
 else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-	    if test -n "$gnucc"; then
-	        { { $as_echo "$as_me:$LINENO: error: Please check if GNU compilers are correctly installed, gcc compiler missing in PATH (required for QE+GPU)." >&5
-$as_echo "$as_me: error: Please check if GNU compilers are correctly installed, gcc compiler missing in PATH (required for QE+GPU)." >&2;}
-   { (exit 1); exit 1; }; }
-	    fi
-	    # Extract the first word of "gfortran", so it can be a program name with args.
-set dummy gfortran; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_GNUFC+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $GNUFC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GNUFC="$GNUFC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GNUFC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-GNUFC=$ac_cv_path_GNUFC
-if test -n "$GNUFC"; then
-  { $as_echo "$as_me:$LINENO: result: $GNUFC" >&5
-$as_echo "$GNUFC" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-	    if test -n "$gnufc"; then
-	        { { $as_echo "$as_me:$LINENO: error: Please check if GNU compilers are correctly installed, gfortran compiler missing in PATH (required for QE+GPU)." >&5
-$as_echo "$as_me: error: Please check if GNU compilers are correctly installed, gfortran compiler missing in PATH (required for QE+GPU)." >&2;}
-   { (exit 1); exit 1; }; }
-	    fi
-
-	    # check for CUDA headers
-	    have_valid_cuda_header=0
-	    if test -e "$cuda_path/include/cuda.h"; then
-	        have_valid_cuda_header=1
-	    fi
-
-	    if test "$have_valid_cuda_header" == 1  && test "$have_valid_cuda_compiler" == 1 ; then
-	        # check for CUDA libs
-	        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	        nvcc=$NVCC
-
-	        try_libdirs="$cuda_path/lib64 /usr/lib64/nvidia /usr/local/cuda/lib64"
-	        try_libdirs="$try_libdirs $libdirs $ld_library_path"
-	        for dir in $try_libdirs
-	        do
-	            unset ac_cv_search_cudaGetDeviceCount # clear cached value
-	            unset ac_cv_search_cublasInit
-	            unset ac_cv_search_cufftPlan1d
-	            unset ac_cv_search_cuMemGetInfo_v2
-	            if test "$dir" = "none"
-	            then
-	                    try_loption=
-	            else
-	                    try_loption="-L$dir"
-	            fi
-	            CFLAGS="$test_cflags"
-	            # $test_ldflags
-	            LDFLAGS="$try_loption"
-
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C
-	            { $as_echo "$as_me:$LINENO: checking for library containing cudaGetDeviceCount" >&5
-$as_echo_n "checking for library containing cudaGetDeviceCount... " >&6; }
-if test "${ac_cv_search_cudaGetDeviceCount+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
+  # Is the header compilable?
+{ $as_echo "$as_me:$LINENO: checking cuda usability" >&5
+$as_echo_n "checking cuda usability... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
+$ac_includes_default
+#include <cuda>
 _ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cudaGetDeviceCount ();
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main ()
-{
-return cudaGetDeviceCount ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' cudart; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
 $as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
+  (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
   rm -f conftest.er1
   cat conftest.err >&5
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
+	 test -z "$ac_f77_werror_flag" ||
 	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_search_cudaGetDeviceCount=$ac_res
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-
+	ac_header_compiler=no
 fi
 
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-  if test "${ac_cv_search_cudaGetDeviceCount+set}" = set; then
-  break
-fi
-done
-if test "${ac_cv_search_cudaGetDeviceCount+set}" = set; then
-  :
-else
-  ac_cv_search_cudaGetDeviceCount=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_cudaGetDeviceCount" >&5
-$as_echo "$ac_cv_search_cudaGetDeviceCount" >&6; }
-ac_res=$ac_cv_search_cudaGetDeviceCount
-if test "$ac_res" != no; then
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  cuda_libs="$cuda_libs $LIBS"
-fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
 
-
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C
-	            { $as_echo "$as_me:$LINENO: checking for library containing cublasInit" >&5
-$as_echo_n "checking for library containing cublasInit... " >&6; }
-if test "${ac_cv_search_cublasInit+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
+# Is the header present?
+{ $as_echo "$as_me:$LINENO: checking cuda presence" >&5
+$as_echo_n "checking cuda presence... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
+#include <cuda>
 _ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cublasInit ();
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main ()
-{
-return cublasInit ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' cublas; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
+if { (ac_try="$ac_cpp conftest.$ac_ext"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
 $as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
   rm -f conftest.er1
   cat conftest.err >&5
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_f77_preproc_warn_flag$ac_f77_werror_flag" ||
 	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_search_cublasInit=$ac_res
+  ac_header_preproc=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-
+  ac_header_preproc=no
 fi
 
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-  if test "${ac_cv_search_cublasInit+set}" = set; then
-  break
-fi
-done
-if test "${ac_cv_search_cublasInit+set}" = set; then
-  :
-else
-  ac_cv_search_cublasInit=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_cublasInit" >&5
-$as_echo "$ac_cv_search_cublasInit" >&6; }
-ac_res=$ac_cv_search_cublasInit
-if test "$ac_res" != no; then
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  cuda_libs="$cuda_libs $LIBS"
-fi
+rm -f conftest.err conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
 
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_f77_preproc_warn_flag in
+  yes:no: )
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: cuda: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: cuda: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: cuda: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: cuda:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: cuda: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: cuda:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: proceeding with the preprocessor's result" >&5
+$as_echo "$as_me: WARNING: cuda: proceeding with the preprocessor's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: cuda: in the future, the compiler will take precedence" >&5
+$as_echo "$as_me: WARNING: cuda: in the future, the compiler will take precedence" >&2;}
 
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C
-	            { $as_echo "$as_me:$LINENO: checking for library containing cufftPlan1d" >&5
-$as_echo_n "checking for library containing cufftPlan1d... " >&6; }
-if test "${ac_cv_search_cufftPlan1d+set}" = set; then
+    ;;
+esac
+{ $as_echo "$as_me:$LINENO: checking for cuda" >&5
+$as_echo_n "checking for cuda... " >&6; }
+if test "${ac_cv_header_cuda+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  ac_func_search_save_LIBS=$LIBS
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cufftPlan1d ();
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main ()
-{
-return cufftPlan1d ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' cufft; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_search_cufftPlan1d=$ac_res
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
+  ac_cv_header_cuda=$ac_header_preproc
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_cuda" >&5
+$as_echo "$ac_cv_header_cuda" >&6; }
 
 fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-  if test "${ac_cv_search_cufftPlan1d+set}" = set; then
-  break
-fi
-done
-if test "${ac_cv_search_cufftPlan1d+set}" = set; then
+if test "x$ac_cv_header_cuda" = x""yes; then
   :
 else
-  ac_cv_search_cufftPlan1d=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_cufftPlan1d" >&5
-$as_echo "$ac_cv_search_cufftPlan1d" >&6; }
-ac_res=$ac_cv_search_cufftPlan1d
-if test "$ac_res" != no; then
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  cuda_libs="$cuda_libs $LIBS"
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cuda.h NOT FOUND
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cuda.h NOT FOUND
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
 fi
 
 
-	            cuda_libs="$try_loption $cuda_libs"
 
-	            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && test "$ac_cv_search_cublasInit" != "no" && test "$ac_cv_search_cufftPlan1d" != "no"
-	            then
+	    nvcc=$NVCC
 
-	                try_dflags="$try_dflags -D__CUDA"
-	                have_cuda=1
-	                break
-	            fi
-	        done
-	        ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+	    cuda_path=`dirname $NVCC`
+	    cuda_path=`dirname $cuda_path`
 
-	    else
-	        { { $as_echo "$as_me:$LINENO: error: Please check if CUDA is correctly installed." >&5
-$as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
-   { (exit 1); exit 1; }; }
-	    fi
-	fi
+		cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
 
-	if test "$use_cuda" -eq 1 && test "$have_cuda" -eq 0; then
-	    { { $as_echo "$as_me:$LINENO: error: Please check if CUDA is correctly installed." >&5
-$as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
-   { (exit 1); exit 1; }; }
-	fi
+		try_dflags="$try_dflags -D__CUDA"
+        have_cuda=1
+    fi
 
 	if test "$have_cuda" -eq 1
 	then
@@ -12014,29 +11698,24 @@ $as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
 	       nvccflags="-O3"
 	    fi
 
-	    try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+	    # All in one ...
+	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=\"sm_20,sm_21\" -gencode arch=compute_30,code=\"sm_30,sm_35\" "
 
+	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"
 	    if test "$use_fastcuda" -eq 1 ; then
-	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"
-	    else
-	        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
-	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"
+	    	nvccflags="$nvccflags--fmad=false"
 	    fi
 
-            if test "$use_pinnedmem" -eq 1  ; then
-                try_dflags="$try_dflags -D__CUDA_PINNED"
-            fi
+        if test "$use_pinnedmem" -eq 1  ; then
+            try_dflags="$try_dflags -D__CUDA_PINNED"
+        fi
 
 	    cuda_include="-I$cuda_path/include"
 
 	    if test "$use_debugcuda" -eq 1 ; then
 	        try_dflags="$try_dflags -D__CUDA_DEBUG"
 	    fi
-
-            # NOT YET READY FOR PRODUCTION
-            # if test "$use_preloadgpu" -eq 1; then
-            #    try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
-            # fi
 
 	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
 	    if test "$with_phigemm" -eq 1  ; then
@@ -12059,28 +11738,27 @@ $as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
 	        # NVCC HOST-side compiler options
 	        case "$arch:$f90_version" in
 			*:ifort* )
-		        phigemm_ldsharedflag="--shared"
+		        #phigemm_ldsharedflag="--shared"
 	            phigemm_fflags="-module ../include/"
 			    ;;
 			*:pgf90 | cray*:pgf )
-		        phigemm_ldsharedflag="-shared"
+		        #phigemm_ldsharedflag="-shared"
 		        phigemm_fflags="-module ../include/"
 		        ;;
 		    crayxt*:cray* )
-				phigemm_ldsharedflag="-shared"
+				#phigemm_ldsharedflag="-shared"
 				phigemm_fflags="-em -J../include/"
 				phigemm_ccflags="$phigemm_ccflags -shared"
 				;;
 		    *:gfortran )
-		        phigemm_ldsharedflag="-shared"
+		        #phigemm_ldsharedflag="-shared"
 		        phigemm_fflags="-J../include/"
 		        ;;
 			esac
 
+	    	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC"
 	        if test "$use_openmp" -eq 1 ; then
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
-	        else
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC' "
+	        	phigemm_nvccflags="$phigemm_nvccflags -fopenmp'"
 	        fi
 
 	        if test "$use_fastcuda" -eq 1 ; then
@@ -12093,13 +11771,8 @@ $as_echo "$as_me: error: Please check if CUDA is correctly installed." >&2;}
 	        fi
 
 	        if test "$phigemm_profiling" -eq 1; then
-	            if test "$f90_version" = "gfortran" ; then
-                    { $as_echo "$as_me:$LINENO: WARNING: phiGEMM call-by-call profile feature not working using gfortran" >&5
-$as_echo "$as_me: WARNING: phiGEMM call-by-call profile feature not working using gfortran" >&2;}
-                else
-	                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-	                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-	            fi
+                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
 	        fi
 	    fi
 
@@ -12330,13 +12003,8 @@ else
 		esac
 
         if test "$phigemm_profiling" -eq 1; then
-            if test "$f90_version" = "gfortran" ; then
-                { $as_echo "$as_me:$LINENO: WARNING: phiGEMM call-by-call profile feature not working using gfortran" >&5
-$as_echo "$as_me: WARNING: phiGEMM call-by-call profile feature not working using gfortran" >&2;}
-            else
-                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-            fi
+            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
         fi
 
         try_iflags="$try_iflags $phigemm_include"

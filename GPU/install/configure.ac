@@ -224,17 +224,6 @@ AC_ARG_WITH(phigemm,
    fi],
    [with_phigemm=1])
    
-# DISABLED
-#AC_ARG_ENABLE(data_preload,
-#   [AS_HELP_STRING([--enable-data-preload],
-#       [enable the pre-loading of data structures on GPU memory (default: no)])],
-#   [if   test "$enableval" = "yes" ; then
-#      use_preloadgpu=1
-#   else
-#      use_preloadgpu=0
-#   fi],
-#   [use_preloadgpu=0])
-
 AC_ARG_ENABLE(fast_cuda,
 	[AS_HELP_STRING([--enable-fast-cuda],
        [enable special CUDA optimizations for fast executions (default: no)])],
@@ -2162,91 +2151,31 @@ echo setting SCALAPACK_LIBS... $scalapack_libs
 # CUDA
 if test "$use_cuda" -eq 1 
 then 
-    
-    # check for CUDA bin
+    have_valid_cuda_compiler=1    
     AC_ARG_VAR([NVCC], [nvcc compiler to use])
-    have_valid_cuda_compiler=1
     
-    AC_PATH_PROG(NVCC, nvcc, )
+    AC_PATH_PROG([NVCC], nvcc)
     if test -n "$nvcc"; then
         have_valid_cuda_compiler=0
+        AC_MSG_WARN([CUDA has not been detected])
     fi
+    
+    #AC_CHECK_LIB([cudart], [cuInit], AC_MSG_RESULT([FOUND cuda.so]), AC_MSG_FAILURE([NOT FOUND cuda.so]), []) 
 
 	if test "$have_valid_cuda_compiler" -eq 1 
-	then 
-	
-	    AC_PATH_PROG(GNUCC, gcc, )
-	    if test -n "$gnucc"; then
-	        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gcc compiler missing in PATH (required for QE+GPU).])
-	    fi
-	    AC_PATH_PROG(GNUFC, gfortran, )
-	    if test -n "$gnufc"; then
-	        AC_MSG_ERROR([Please check if GNU compilers are correctly installed, gfortran compiler missing in PATH (required for QE+GPU).])
-	    fi
+	then 	    
+	    AC_CHECK_HEADER([cuda],[], AC_MSG_FAILURE([cuda.h NOT FOUND]), []) 
 	    
-	    # check for CUDA headers
-	    have_valid_cuda_header=0
-	    if test -e "$cuda_path/include/cuda.h"; then
-	        have_valid_cuda_header=1
-	    fi
-	
-	    if test "$have_valid_cuda_header" == 1  && test "$have_valid_cuda_compiler" == 1 ; then 
-	        # check for CUDA libs
-	        AC_LANG_PUSH(C)
-	        nvcc=$NVCC
-			
-	        try_libdirs="$cuda_path/lib64 /usr/lib64/nvidia /usr/local/cuda/lib64"
-	        try_libdirs="$try_libdirs $libdirs $ld_library_path"
-	        for dir in $try_libdirs
-	        do
-	            unset ac_cv_search_cudaGetDeviceCount # clear cached value
-	            unset ac_cv_search_cublasInit
-	            unset ac_cv_search_cufftPlan1d
-	            unset ac_cv_search_cuMemGetInfo_v2
-	            if test "$dir" = "none"
-	            then
-	                    try_loption=
-	            else                  
-	                    try_loption="-L$dir"
-	            fi          
-	            CFLAGS="$test_cflags"
-	            # $test_ldflags
-	            LDFLAGS="$try_loption"
-	            
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C                
-	            AC_SEARCH_LIBS(cudaGetDeviceCount,cudart, 
-	                  cuda_libs="$cuda_libs $LIBS",,)
-	            
-	            LIBS=""
-	            echo $ECHO_N "in $dir: " $ECHO_C    
-	            AC_SEARCH_LIBS(cublasInit,cublas, 
-	                  cuda_libs="$cuda_libs $LIBS",,)
-	            
-	            LIBS=""         
-	            echo $ECHO_N "in $dir: " $ECHO_C
-	            AC_SEARCH_LIBS(cufftPlan1d,cufft, 
-	                  cuda_libs="$cuda_libs $LIBS",,)                     
-	                          
-	            cuda_libs="$try_loption $cuda_libs"
-	            
-	            if test "$ac_cv_search_cudaGetDeviceCount" != "no" && test "$ac_cv_search_cublasInit" != "no" && test "$ac_cv_search_cufftPlan1d" != "no"
-	            then                 
-	                
-	                try_dflags="$try_dflags -D__CUDA"    
-	                have_cuda=1
-	                break
-	            fi
-	        done    
-	        AC_LANG_POP(C)      
-	    else
-	        AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
-	    fi
-	fi
-	
-	if test "$use_cuda" -eq 1 && test "$have_cuda" -eq 0; then 
-	    AC_MSG_ERROR([Please check if CUDA is correctly installed.]) 
-	fi
+	    nvcc=$NVCC
+	    
+	    cuda_path=`dirname $NVCC`
+	    cuda_path=`dirname $cuda_path`
+	    	
+		cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
+		
+		try_dflags="$try_dflags -D__CUDA"    
+        have_cuda=1
+    fi
 	
 	if test "$have_cuda" -eq 1
 	then
@@ -2266,29 +2195,24 @@ then
 	       nvccflags="-O3"
 	    fi
 	    
-	    try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+	    # All in one ...
+	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=\"sm_20,sm_21\" -gencode arch=compute_30,code=\"sm_30,sm_35\" "
 	    
+	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
+	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"	    
 	    if test "$use_fastcuda" -eq 1 ; then
-	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"    
-	    else
-	        # NOTE: nvcc option "--fmad=false" raises a warning if cc13. Just ignore it
-	    	nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v --fmad=false"   
+	    	nvccflags="$nvccflags--fmad=false"   
 	    fi
-	   
-            if test "$use_pinnedmem" -eq 1  ; then
-                try_dflags="$try_dflags -D__CUDA_PINNED"
-            fi   
+	    
+        if test "$use_pinnedmem" -eq 1  ; then
+            try_dflags="$try_dflags -D__CUDA_PINNED"
+        fi   
 		
 	    cuda_include="-I$cuda_path/include"
 	    
 	    if test "$use_debugcuda" -eq 1 ; then
 	        try_dflags="$try_dflags -D__CUDA_DEBUG"
-	    fi
-	    
-            # NOT YET READY FOR PRODUCTION    
-            # if test "$use_preloadgpu" -eq 1; then
-            #    try_dflags="$try_dflags -D__CUDA_PRELOAD -D__CUDA_NOALLOC"
-            # fi          
+	    fi 
 	    
 	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
 	    if test "$with_phigemm" -eq 1  ; then 
@@ -2311,28 +2235,27 @@ then
 	        # NVCC HOST-side compiler options
 	        case "$arch:$f90_version" in
 			*:ifort* )
-		        phigemm_ldsharedflag="--shared"
+		        #phigemm_ldsharedflag="--shared"
 	            phigemm_fflags="-module ../include/"
 			    ;;
 			*:pgf90 | cray*:pgf )
-		        phigemm_ldsharedflag="-shared"  
+		        #phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-module ../include/"      
 		        ;;
 		    crayxt*:cray* )
-				phigemm_ldsharedflag="-shared"
+				#phigemm_ldsharedflag="-shared"
 				phigemm_fflags="-em -J../include/"
 				phigemm_ccflags="$phigemm_ccflags -shared"
 				;;		    
 		    *:gfortran )
-		        phigemm_ldsharedflag="-shared"  
+		        #phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-J../include/"      
 		        ;;
 			esac
 	    
+	    	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC"
 	        if test "$use_openmp" -eq 1 ; then	        
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
-	        else
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC' "
+	        	phigemm_nvccflags="$phigemm_nvccflags -fopenmp'"
 	        fi
 	        
 	        if test "$use_fastcuda" -eq 1 ; then
@@ -2345,12 +2268,8 @@ then
 	        fi  
 	        	
 	        if test "$phigemm_profiling" -eq 1; then
-	            if test "$f90_version" = "gfortran" ; then
-                    AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
-                else
-	                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-	                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-	            fi
+                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
 	        fi
 	    fi
 	    
@@ -2513,12 +2432,8 @@ else
 		esac
 		
         if test "$phigemm_profiling" -eq 1; then
-            if test "$f90_version" = "gfortran" ; then
-                AC_MSG_WARN([phiGEMM call-by-call profile feature not working using gfortran])
-            else
-                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-            fi
+            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
         fi
         
         try_iflags="$try_iflags $phigemm_include"
