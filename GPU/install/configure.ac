@@ -100,14 +100,27 @@ AC_ARG_WITH(scalapack,
    [with_scalapack=1])
 
 AC_ARG_WITH(elpa,
-    [AS_HELP_STRING([--with-elpa],
-        [use elpa if available (default: no)])],
-    [if  test "$withval" = "yes" ; then
-       with_elpa=1
-    else
-       with_elpa=0
-    fi],
-    [with_elpa=0])
+   [AS_HELP_STRING([--with-elpa],
+       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE|<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
+   [if  test "$withval" = "yes" ; then
+      with_elpa=1
+      with_elpa_flavor=0
+   elif  test "$withval" = "SSE" ; then
+      with_magma=0
+      with_elpa_flavor=1
+   elif  test "$withval" = "BULLDOZER" ; then
+      with_magma=0
+      with_elpa_flavor=2
+   elif  test "$withval" = "SANDYBRIDGE" ; then
+      with_magma=0
+      with_elpa_flavor=3
+   elif  test "$withval" = "no" ; then
+      with_elpa=0
+   else
+      with_elpa=2
+      with_elpa_path="$withval"   
+   fi],
+   [with_elpa=0])
 
 AC_ARG_WITH(internal-blas,
    [AS_HELP_STRING([--with-internal-blas],
@@ -2139,7 +2152,13 @@ done
 
 # ELPA iff SCALAPACK
 elpa_libs_switch="disabled"
-if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then 
+if test "$with_elpa" -eq 2 && test "$have_scalapack" -eq 1; then
+    scalapack_libs="-L$with_elpa_path/lib -lelpa $scalapack_libs"
+    # ELPA includes are version-dependent. This works with 2013.08
+    try_iflags="$try_iflags -I$with_elpa_path/include -I$with_elpa_path/include/elpa/modules " 
+    try_dflags="$try_dflags -D__ELPA"
+fi
+if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then
     scalapack_libs="\$(TOPDIR)/ELPA/libelpa.a $scalapack_libs"
     try_dflags="$try_dflags -D__ELPA"
     elpa_libs_switch="enabled"    
@@ -2196,7 +2215,7 @@ then
 	    fi
 	    
 	    # All in one ...
-	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=\"sm_20,sm_21\" -gencode arch=compute_30,code=\"sm_30,sm_35\" "
+	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_30,code=sm_35 "
 	    
 	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
 	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"	    
@@ -2235,21 +2254,25 @@ then
 	        # NVCC HOST-side compiler options
 	        case "$arch:$f90_version" in
 			*:ifort* )
-		        #phigemm_ldsharedflag="--shared"
+		        phigemm_ldsharedflag="--shared"
 	            phigemm_fflags="-module ../include/"
+	            phigemm_ldflags="$phigemm_ldflags -zmuldefs"
 			    ;;
 			*:pgf90 | cray*:pgf )
-		        #phigemm_ldsharedflag="-shared"  
-		        phigemm_fflags="-module ../include/"      
+		        phigemm_ldsharedflag="-shared"  
+		        phigemm_fflags="-module ../include/" 
+		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"     
 		        ;;
 		    crayxt*:cray* )
-				#phigemm_ldsharedflag="-shared"
+				phigemm_ldsharedflag="-shared"
 				phigemm_fflags="-em -J../include/"
 				phigemm_ccflags="$phigemm_ccflags -shared"
+		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"				
 				;;		    
 		    *:gfortran )
 		        #phigemm_ldsharedflag="-shared"  
-		        phigemm_fflags="-J../include/"      
+		        phigemm_fflags="-J../include/"     
+		        phigemm_ldflags="$phigemm_ldflags -z muldefs" 
 		        ;;
 			esac
 	    
@@ -2262,7 +2285,7 @@ then
 	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
 	    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
 	    	fi
-	    	
+        
 			if test "$use_pinnedmem" -eq 1  ; then
 	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
 	        fi  
@@ -2389,56 +2412,6 @@ then
 	    
 	    echo setting CUDA_LIBS... $cuda_libs
     fi
-    
-else
-
-    if test "$with_phigemm" -eq 1; then 
-        
-        nvcc=$cc
-        nvccflags=$cflags
-    	
-        phigemm_switch=1
-        try_dflags="$try_dflags -D__PHIGEMM -D__PHIGEMM_CPUONLY"
-        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_CPUONLY"        
-        phigemm_include="-I$topdir/phiGEMM/include"
-        phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
-		
-		phigemm_cc=$cc
-		phigemm_fc=$f90
-		if test "$use_debug" -eq 1; then
-		    phigemm_ccflags="-g -O0 $try_fflags_openmp -fPIC"
-	        phigemm_ldflags="-g -O0 $try_fflags_openmp -fPIC"
-        else
-		    phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
-	        phigemm_ldflags="-O3 $try_fflags_openmp -fPIC"            
-        fi
-        
-        phigemm_nvccflags=$phigemm_ccflags
-            
-        # NVCC HOST-side compiler options
-        case "$arch:$f90_version" in
-		*:ifort* )
-	        phigemm_ldsharedflag="--shared"
-            phigemm_fflags="-module ../include/"
-		;;
-		*:pgf90 | cray*:pgf )
-	        phigemm_ldsharedflag="-shared"  
-	        phigemm_fflags="-module ../include/"      
-	        ;;
-	    *:gfortran )
-	        phigemm_ldsharedflag="-shared"  
-	        phigemm_fflags="-J../include/"      
-	        ;;
-		esac
-		
-        if test "$phigemm_profiling" -eq 1; then
-            phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-            try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-        fi
-        
-        try_iflags="$try_iflags $phigemm_include"
-        blas_libs="$phigemm_libs $blas_libs"
-	fi
 fi
 
 # preprocessing flag for openmp (experimental)

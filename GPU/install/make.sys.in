@@ -40,6 +40,7 @@ TOPDIR = @topdir@
 
 # MANUAL_DFLAGS  = additional precompilation option(s), if desired
 #                  You may use this instead of tweaking DFLAGS and FDFLAGS
+#                  BEWARE: will not work for IBM xlf! Manually edit FDFLAGS
 MANUAL_DFLAGS  =
 DFLAGS         = @dflags@ $(MANUAL_DFLAGS)
 FDFLAGS        = @fdflags@ $(MANUAL_DFLAGS)
@@ -156,7 +157,7 @@ RANLIB         = @ranlib@
 
 FLIB_TARGETS   = all
 
-# CUDA section (flags temporary hard-coded)
+# CUDA section
 NVCC             = @nvcc@
 NVCCFLAGS        = @nvccflags@ 
 

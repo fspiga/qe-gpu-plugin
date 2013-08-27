@@ -61,13 +61,9 @@ test -e config.status     && mv config.status $root/install/
 test -e configure.msg     && mv configure.msg $root/install/
 
 #
-# copy the Makefile
+# copy the Makefile (GPU-only)
 #
-if echo "$@" | grep -q "enable-cuda"; then
-	test -e $root/install/Makefile.gpu.in && cp $root/install/Makefile.gpu.in ../Makefile.gpu
-else
-	test -e $root/install/Makefile.cpu.in && cp $root/install/Makefile.cpu.in ../Makefile.cpu
-fi
+test -e $root/install/Makefile.gpu.in && cp $root/install/Makefile.gpu.in ../Makefile.gpu
 #
 
 exit 0
