@@ -4,31 +4,24 @@
 # in the root directory of the present distribution,
 # or http://www.gnu.org/copyleft/gpl.txt .
 #
-# Author: Filippo Spiga (spiga.filippo@gmail.com)
-# Date: May 31, 2013
-# Version: 1.2
+# Author: Filippo Spiga
+# Date: September 14, 2013
+# Version: 1.4
 
 import os
 import os.path
 import sys
 import shutil
 
-s=raw_input()
-while s.strip()!='':
-	input_file = os.path.abspath(s)
+raw_input = sys.stdin.readlines()
+for line in raw_input:
+	input_file = os.path.abspath(line.rstrip())
 	backup_file = os.path.join(os.path.dirname(input_file), '.' + os.path.basename(input_file) + '.orig')
 	
 	if os.path.exists(backup_file) :
 		# restore original
 		os.rename(backup_file, input_file) 
-		
-		# output disabled 
-		# print input_file + ":"restored."
-	else:
-		print input_file + ": skipped (do a manual check)."
+	#else:
+		# DEBUG # print input_file + ": skipped (do a manual check)."
 	
-	try:
-		s=raw_input()
-	except:
-		sys.exit()
 sys.exit()
