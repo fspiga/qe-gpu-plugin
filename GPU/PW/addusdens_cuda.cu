@@ -13,8 +13,10 @@
 #include "cuda_env.h"
 
 #define _CUDA_QVAN_ 1
+
 extern "C" void qvan2_(int * ptr_ngm, int * iih, int * jjh, int * ptr_nt, double * qmod, double * qgm, double * ylmk0);
-int qvan2_cuda( int ngy, int ih, int jh, 
+
+extern "C" int qvan2_cuda( int ngy, int ih, int jh, 
                             int np, double *qmod_D, double *qg_D, double *ylmk0_D, 
                             int ylmk0_s1, int nlx,  
                             double dq, double *qrad_D, int qrad_s1, int qrad_s2,

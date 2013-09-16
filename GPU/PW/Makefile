@@ -12,8 +12,8 @@ addusdens_gpu.o \
 newq_compute_gpu.o \
 cdiaghg_gpu.o \
 vloc_psi_gpu.o \
-rdiaghg_gpu.o \
-qvan2_gpu.o 
+rdiaghg_gpu.o
+#qvan2_gpu.o \
 #add_vuspsi.o \
 #cegterg.o \
 #regterg.o \

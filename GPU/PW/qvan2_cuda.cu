@@ -32,7 +32,7 @@ __global__ void qvan_kernel( double dqi, double *qmod, double *qrad, double *ylm
 
 } 
 
-extern int qvan2_cuda( int ngy, int ih, int jh, 
+extern "C" int qvan2_cuda( int ngy, int ih, int jh, 
                             int np, double *qmod, double *qg, double *ylmk0, 
                             int ylmk0_s1, int nlx,  
                             double dq, double *qrad, int qrad_s1, int qrad_s2,
