@@ -2182,17 +2182,18 @@ then
     #AC_CHECK_LIB([cudart], [cuInit], AC_MSG_RESULT([FOUND cuda.so]), AC_MSG_FAILURE([NOT FOUND cuda.so]), []) 
 
 	if test "$have_valid_cuda_compiler" -eq 1 
-	then 	    
-	    AC_CHECK_HEADER([cuda],[], AC_MSG_FAILURE([cuda.h NOT FOUND]), []) 
+	then 
+	    # DISABLED (if nvcc is present, cuda.h has to be present. On CRAY systems AC_CHECK_HEADER[cuda] does not work)	    
+	    # AC_CHECK_HEADER([cuda],[], AC_MSG_FAILURE([cuda.h NOT FOUND]), []) 
 	    
 	    nvcc=$NVCC
 	    
 	    cuda_path=`dirname $NVCC`
 	    cuda_path=`dirname $cuda_path`
 	    	
-		cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
+	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
 		
-		try_dflags="$try_dflags -D__CUDA"    
+	    try_dflags="$try_dflags -D__CUDA"    
         have_cuda=1
     fi
 	

@@ -11559,146 +11559,17 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 
 	if test "$have_valid_cuda_compiler" -eq 1
 	then
-
-if test "${ac_cv_header_cuda+set}" = set; then
-  { $as_echo "$as_me:$LINENO: checking for cuda" >&5
-$as_echo_n "checking for cuda... " >&6; }
-if test "${ac_cv_header_cuda+set}" = set; then
-  $as_echo_n "(cached) " >&6
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_cuda" >&5
-$as_echo "$ac_cv_header_cuda" >&6; }
-else
-  # Is the header compilable?
-{ $as_echo "$as_me:$LINENO: checking cuda usability" >&5
-$as_echo_n "checking cuda usability... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-$ac_includes_default
-#include <cuda>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_f77_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_header_compiler=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_header_compiler=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:$LINENO: checking cuda presence" >&5
-$as_echo_n "checking cuda presence... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-#include <cuda>
-_ACEOF
-if { (ac_try="$ac_cpp conftest.$ac_ext"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null && {
-	 test -z "$ac_f77_preproc_warn_flag$ac_f77_werror_flag" ||
-	 test ! -s conftest.err
-       }; then
-  ac_header_preproc=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-
-rm -f conftest.err conftest.$ac_ext
-{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_f77_preproc_warn_flag in
-  yes:no: )
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: cuda: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: cuda: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: cuda: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: cuda:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: cuda: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: cuda:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: proceeding with the preprocessor's result" >&5
-$as_echo "$as_me: WARNING: cuda: proceeding with the preprocessor's result" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: cuda: in the future, the compiler will take precedence" >&5
-$as_echo "$as_me: WARNING: cuda: in the future, the compiler will take precedence" >&2;}
-
-    ;;
-esac
-{ $as_echo "$as_me:$LINENO: checking for cuda" >&5
-$as_echo_n "checking for cuda... " >&6; }
-if test "${ac_cv_header_cuda+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_header_cuda=$ac_header_preproc
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_cuda" >&5
-$as_echo "$ac_cv_header_cuda" >&6; }
-
-fi
-if test "x$ac_cv_header_cuda" = x""yes; then
-  :
-else
-  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-{ { $as_echo "$as_me:$LINENO: error: cuda.h NOT FOUND
-See \`config.log' for more details." >&5
-$as_echo "$as_me: error: cuda.h NOT FOUND
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }; }
-fi
-
-
+	    # DISABLED (if nvcc is present, cuda.h has to be present. On CRAY systems AC_CHECK_HEADER[cuda] does not work)
+	    # AC_CHECK_HEADER([cuda],[], AC_MSG_FAILURE([cuda.h NOT FOUND]), [])
 
 	    nvcc=$NVCC
 
 	    cuda_path=`dirname $NVCC`
 	    cuda_path=`dirname $cuda_path`
 
-		cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
+	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
 
-		try_dflags="$try_dflags -D__CUDA"
+	    try_dflags="$try_dflags -D__CUDA"
         have_cuda=1
     fi
 
