@@ -162,6 +162,7 @@ NVCC             = @nvcc@
 NVCCFLAGS        = @nvccflags@ 
 
 PHIGEMM_INTERNAL = @phigemm_switch@
+PHIGEMM_SYMBOLS  = @phigemm_symbols@
 MAGMA_INTERNAL   = @magma_switch@
 
 LIBOBJS        = ../flib/ptools.a ../flib/flib.a ../clib/clib.a ../iotk/src/libiotk.a 

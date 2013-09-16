@@ -2206,6 +2206,7 @@ then
 	    phigemm_libs=""
 	    magma_switch=0
 	    phigemm_switch=0
+		phigemm_symbols=0
 	    cblas_switch=0
 	    
 	    if test "$use_debug" -eq 1; then
@@ -2236,6 +2237,7 @@ then
 	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
 	    if test "$with_phigemm" -eq 1  ; then 
 	        phigemm_switch=1
+	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
 	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
 	        phigemm_include="-I$topdir/phiGEMM/include"
@@ -2299,6 +2301,7 @@ then
 	    # phiGEMM - EXTERNAL, assumed well-compiled (no profiling)     
 	    if test "$with_phigemm" -eq 2  ; then 
 	        phigemm_switch=0
+	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
 	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
 	        phigemm_include="-I$with_phigemm_path/include"
@@ -2559,6 +2562,7 @@ AC_SUBST(phigemm_fc)
 AC_SUBST(phigemm_opts)
 AC_SUBST(phigemm_include)
 AC_SUBST(phigemm_libs)
+AC_SUBST(phigemm_symbols)
 AC_SUBST(phigemm_switch)
 AC_SUBST(phigemm_ccflags)
 AC_SUBST(phigemm_fflags)

@@ -645,6 +645,7 @@ phigemm_nvccflags
 phigemm_fflags
 phigemm_ccflags
 phigemm_switch
+phigemm_symbols
 phigemm_libs
 phigemm_include
 phigemm_opts
@@ -11490,7 +11491,7 @@ elpa_libs_switch="disabled"
 if test "$with_elpa" -eq 2 && test "$have_scalapack" -eq 1; then
     scalapack_libs="-L$with_elpa_path/lib -lelpa $scalapack_libs"
     # ELPA includes are version-dependent. This works with 2013.08
-    try_iflags="$try_iflags -I$with_elpa_path/include -I$with_elpa_path/include/elpa/modules"
+    try_iflags="$try_iflags -I$with_elpa_path/include -I$with_elpa_path/include/elpa/modules "
     try_dflags="$try_dflags -D__ELPA"
 fi
 if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then
@@ -11711,6 +11712,7 @@ fi
 	    phigemm_libs=""
 	    magma_switch=0
 	    phigemm_switch=0
+		phigemm_symbols=0
 	    cblas_switch=0
 
 	    if test "$use_debug" -eq 1; then
@@ -11741,6 +11743,7 @@ fi
 	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
 	    if test "$with_phigemm" -eq 1  ; then
 	        phigemm_switch=1
+	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
 	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"
 	        phigemm_include="-I$topdir/phiGEMM/include"
@@ -11804,6 +11807,7 @@ fi
 	    # phiGEMM - EXTERNAL, assumed well-compiled (no profiling)
 	    if test "$with_phigemm" -eq 2  ; then
 	        phigemm_switch=0
+	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
 	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"
 	        phigemm_include="-I$with_phigemm_path/include"
@@ -12231,6 +12235,7 @@ fi
 
 
 # CUDA
+
 
 
 
