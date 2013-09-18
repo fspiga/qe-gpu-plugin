@@ -69,7 +69,7 @@ extern "C" int qvan2_cuda( int ngy, int ih, int jh,
 
 #if defined(__CUDA_QVAN2)
 	cudaError_t err;
-
+#endif
 	//
 	//     compute the indices which correspond to ih,jh
 	//
