@@ -12,7 +12,7 @@
 // #defined __CUDA_NEWD_DEBUG
 
 #define _N_BINS 2
-#define MAX_STREAMS 2
+#define MAX_STREAMS 1
 
 #include <stdio.h>
 #include "cuda_env.h"
@@ -91,6 +91,26 @@ __device__ double atomicAdd(double* address, double val)
 
 }
 
+__global__ void kernel_qgm_reduce( double * dtmp, int size) 
+{
+	int tid = threadIdx.x;
+	int global_idx = tid + blockIdx.x * blockDim.x;
+	__shared__ double sdata[512];
+	if (global_idx < size) {
+		sdata[tid] = dtmp[global_idx];
+		dtmp[global_idx] = 0.0;
+	} else {
+		sdata[tid] = 0.0;
+	}
+	__syncthreads();
+	for (unsigned int s = blockDim.x/2; s>0; s >>= 1) {
+		if (tid<s)
+		sdata[tid] += sdata[tid+s];
+		__syncthreads();
+	}
+	if (tid==0) atomicAdd(&dtmp[0], sdata[0]);
+}
+
 __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict eigts1, 
 		const  cuDoubleComplex * __restrict eigts2, const  cuDoubleComplex * __restrict eigts3,
 		const  int * __restrict ig1, const  int * __restrict ig2, const  int * __restrict ig3,
@@ -161,7 +181,7 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
 __global__ void kernel_compute_deeq( const double * qgm, double * deeq, const double * aux,
 		const int na, const int nspin_mag, const int ngm, const int nat, const int flag,
 		const int ih, const int jh, const int nhm, const double omega, const double fact,
-		const  double * __restrict qgm_na, double * dtmp )
+		const  double * __restrict qgm_na, double * dtmp, int dtmp_stride )
 {
 	int global_index = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 	double sup_prod_1[2];
@@ -170,9 +190,9 @@ __global__ void kernel_compute_deeq( const double * qgm, double * deeq, const do
 
 		int index = ih + ( jh * nhm ) + ( na * nhm * nhm ) + ( global_index * nhm * nhm * nat );
 		int rev_index = jh + ( ih * nhm ) + ( na * nhm * nhm ) + ( global_index * nhm * nhm * nat );
-		double temp = fact * omega * dtmp[global_index];
+		double temp = fact * omega * dtmp[global_index * dtmp_stride];
 		//LDB zero this for use in the next iteration
-		dtmp[global_index]=0.0;
+		dtmp[global_index * dtmp_stride]=0.0;
 
 		if ( flag ) {
 			complex_by_complex_device( &aux[ global_index * ngm * 2 ], qgm_na, sup_prod_1 );
@@ -201,6 +221,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	void *qrad_D, *qmod_D, *ylmk0_D;
 
 	double * qgm;
+	double *dtmp;
 
 	int ih, jh, jjh, iih;
 	double fact = (* ptr_fact);
@@ -268,7 +289,6 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	}
 #endif
 
-
 	do {
 		shift = 0;
 		n_streams -= 1;
@@ -309,7 +329,9 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 		ylmk0_D = (char*) qe_dev_scratch[0] + shift;
 		shift += ( ngm * lmaxq * lmaxq )*sizeof(double);
 #endif
-// now	shift contains the amount of byte required on the GPU to compute
+
+		// now	shift contains the amount of byte required on the GPU to compute
+	
 	} while (n_streams > 0 && shift > qe_gpu_mem_unused[0]);
 
 	if ( n_streams < 1) {
@@ -344,11 +366,12 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 	qecudaSafeCall( cudaMemcpy( ylmk0_D, ylmk0,  sizeof( double ) * ( ngm * lmaxq * lmaxq ), cudaMemcpyHostToDevice ) );
 #endif
 	qecudaSafeCall( cudaMemset( (double *) qgm_na_D, 0, sizeof( double ) * ngm * 2 * n_streams  ) );
-	qecudaSafeCall( cudaMemset( (double *) dtmp_D, 0, sizeof( double ) * nspin_mag * n_streams ) );
-
+	qecudaSafeCall( cudaMemset( (double *) dtmp_D, 0, sizeof( double ) * nspin_mag * grid2_qgm.x * n_streams ) );
+	qecudaSafeCall( cudaHostAlloc( (void**) &dtmp,  nspin_mag * grid2_qgm.x * sizeof(double), cudaHostAllocDefault ) );
+	
 	cublasSetPointerMode(qecudaHandles[ 0 ] , CUBLAS_POINTER_MODE_DEVICE);
 
-	int this_stream = -1;
+	int this_stream = n_streams-1;
 	for( ih = 0, iih = 1; ih < nh[nt - 1]; ih++, iih++ )
 	{
 		for( jh = ih, jjh = iih; jh < nh[nt - 1]; jh++, jjh++ )
@@ -384,17 +407,24 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 					kernel_compute_qgm_na_new<<< grid2_qgm, threads2_qgm, _N_BINS*(qe_gpu_kernel_launch[0].__CUDA_TxB_NEWD_QGM)*sizeof(double), newdcudaStreams[ this_stream ] >>>(
 							(cuDoubleComplex *) eigts1_D, (cuDoubleComplex *) eigts2_D, (cuDoubleComplex *) eigts3_D,
 							(int *) ig1_D, (int *) ig2_D, (int *) ig3_D, (cuDoubleComplex *) qgm_D + ngm * this_stream,
-							nr1, nr2, nr3, na, ngm, (cuDoubleComplex *) aux_D, nspin_mag,
-							(double*) dtmp_D + nspin_mag * this_stream,
+							nr1, nr2, nr3, na, ngm, (cuDoubleComplex *) aux_D, nspin_mag, 
+							(double*) dtmp_D + nspin_mag * grid2_qgm.x * this_stream, 
 							(cuDoubleComplex *) qgm_na_D + ngm * this_stream );
 
 					qecudaGetLastError("kernel kernel_compute_qgm_na launch failure");
 
+					for (int is = 0; is < nspin_mag; is++) {
+						kernel_qgm_reduce<<<(grid2_qgm.x+511)/512, 512, 0, newdcudaStreams[ this_stream ]>>>
+							((double*)dtmp_D + nspin_mag * grid2_qgm.x * this_stream + is * grid2_qgm.x, grid2_qgm.x);
+}
+
+					qecudaGetLastError("kernel kernel_qgm_reduce failure");
+
 					kernel_compute_deeq<<< grid2_deepq, threads2_deepq, 0, newdcudaStreams[ this_stream ] >>>(
 							(double *) qgm_D + ngm * 2 * this_stream, (double *) deeq_D, (double *) aux_D,
 							na, nspin_mag, ngm, nat, flag, ih, jh, nhm, omega, fact,
-							(double *) qgm_na_D + ngm * 2 * this_stream,
-							(double *) dtmp_D + nspin_mag * this_stream );
+							(double *) qgm_na_D + ngm * 2 * this_stream, 
+							(double *) dtmp_D + nspin_mag * grid2_qgm.x * this_stream, grid2_qgm.x );
 					qecudaGetLastError("kernel kernel_compute_deeq launch failure");
 				}
 			}
