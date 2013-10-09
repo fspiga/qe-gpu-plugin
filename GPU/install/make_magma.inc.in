@@ -23,18 +23,13 @@ ARCH      = @ar@
 ARCHFLAGS = cr
 RANLIB    = @ranlib@
 
-# Before CUDA 5.0
-#OPTS      = -O3 -DADD_
-#FOPTS     = -O3 -DADD_ -x f95-cpp-input
-#NVOPTS    = --compiler-options -fno-strict-aliasing -DUNIX -O3 -DADD_
-#LDOPTS    = -fPIC -Xlinker -zmuldefs
-
-# CUDA 5 needs -DCUBLAS_GFORTRAN or appropriate setting to compile cuda/src/fortran.c bindings
-OPTS      = -O3 -DADD_ -DCUBLAS_GFORTRAN
+# -DMAGMA_SETAFFINITY
+OPTS      = -O3 -DADD_ @magma_openmp@ @magma_dflags@ -DCUBLAS_GFORTRAN
 F77OPTS   = -O3 -DADD_
 FOPTS     = -O3 -DADD_ -x f95-cpp-input
 NVOPTS    = -O3 -DADD_ --compiler-options -fno-strict-aliasing -DUNIX
-LDOPTS    = -fPIC -Xlinker -zmuldefs
+LDOPTS    = -fPIC -Xlinker @magma_openmp@
+# -zmuldefs
 
 # see MKL Link Advisor at http://software.intel.com/sites/products/mkl/
 # gcc with MKL 10.3, sequential version

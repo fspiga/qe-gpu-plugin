@@ -636,6 +636,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+magma_dflags
+magma_openmp
 magma_gpu_target
 magma_switch
 cblas_switch
@@ -11655,10 +11657,11 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 		        ;;
 			esac
 
-	    	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC"
 	        if test "$use_openmp" -eq 1 ; then
-	        	phigemm_nvccflags="$phigemm_nvccflags -fopenmp'"
-	        fi
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
+	        else
+                	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
+		fi
 
 	        if test "$use_fastcuda" -eq 1 ; then
 	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
@@ -11693,10 +11696,21 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	        magma_switch=1
 	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
 	        magma_libs="$topdir/magma/lib/libmagma.a "
-	        try_dflags="$try_dflags -D__MAGMA"
+		# -DHAVE_CUBLAS is required by magma-1.4.0 ...
+	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
 
-		    # GPU architecture
-		    case "$cuda_arch" in
+		magma_openmp=""
+                if test "$use_openmp" -eq 1 ; then
+                        magma_openmp="-fopenmp"
+                fi
+
+		if test "$have_mkl" -eq 1
+		then
+			magma_dflags="-DMAGMA_WITH_MKL"
+		fi
+
+		# GPU architecture
+		case "$cuda_arch" in
 		    35 | 30 )
 		        magma_gpu_target=Kepler
 		        ;;
@@ -11706,7 +11720,8 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 		    13 )
 		        magma_gpu_target=Tesla
 		        ;;
-		    esac
+		esac
+
 	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
@@ -12105,7 +12120,15 @@ fi
 
 
 
+
 # CUDA
+
+
+
+
+
+
+
 
 
 

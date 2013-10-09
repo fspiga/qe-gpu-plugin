@@ -2279,10 +2279,11 @@ then
 		        ;;
 			esac
 	    
-	    	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC"
 	        if test "$use_openmp" -eq 1 ; then	        
-	        	phigemm_nvccflags="$phigemm_nvccflags -fopenmp'"
-	        fi
+	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
+	        else
+                	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
+		fi
 	        
 	        if test "$use_fastcuda" -eq 1 ; then
 	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
@@ -2317,10 +2318,21 @@ then
 	        magma_switch=1
 	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
 	        magma_libs="$topdir/magma/lib/libmagma.a " 
-	        try_dflags="$try_dflags -D__MAGMA"
-			
-		    # GPU architecture
-		    case "$cuda_arch" in
+		# -DHAVE_CUBLAS is required by magma-1.4.0 ...
+	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
+
+		magma_openmp=""
+                if test "$use_openmp" -eq 1 ; then
+                        magma_openmp="-fopenmp"
+                fi
+
+		if test "$have_mkl" -eq 1
+		then
+			magma_dflags="-DMAGMA_WITH_MKL"
+		fi
+		
+		# GPU architecture
+		case "$cuda_arch" in
 		    35 | 30 )
 		        magma_gpu_target=Kepler
 		        ;;
@@ -2330,7 +2342,8 @@ then
 		    13 )
 		        magma_gpu_target=Tesla
 		        ;;        
-		    esac
+		esac
+		
 	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
@@ -2552,12 +2565,15 @@ AC_SUBST(wget)
 AC_SUBST(topdir)
 AC_SUBST(extlib_flags)
 
+
 # CUDA 
 AC_SUBST(nvcc)
 AC_SUBST(nvccflags)
+
 AC_SUBST(cuda_path)
 AC_SUBST(cuda_include)
 AC_SUBST(cuda_libs)
+
 AC_SUBST(phigemm_cc)
 AC_SUBST(phigemm_fc)
 AC_SUBST(phigemm_opts)
@@ -2570,9 +2586,14 @@ AC_SUBST(phigemm_fflags)
 AC_SUBST(phigemm_nvccflags)
 AC_SUBST(phigemm_ldflags)
 AC_SUBST(phigemm_ldsharedflag)
+
 AC_SUBST(cblas_switch)
+
 AC_SUBST(magma_switch)
 AC_SUBST(magma_gpu_target)
+AC_SUBST(magma_openmp)
+AC_SUBST(magma_dflags)
+
 
 AC_CONFIG_HEADERS([../include/c_defs.h:../include/c_defs.h.in])
 AC_CONFIG_HEADERS([./include/c_defs.h:./include/c_defs.h.in])

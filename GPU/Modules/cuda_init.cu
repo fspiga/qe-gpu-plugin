@@ -426,6 +426,10 @@ extern "C" void initcudaenv_()
 	initphigemm_();
 #endif
 
+#if defined(__MAGMA)
+	int whatever = magma_init();
+#endif
+
 #if defined(__CUDA)
 	initStreams_();
 
@@ -440,6 +444,10 @@ extern "C" void closecudaenv_()
 {
 #if defined(__CUDA) && !defined(__CUDA_NOALLOC)
 	deallocatedevicememory_();
+#endif
+
+#if defined(__MAGMA)
+	int whatever = magma_finalize();
 #endif
 
 #if defined(__CUDA)
