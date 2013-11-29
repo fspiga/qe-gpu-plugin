@@ -28,8 +28,7 @@ OPTS      = -O3 -DADD_ @magma_openmp@ @magma_dflags@ -DCUBLAS_GFORTRAN
 F77OPTS   = -O3 -DADD_
 FOPTS     = -O3 -DADD_ -x f95-cpp-input
 NVOPTS    = -O3 -DADD_ --compiler-options -fno-strict-aliasing -DUNIX
-LDOPTS    = -fPIC -Xlinker @magma_openmp@
-# -zmuldefs
+LDOPTS    = -fPIC @magma_openmp@
 
 # see MKL Link Advisor at http://software.intel.com/sites/products/mkl/
 # gcc with MKL 10.3, sequential version

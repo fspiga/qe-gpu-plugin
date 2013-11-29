@@ -26,6 +26,10 @@
 #include "phigemm.h"
 #endif
 
+#if defined(__MAGMA)
+#include "magma.h"
+#endif
+
 #if defined(__CUDA)
 
 #define qe_compute_num_blocks(N, THREADS) N / THREADS + (N % THREADS == 0 ? 0 : 1 )
