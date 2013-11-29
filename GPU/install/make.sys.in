@@ -43,7 +43,7 @@ TOPDIR = @topdir@
 #                  BEWARE: will not work for IBM xlf! Manually edit FDFLAGS
 MANUAL_DFLAGS  =
 DFLAGS         = @dflags@ $(MANUAL_DFLAGS)
-FDFLAGS        = @fdflags@ $(MANUAL_DFLAGS)
+FDFLAGS        = @fdflags@
 
 # IFLAGS = how to locate directories where files to be included are
 # In most cases, IFLAGS = -I../include
