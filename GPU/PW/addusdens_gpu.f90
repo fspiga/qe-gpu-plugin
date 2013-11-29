@@ -77,95 +77,11 @@ subroutine addusdens_g_gpu(rho)
         !
 		first_becsum = nhm * (nhm + 1)/2
 		!
-#if defined(__CUDA_QE_TIMING)
-        CALL start_clock( 'cu:addusdens' )
-#endif
-        !
-#if defined(__WRITE_UNIT_TEST_DATA)
-        WRITE(filename, "(A15,I0.3,A4)"), "addusdens_input", file_inx, ".bin"
-
-        INQUIRE(FILE=filename, EXIST=file_exists)
-        IF (.not.file_exists) then 
-          OPEN(UNIT= 11, STATUS = 'REPLACE', FILE = filename, FORM='UNFORMATTED') 
-          PRINT *, "Writing ", filename
-          WRITE(11) dfftp%nr1
-          WRITE(11) dfftp%nr2
-          WRITE(11) dfftp%nr3
-          WRITE(11) first_becsum
-          WRITE(11) nat
-          WRITE(11) nh
-          WRITE(11) nt
-          WRITE(11) ngm
-          WRITE(11) lmaxq
-          WRITE(11) nspin_mag
-          WRITE(11) nspin
-          WRITE(11) qmod
-          WRITE(11) qgm
-          WRITE(11) ylmk0
-          WRITE(11) eigts1
-          WRITE(11) eigts2
-          WRITE(11) eigts3
-          WRITE(11) mill
-          WRITE(11) aux
-          WRITE(11) becsum
-          WRITE(11) ityp
- 
-          WRITE(11) SIZE(indv,1)
-          WRITE(11) SIZE(indv,2)
-          WRITE(11) indv
-     
-          WRITE(11) SIZE(nhtolm,1)
-          WRITE(11) SIZE(nhtolm,2)
-          WRITE(11) nhtolm
-     
-          WRITE(11) SIZE(qrad,1)
-          WRITE(11) SIZE(qrad,2)
-          WRITE(11) SIZE(qrad,3)
-          WRITE(11) SIZE(qrad,4)
-          WRITE(11) qrad
-
-          WRITE(11) lpx
-          WRITE(11) lpl
-          WRITE(11) ap
-
-          WRITE(11) nbetam
-  
-          CLOSE(11)
-        ELSE
-          OPEN(UNIT= 11, STATUS = 'OLD', FILE = filename, FORM='UNFORMATTED') 
-          READ(11) dfftp%nr1
-          READ(11) dfftp%nr2
-          READ(11) dfftp%nr3
-          READ(11) first_becsum
-          READ(11) nat
-          READ(11) nh
-          READ(11) junk_nt
-          READ(11) ngm
-          READ(11) lmaxq
-          READ(11) qmod
-          READ(11) qgm
-          READ(11) ylmk0
-          READ(11) eigts1
-          READ(11) eigts2
-          READ(11) eigts3
-          READ(11) mill
-          READ(11) aux
-          READ(11) becsum
-          READ(11) ityp
-          READ(11) nspin_mag
-          READ(11) nspin
- 
-        ENDIF
-#endif
    		err = addusdens_cuda(dfftp%nr1, dfftp%nr2, dfftp%nr3, first_becsum, nat, nh, nt, ngm, qmod, qgm, ylmk0, &
   		    eigts1, eigts2, eigts3, mill (1,:), mill (2,:), mill (3,:), &
   		    aux, becsum, ityp, nspin_mag, nspin, qrad, size(qrad,1), size(qrad,2), size(qrad,3), &
           size(qrad,4), lmaxq, nlx, dq, indv, nhtolm, nbetam, lpx, lpl, ap, size(ap,1), nhm)
   		!
-#if defined(__CUDA_QE_TIMING)
-        CALL stop_clock( 'cu:addusdens' )
-#endif
-        !
         IF (err .EQ. 1) THEN
 		    !
 	        do ih = 1, nh (nt)
