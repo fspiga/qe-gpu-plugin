@@ -8,114 +8,38 @@
  *
  */
 
-*** Last update: January 16, 2013 (Filippo Spiga) ***
+*** Last update: November 29, 2013 (Filippo Spiga) ***
 
-Rebuild date: January 16, 2013
-Rebuild version: 2
+*** Requirements               
 
-
-*** 0. What's new in this build
-
->> MAGMA works also using GPU with compute capabiity 3.0
->> OpenBLAS included in QE-GPU (see IMPORTANT NOTE (4), section 3)
-
-
-*** 1. Requirements               
-
->> Strongly suggested:
 - Intel compiler (versions above 11) or PGI compiler (tested up to 12.8)
 - GNU GCC/GFORTRAN (version above 4.1 but lower than 4.6)
-- NVIDIA cards (compute capability >= 2.0)
-- CUDA 4.x OR CUDA 5.0
+- NVIDIA cards (compute capability >= 2.0, best 3.5)
+- CUDA 5.x
 - MKL (version >=10.x) or ACML (>= 4.4.x, >= 5.x)
 - python >= 2.4.x
-- Quantum ESPRESSO 5.0.2[1,2]
+- Quantum ESPRESSO svn
 
->> Minimum:              
-- GNU GCC/GFORTRAN (version above 4.1 but lower than 4.6)
-- NVIDIA cards (compute capability >= 1.3)
-- CUDA 4.x OR CUDA 5.0
-- python >= 2.4.x
-- Quantum ESPRESSO 5.0.2
-
-The code has always been tested on a 64bit systems.
-
-
-*** 2. Features not (yet) GPU accelerated in PWscf
-
-- iterative diagonalization of a complex hermitian matrix through 
-  preconditioned conjugate gradient algorithm (rcgdiagg, ccgdiagg)
-- noncollinear case 
-
-
-*** 3.  How to compile 
-
-(...after checkout the entire QE repository from SVN or 
-   untar QE-GPU-5.0.2-build1.tar.gz in your working directory...)   
-  
+*** How to compile 
+ 
 $ cd GPU
 $ ./configure --disable-parallel --enable-openmp \
   --enable-cuda --with-gpu-arch=35 \
-  --with-cuda-dir=/opt/cuda5.0 --enable-magma --enable-phigemm
+  --with-cuda-dir=/opt/cuda5.0 --with-magma --with-phigemm
 $ cd ..
 $ make -f Makefile.gpu all-gpu
 
 "*-gpu.x" executables will be placed under bin/ (like "pw-gpu.x")
 
-Additional options for QE-GPU are:
-
---enable-cuda           : turn on the GPU support
-
---with-cuda-dir=<path>  : specify the path where CUDA is installed (mandatory)
-
---with-gpu-arch=<arch>  : specify GPU compute capabilities. QE-GPU supports 
-                          cc_13, cc_20, cc_21, cc_30, cc_35. (default: 20)
-
---enable-phigemm        : enable BLAS Level 3 GPU acceleration using phiGEMM[3] 
-				           (default: yes)
-				  
---enable-magma		    : enable GPU LAPACK acceleration based on MAGMA 1.3.0
-                           (default: yes)
-                                             
---enable-fast-cuda      : this option turn on some special optimizations. 
-                          Use *ONLY* if you can safely run your test in normal
-                          conditions (default: no)
-
---enable-pinned-mem     : this option enable pinned memory allocations for fast 
-                          H2D-D2H data transfers. (default: no)
-                                                                                              
---enable-profiling      : turn on the phiGEMM call-per-call profile
-                           (default: no)
-
---enable-debug-cuda     : turn on verbose debug messages on the stdout
-
---enable-openacc	    : enable OpenACC (PGI only)
-
-
-IMPORTANT NOTE (1): both serial and parallel can exploit GPU acceleration
-                    
-IMPORTANT NOTE (2): run 'configure' in the root directory will produce a 
-                    make.sys for CPU-ONLY execution. Do this in a first 
-                    instance if you are going to build both CPU and CPU+GPU
-                    versions. 
-
-IMPORTANT NOTE (3): remember to have CUDA nvcc and CUDA libs properly set in 
-                    the environment
-
-IMPORTANT NOTE (4): if you do not have a multi-threaded BLAS library (because
-                    you do not have MKL or AMCL or other vendor-specific 
-                    library) you can exploit multi-threading at BLAS/LAPACK 
-                    level by using OpenBLAS[4,5]. OpenBLAS is compiled 
-                    automatically if "--with-internal-blas" is specified.
-
+For additional options for QE-GPU see ./configure --help
 
 In order to assess the best flag combination on a specific system we suggest
 to exploit all these 4 configurations by running one or two steps before run 
 the entire (long) simulation:
-1) --enable-phigemm --enable-magma
-2) --enable-phigemm --enable-magma --enable-fast-cuda
-3) --enable-phigemm --enable-magma --enable-pinned-mem
-4) --enable-phigemm --enable-magma --enable-pinned-mem --enable-fast-cuda
+1) --with-phigemm --with-magma
+2) --with-phigemm --with-magma --enable-fast-cuda
+3) --with-phigemm --with-magma --enable-pinned-mem
+4) --with-phigemm --with-magma --enable-pinned-mem --enable-fast-cuda
 
 In detail:
 1) is the default, it has to work. If it does not please contact us.
@@ -131,10 +55,9 @@ In detail:
    to get the maximum from the GPU
 
 
-*** PLEASE KEEP ALL THESE NOTES AS ADVICES, NOT RULES WRITTEN IN THE STONE ***
+   * PLEASE KEEP ALL THESE NOTES AS ADVICES, NOT RULES WRITTEN IN THE STONE *
 
-- specify ALWAYS the right GPU compute capability ("13" for 1.3 cards or
-  "20" for 2.x card or "30" for GTX 6xx or "35" for new TESLA K20/K20x).
+- specify ALWAYS the right GPU compute capability.
 - specify the correct PATH of CUDA (where CUDA is installed). Usually HPC 
   systems have the env variable $CUDA_HOME or $CUDA_ROOT
 - run too small systems using the GPU. The GPU implementation has been 
@@ -146,76 +69,7 @@ In detail:
   is very limited. If you cannot run the GPU PWscf due to memory limits try to
   run (with GPU) but on a parallel machine
 
-Best software configuration for SERIAL computation on multi-core workstation
-- CUDA 5.0
-- Intel compiler (it exists a free version under academic license)
-- Intel MKL (whatever version above 10)
-
-Best software configuration for PARALLEL computation on small cluster composed
-by several hybrid nodes
-- CUDA 5.0
-- Intel compiler (it exists a free version under academic license)
-- Intel MKL (whatever version above 10)
-- Open MPI
-
-Best hardware configuration is...
-- NVIDIA cards with compute capability 2.x (C20xx, M20xx) or 3.5 (K20/K20x):
-- good amount of memory on the card is 3 GByte
-- for a system with less than 50 atoms, 1.5 GByte are usually enough 
-
-For cards with compute capability 1.3...
-- MAGMA does not perform as expected, it generates not precise numbers and the 
-  iterative diagonalization fails. Suggestion: --disable-magma (but you might 
-  want to check if your input still works with MAGMA)
-
-If you use GCC/GFORTRAN compilers...
-- be sure that GNU version is above 4.1
-- GCC 4.5 appears to be compatible only with CUDA 4.2 and above
-- if you want to link BLAS/LAPACK Intel MKL libraries to QE add 
-  the following (--enable-openmp case)
-    BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core" LAPACK_LIBS=" "
-  or the following (--disable-openmp case)
-    BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_gnu_sequential -lmkl_core" LAPACK_LIBS=" "
-  at the end of the ./configure
-- "--enable-profiling" does not work (and it will never supported)
-
-If you use PGI compilers...
-- versions above 12.2 experience a problem at run-time due to the IOTK library.
-  Be sure to compile by adding the flag -D__IOTK_WORKAROUND1
-    make -f Makefile.gpu MANUAL_DFLAGS="-D__IOTK_WORKAROUND1" pw-gpu
-- do not trust the BLAS/LAPACK (AMCL) implementation provided by PGI. if you 
-  are using Intel processors on your system download the Intel MKl library and 
-  link link it to QE by adding the following (--enable-openmp case)
-    BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_pgi_thread -lmkl_core" LAPACK_LIBS=" "
-  or the following (--disable-openmp case)
-    BLAS_LIBS="-L${MKL_LIB} -lmkl_intel_lp64 -lmkl_pgi_sequential -lmkl_core" LAPACK_LIBS=" "
-  at the end of the ./configure
-
-For CRAY XK6/XK7 systems...
-- be sure to compile by adding the flag -D__IOTK_WORKAROUND1 if PGI compiler is
-  used (make MANUAL_DFLAGS="-D__IOTK_WORKAROUND1" pw)
-- CRAY compiler is not supported
-- phiGEMM profiling does not work properly at the moment (no idea why)
-- XK6/XK7 systems usually have Intel compiler and MKL. If it is the case, use 
-  this compiler
-- experimental OpenACC stuff are in the code but please... try it if you know
-  what are you doing
-- be sure to unload the module "atp  totalview-support xt-totalview hss-llm"
-- if you want to use PGI compiler, then use ACML 5.0.0 (provided by CRAY in the 
-  environment but not as default) and manually add ACML in this way
-    ./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CRAY_CUDATOOLKIT_DIR} \
-     --enable-magma --disable-profiling --enable-phigemm --enable-parallel ARCH=crayxt \
-     BLAS_LIBS="-L/opt/acml/5.0.0/pgi64_mp/lib -lacml_mp" LAPACK_LIBS="  "
-- ALWAYS specify "ARCH=crayxt" in the configure, for example
-    ./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CRAY_CUDATOOLKIT_DIR} \ 
-     --enable-magma --disable-profiling --enable-phigemm --enable-parallel ARCH=crayxt
-- on some CRAY XK6 systems, if Intel compilers are used you also need to add
-  "F90=ifort" on the configure
-    ./configure --enable-openmp --enable-cuda --with-gpu-arch=20 --with-cuda-dir=${CRAY_CUDATOOLKIT_DIR} \ 
-     --enable-magma --disable-profiling --enable-phigemm --enable-parallel ARCH=crayxt F90=ifort
-
-
-*** 4. How to run
+*** How to run
 
 Nothing has changed. If the support to the GPU is enables you MUST remember to 
 specify few additional environmental variables required by the phiGEMM library 
@@ -229,12 +83,11 @@ performed by the GPU, the 5% by the CPU.
 
 Here an example:
 
-export PHI_SGEMM_SPLIT=0.95
-export PHI_CGEMM_SPLIT=0.875
-export PHI_DGEMM_SPLIT=0.9
-export PHI_ZGEMM_SPLIT=0.925
 
-IMPORTANT NOTE (1): suggested values are between 0.875 and 0.95
+export PHI_DGEMM_SPLIT=0.975
+export PHI_ZGEMM_SPLIT=0.975
+
+IMPORTANT NOTE (1): suggested values are between 0.925 and 0.975
 
 IMPORTANT NOTE (2): some system are equipped with different cards. For 
                     example, you may have 2 Tesla Cxxxx and another card, that 
@@ -298,13 +151,13 @@ mpirun -v -np 16 -npernode 4  -bysocket -bind-to-socket -display-map -report-bin
    
 
 
-*** 6. Trouble-makers. inconsistencies, etc: 
+*** Trouble-makers. inconsistencies, etc: 
 
 - if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
   ignore MPI C++ bindings.
 
 
-*** 7. In case of CUDA/GPU code errors...
+*** In case of CUDA/GPU code errors...
         
 It may happen that some ported routines fail. If this happen you can easily
 decide to run the code skipping that specific "GPU" part that produce some 
@@ -375,5 +228,5 @@ suite in order to support GPU calculation using the NVIDIA CUDA environment.
 - Ivan Girotto  (ICHEC, Ireland)
 
 [2012-2013]
-- Filippo Spiga (Quantum ESPRESSO Foundation)
-- Ivan Girotto  (ICTP, Italy)
+- Filippo Spiga (University of Cambridge, Quantum ESPRESSO Foundation)
+- Ivan Girotto  (ICTP)
