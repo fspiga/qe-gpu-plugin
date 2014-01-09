@@ -24,7 +24,7 @@ ARCHFLAGS = cr
 RANLIB    = @ranlib@
 
 # -DMAGMA_SETAFFINITY
-OPTS      = -O3 -DADD_ @magma_openmp@ @magma_dflags@ -DCUBLAS_GFORTRAN
+OPTS      = -O3 -DADD_ @magma_openmp@ @magma_dflags@ -DCUBLAS_GFORTRAN -DHAVE_CUBLAS
 F77OPTS   = -O3 -DADD_
 FOPTS     = -O3 -DADD_ -x f95-cpp-input
 NVOPTS    = -O3 -DADD_ --compiler-options -fno-strict-aliasing -DUNIX
