@@ -228,7 +228,7 @@ clean-gpu :
 	touch make.sys
 ifeq ($(PHIGEMM_SYMBOLS),1)
 	for dir in \
-        CPV/src Modules/src PW/src PH/src NEB/src \
+        CPV/src Modules PW/src PH/src NEB/src \
 	; do \
 		grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
 	done
