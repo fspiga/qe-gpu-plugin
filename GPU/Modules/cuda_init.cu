@@ -104,6 +104,10 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 	 */
 	cudaGetDeviceCount(&lNumDevicesThisNode);
 
+#if defined(__CUDA_DEBUG)
+                printf("Detected %d GPU on node of rank: %d (internal rank:%d)\n", lNumDevicesThisNode, lRank, lRankThisNode); fflush(stdout);
+#endif
+
 	if (lNumDevicesThisNode == 0 && lRankThisNode == 0)
 	{
 		printf("***ERROR: no CUDA-capable devices were found.\n");
@@ -247,9 +251,14 @@ extern "C" void detectdevicememory_(){
 
 		cudaMemGetInfo((size_t*)&free,(size_t*)&total);
 
+#if defined(__CUDA_WORKAROUND_1)
+		// Assuming only one MPI process accessing the GPU -- no sharing
+		qe_gpu_mem_tot[i] = (size_t) (free * __SCALING_MEM_FACTOR__) ;
+#else
 		qe_gpu_mem_tot[i] = (size_t) ((free * __SCALING_MEM_FACTOR__ ) / procs_per_gpu);
+#endif		
 		qe_gpu_mem_unused[i] = qe_gpu_mem_tot[i];
-
+	
 	}
 
 	return;
@@ -362,8 +371,8 @@ extern "C" void query_gpu_specs_(int lRankThisNode)
 			exit(EXIT_FAILURE);
 		}
 
-        int cc = deviceProp.major*10 + deviceProp.minor;
-        switch (cc) {
+        	int cc = deviceProp.major*10 + deviceProp.minor;
+        	switch (cc) {
 			case 13:
 				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
 						deviceProp.maxThreadsPerBlock, 65535, 4, 256, 128, 256, 256, 256, 256, 256);
@@ -388,14 +397,13 @@ extern "C" void query_gpu_specs_(int lRankThisNode)
 				printf("*** ERROR *** something went wrong inside query_gpu_specs! (rank %d)",lRankThisNode ); fflush(stdout);
 				exit(EXIT_FAILURE);
 				break;
-        }
-	}
+		}
 
 #if defined(__CUDA_DEBUG)
-	for (i = 0; i < ngpus_per_process; i++) {
-		printf("[rank %d]  CUDA Capability Major/Minor version number:    %d.%d\n", lRankThisNode, qe_gpu_kernel_launch[i].__cc_major, qe_gpu_kernel_launch[i].__cc_minor);
-	}
+        	printf("[rank %d]  CUDA Capability Major/Minor version number:    %d.%d\n", lRankThisNode, deviceProp.major, deviceProp.minor);
 #endif
+
+	}
 
     return;
 }
