@@ -8,7 +8,10 @@
  *
  */
 
+// Active by default...
 #define __CUDA_QVAN2
+
+#define sixth 1.0/6.0
 
 #include <stdio.h>
 
@@ -18,7 +21,6 @@ __global__ void qvan_kernel( double dqi, double *qmod, double *qrad, double *ylm
 	double qm, work;
 	double px, ux, vx, wx, uvx, pwx;
 	int i0, i1, i2, i3;
-	double sixth = 1.0/6.0;
 	int ig = threadIdx.x + blockIdx.x * blockDim.x;
 	if (ig < ngy) {
 		qm = qmod[ig] * dqi;
@@ -53,7 +55,6 @@ extern "C" int qvan2_cuda( int ngy, int ih, int jh,
 		int *lpl, int lpl_s1, int lpl_s2,
 		double *ap, int ap_s1, int ap_s2, cudaStream_t st)
 {
-	int qg_s1 = 2;
 	// adjust array indeces to begin with 0
 	np = np - 1;
 	ih = ih - 1;
@@ -63,13 +64,17 @@ extern "C" int qvan2_cuda( int ngy, int ih, int jh,
 	// the nonzero real or imaginary part of (-i)^L
 	double sig;
 
-	double sixth = 1.0/6.0;
-	int nb, mb, ijv, ivl, jvl, ig, lp, l, lm, i0, i1, i2, i3, ind;
-	double dqi, qm, px, ux, vx, wx, uvx, pwx, work, qm1;
-
 #if defined(__CUDA_QVAN2)
-	cudaError_t err;
+        cudaError_t err;
+#else
+	int qg_s1 = 2;
+	int i0, i1, i2, i3, ig;
+	double qm, px, ux, vx, wx, uvx, pwx, work;
+	double qm1 = -1.0; // any number smaller than qmod[1]
 #endif
+        int nb, mb, ijv, ivl, jvl, lp, l, lm, ind;
+	double dqi;
+
 	//
 	//     compute the indices which correspond to ih,jh
 	//
@@ -138,8 +143,6 @@ extern "C" int qvan2_cuda( int ngy, int ih, int jh,
 		//Note: To avoid major changes to the comparisons above, we're leaving lp alone
 		//    and subtracting 1 here
 		sig = sig * ap[lp-1 + ap_s1*(ivl + ap_s2*jvl) ];
-
-		qm1 = -1.0; // any number smaller than qmod[1]
 
 #if defined(__CUDA_QVAN2)
 
