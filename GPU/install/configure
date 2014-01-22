@@ -11636,8 +11636,8 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	        case "$arch:$f90_version" in
 			*:ifort* )
 		        phigemm_ldsharedflag="--shared"
-	            phigemm_fflags="-module ../include/"
-	            phigemm_ldflags="$phigemm_ldflags -zmuldefs"
+	            	phigemm_fflags="-module ../include/"
+	            	phigemm_ldflags="$phigemm_ldflags -zmuldefs"
 			    ;;
 			*:pgf90 | cray*:pgf )
 		        phigemm_ldsharedflag="-shared"
@@ -11696,8 +11696,8 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	        magma_switch=1
 	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
 	        magma_libs="$topdir/magma/lib/libmagma.a "
-		# -DHAVE_CUBLAS is required by magma-1.4.0 ...
-	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
+
+		try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
 
 		magma_openmp=""
                 if test "$use_openmp" -eq 1 ; then
@@ -11706,23 +11706,24 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 
 		if test "$have_mkl" -eq 1
 		then
-			magma_dflags="-DMAGMA_WITH_MKL"
+			magma_dflags="-DMAGMA_WITH_MKL -DMAGMA_SETAFFINITY"
 		fi
 
-		# GPU architecture
+		# GPU architecture -- if not specified compiles for everything!
+		magma_gpu_target="Tesla Fermi kepler"
 		case "$cuda_arch" in
 		    35 | 30 )
-		        magma_gpu_target=Kepler
+		        magma_gpu_target="Kepler"
 		        ;;
 		    20 | 21 )
-		        magma_gpu_target=Fermi
+		        magma_gpu_target="Fermi"
 		        ;;
 		    13 )
-		        magma_gpu_target=Tesla
+		        magma_gpu_target="Tesla"
 		        ;;
 		esac
 
-	        # CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
+		# CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
 		    if test "$have_mkl" -eq 0 && test "$have_acml" -eq 0 && test "$openblas_switch" -eq 0
@@ -11849,7 +11850,7 @@ fi
 	        magma_switch=0
 	        magma_include="-I$with_magma_path/include -I$with_magma_path/quark/include"
 	        magma_libs="$with_magma_path/lib/libmagma.a "
-	        try_dflags="$try_dflags -D__MAGMA"
+	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
 	    fi
 
 		# Enable Open ACC (now only for card with compute capaility 2.x)

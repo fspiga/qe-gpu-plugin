@@ -1,43 +1,54 @@
 #//////////////////////////////////////////////////////////////////////////////
-#   -- MAGMA (version 1.3.0) --
+#   -- MAGMA (version 1.4.1) --
 #      Univ. of Tennessee, Knoxville
 #      Univ. of California, Berkeley
 #      Univ. of Colorado, Denver
-#      November 2012
+#      December 2013
 #//////////////////////////////////////////////////////////////////////////////
 
-#
-# GPU_TARGET specifies for which GPU you want to compile MAGMA:
-#     "Tesla"  (NVIDIA compute capability 1.x cards)
-#     "Fermi"  (NVIDIA compute capability 2.x cards)
-#     "Kepler" (NVIDIA compute capability 3.x cards)
+# GPU_TARGET contains one or more of Tesla, Fermi, or Kepler,
+# to specify for which GPUs you want to compile MAGMA:
+#     Tesla  - NVIDIA compute capability 1.x cards
+#     Fermi  - NVIDIA compute capability 2.x cards
+#     Kepler - NVIDIA compute capability 3.x cards
+# The default is all, "Tesla Fermi Kepler".
 # See http://developer.nvidia.com/cuda-gpus
+#
 
-GPU_TARGET = @magma_gpu_target@
+GPU_TARGET ?= @magma_gpu_target@
 
 CC        = gcc
-NVCC      = @nvcc@
+NVCC      = nvcc
 FORT      = gfortran
 
-ARCH      = @ar@
+ARCH      = ar
 ARCHFLAGS = cr
-RANLIB    = @ranlib@
+RANLIB    = ranlib
 
-# -DMAGMA_SETAFFINITY
-OPTS      = -O3 -DADD_ @magma_openmp@ @magma_dflags@ -DCUBLAS_GFORTRAN -DHAVE_CUBLAS
-F77OPTS   = -O3 -DADD_
-FOPTS     = -O3 -DADD_ -x f95-cpp-input
-NVOPTS    = -O3 -DADD_ --compiler-options -fno-strict-aliasing -DUNIX
-LDOPTS    = -fPIC @magma_openmp@
+OPTS      = -O3 -DADD_ -Wall -fno-strict-aliasing @magma_openmp@ @magma_dflags@
+F77OPTS   = -O3 -DADD_ -Wall
+FOPTS     = -O3 -DADD_ -Wall -x f95-cpp-input
+NVOPTS    = -O3 -DADD_ -Xcompiler -fno-strict-aliasing -DUNIX
+LDOPTS    = @magma_openmp@
 
 # see MKL Link Advisor at http://software.intel.com/sites/products/mkl/
 # gcc with MKL 10.3, sequential version
-LIB      = @ld_libs@
+#LIB       = -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lcublas -lcudart -lstdc++ -lm -lgfortran
 
-CUDADIR   = @cuda_path@
+# gcc with MKL 10.3, GNU threads
+#LIB       = -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lpthread -lcublas -lcudart -lstdc++ -lm -lgfortran
 
-LIBDIR    = 
-INC       = @cuda_include@
+# gcc with MKL 10.3, Intel threads
+LIB       = @ld_libs@
 
-#LIBMAGMA     = ../lib/libmagma.a
-#LIBMAGMABLAS = ../lib/libmagmablas.a
+# define library directories preferably in your environment, or here.
+# for MKL run, e.g.: source /opt/intel/composerxe/mkl/bin/mklvars.sh intel64
+#MKLROOT ?= @ld_libs@
+CUDADIR ?= @cuda_path@
+-include make.check-mkl
+-include make.check-cuda
+
+LIBDIR    = -L$(MKLROOT)/lib/intel64 \
+            -L$(CUDADIR)/lib64
+
+INC       = -I$(CUDADIR)/include -I$(MKLROOT)/include

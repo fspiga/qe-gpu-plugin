@@ -44,8 +44,8 @@ ifeq ($(CBLAS_INTERNAL),1)
 endif
 ifeq ($(MAGMA_INTERNAL),1) 
 	if test ! -d ../../magma ; then \
-	( gzip -dc ../archive/magma-1.4.0.tar.gz | \
-		(cd ../../; tar -xvf ./GPU/archive/magma-1.4.0.tar.gz; )); fi
+	( gzip -dc ../archive/magma-1.4.1.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/magma-1.4.1.tar.gz; )); fi
 	cp make_magma.inc ../../magma/make.inc;
 	cd ../../magma; $(MAKE) lib;
 endif
@@ -66,7 +66,7 @@ libphiGEMM_veryclean:
 	rm -f make_phiGEMM.inc
 libMAGMA_clean:
 	if test -d ../../CBLAS; then (cd ../../CBLAS; $(MAKE) clean); fi
-	if test -d ../../magma; then (cd ../../magma; $(MAKE) clean); fi
+	if test -d ../../magma; then (cd ../../magma; $(MAKE) cleanall); fi
 libMAGMA_veryclean:
 	if test -d ../../CBLAS; then (rm -R -f ../../CBLAS); fi
 	if test -d ../../magma; then (rm -R -f ../../magma); fi
