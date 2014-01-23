@@ -25,11 +25,11 @@ ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib
 
-OPTS      = -O3 -DADD_ -Wall -fno-strict-aliasing @magma_openmp@ @magma_dflags@
+OPTS      = -O3 -DADD_ -Wall @magma_openmp@ @magma_dflags@
 F77OPTS   = -O3 -DADD_ -Wall
 FOPTS     = -O3 -DADD_ -Wall -x f95-cpp-input
 NVOPTS    = -O3 -DADD_ -Xcompiler -fno-strict-aliasing -DUNIX
-LDOPTS    = @magma_openmp@
+LDOPTS    = @magma_openmp@ -fPIC
 
 # see MKL Link Advisor at http://software.intel.com/sites/products/mkl/
 # gcc with MKL 10.3, sequential version
@@ -45,8 +45,8 @@ LIB       = @ld_libs@
 # for MKL run, e.g.: source /opt/intel/composerxe/mkl/bin/mklvars.sh intel64
 #MKLROOT ?= @ld_libs@
 CUDADIR ?= @cuda_path@
--include make.check-mkl
--include make.check-cuda
+#-include make.check-mkl
+#-include make.check-cuda
 
 LIBDIR    = -L$(MKLROOT)/lib/intel64 \
             -L$(CUDADIR)/lib64

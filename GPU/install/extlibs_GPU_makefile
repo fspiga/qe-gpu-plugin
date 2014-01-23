@@ -44,8 +44,8 @@ ifeq ($(CBLAS_INTERNAL),1)
 endif
 ifeq ($(MAGMA_INTERNAL),1) 
 	if test ! -d ../../magma ; then \
-	( gzip -dc ../archive/magma-1.4.1.tar.gz | \
-		(cd ../../; tar -xvf ./GPU/archive/magma-1.4.1.tar.gz; )); fi
+	( gzip -dc ../archive/magma.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/magma.tar.gz; )); fi
 	cp make_magma.inc ../../magma/make.inc;
 	cd ../../magma; $(MAKE) lib;
 endif

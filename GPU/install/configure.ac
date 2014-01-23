@@ -2328,7 +2328,7 @@ then
 
 		if test "$have_mkl" -eq 1
 		then
-			magma_dflags="-DMAGMA_WITH_MKL -DMAGMA_SETAFFINITY"
+			magma_dflags="-DMAGMA_WITH_MKL -DCUBLAS_GFORTRAN -DHAVE_CUBLAS"
 		fi
 	       
 		# GPU architecture -- if not specified compiles for everything!
@@ -2513,8 +2513,7 @@ then
                 parallel_report="Parallel environment detected successfully.\\
 Configured for compilation of parallel executables."
         else
-                parallel_report="Parallel environment not detected \
-\(is this a parallel machine?\).\\
+                parallel_report="Parallel environment not detected \(is this a parallel machine?\).\
 Configured for compilation of serial executables."
         fi
 else
