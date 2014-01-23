@@ -149,10 +149,15 @@ __global__ void kernel_compute_qgm_na_new( const  cuDoubleComplex * __restrict e
 	int tid = threadIdx.x + blockDim.x * threadIdx.y;
 
 #if ( __CUDA_ARCH__ >= 200 )
-#pragma unroll _N_BINS
-#endif
-	for (is = 0; is < nspin_mag; is++) {
 
+#pragma unroll _N_BINS
+        for (is = 0; is < nspin_mag; is++) {
+
+#else
+
+        for (is = 0; is < nspin_mag; is++) {
+
+#endif
 		if( global_index < ngm ){
 			tmp[parity] = aux[ is * ngm + global_index ];
 			sdata[blockDim.y*tid + parity] = out.x * tmp[parity].x + out.y * tmp[parity].y;
