@@ -675,7 +675,6 @@ elpa_libs_switch
 mass_libs
 mpi_libs
 fft_libs
-openblas_switch
 lapack_libs_switch
 lapack_libs
 blas_libs_switch
@@ -780,7 +779,6 @@ with_elpa
 with_internal_blas
 with_internal_cblas
 with_internal_lapack
-with_openblas
 enable_environment
 enable_cuda
 enable_debug_cuda
@@ -788,7 +786,6 @@ enable_pinned_mem
 with_magma
 with_phigemm
 enable_fast_cuda
-enable_openacc
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1444,7 +1441,6 @@ Optional Features:
   --enable-pinned-mem     enable non-pageable memory allocations (default: no)
   --enable-fast-cuda      enable special CUDA optimizations for fast
                           executions (default: no)
-  --enable-openacc        enable OpenACC directives - PGI only (default: no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1462,8 +1458,6 @@ Optional Packages:
   --with-internal-cblas   compile with internal cblas (default: no -- for CRAY
                           only)
   --with-internal-lapack  compile with internal lapack (default: no)
-  --with-openblas         self-compile and link against Open BLAS (default:
-                          no)
   --with-magma            (yes|no|<path>) Use MAGMA. Self-compile or a <path>
                           can be specified (default: no)
   --with-phigemm          (yes|no|<path>|profile) Use PHIGEMM. Self-compile or
@@ -2120,19 +2114,6 @@ else
 fi
 
 
-
-# Check whether --with-openblas was given.
-if test "${with_openblas+set}" = set; then
-  withval=$with_openblas; if   test "$withval" = "yes" ; then
-      use_openblas=1
-   else
-      use_openblas=0
-   fi
-else
-  use_openblas=0
-fi
-
-
 # -----------------------------
 # more options
 # ----------------------------
@@ -2231,18 +2212,6 @@ if test "${enable_fast_cuda+set}" = set; then
    fi
 else
   use_fastcuda=0
-fi
-
-
-# Check whether --enable-openacc was given.
-if test "${enable_openacc+set}" = set; then
-  enableval=$enable_openacc; if   test "$enableval" = "yes" ; then
-      use_openacc=1
-   else
-      use_openacc=0
-   fi
-else
-  use_openacc=0
 fi
 
 
@@ -9900,25 +9869,12 @@ fi
 # (blas_libs is used in the above lapack tests: do not move the following
 # settings above lapack tests, which would seem a more logical place)
 
-if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-    blas_libs_switch="internal"
 
-    # OpenBLAS is a repleacement for GOTO BLAS. It is multi-threading and
-    # if has specific optimized kernels for some architecture. It also
-    # include LAPACK.
-    if test "$use_openblas" -eq 1 && test "$use_openmp" -eq 1
-    then
-	openblas_switch=1
-	blas_libs="$topdir/OpenBLAS/libopenblas_qe.a"
-	# workaround?
-	use_internal_lapack=1
-    else
-    	blas_libs="$topdir/BLAS/blas.a"
-    	openblas_switch=0
-    fi
+if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
+    blas_libs="$topdir/BLAS/blas.a"
+    blas_libs_switch="internal"
 else
     blas_libs_switch="external"
-    openblas_switch=0
 fi
 
 # no lapack library found, or incomplete lapack found (atlas, essl),
@@ -11853,20 +11809,6 @@ fi
 	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
 	    fi
 
-		# Enable Open ACC (now only for card with compute capaility 2.x)
-		if test "$use_openacc" -eq 1 ; then
-		    case "$arch:$f90_version" in
-		    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )
-		        if  test "$cuda_arch" = "20" ; then
-		            try_dflags="$try_dflags -D__OPENACC"
-		            fflags="$fflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		            f90flags="$f90flags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		            ldflags="$ldflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		        fi
-		        ;;
-		    esac
-		fi
-
 	    try_iflags="$try_iflags $magma_include $phigemm_include $cuda_include"
 
 	    lapack_libs="$magma_libs $lapack_libs"
@@ -12076,7 +12018,6 @@ else
 fi
 
 # export settings to generated files
-
 
 
 

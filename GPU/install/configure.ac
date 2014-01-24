@@ -152,16 +152,6 @@ AC_ARG_WITH(internal-lapack,
    fi],
    [use_internal_lapack=0])
 
-AC_ARG_WITH(openblas,
-   [AS_HELP_STRING([--with-openblas],
-       [self-compile and link against Open BLAS (default: no)])],
-    [if   test "$withval" = "yes" ; then
-      use_openblas=1
-   else
-      use_openblas=0
-   fi],
-   [use_openblas=0])
-
 # -----------------------------
 # more options 
 # ----------------------------
@@ -247,16 +237,6 @@ AC_ARG_ENABLE(fast_cuda,
    fi],
    [use_fastcuda=0])
    
-AC_ARG_ENABLE(openacc,
-	[AS_HELP_STRING([--enable-openacc],
-       [enable OpenACC directives - PGI only (default: no)])],
-   [if   test "$enableval" = "yes" ; then
-      use_openacc=1
-   else
-      use_openacc=0
-   fi],
-   [use_openacc=0])
-
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
 # If set, they take precedence over configure internal choice.
@@ -1734,25 +1714,12 @@ fi
 # (blas_libs is used in the above lapack tests: do not move the following
 # settings above lapack tests, which would seem a more logical place)
 
-if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
-    blas_libs_switch="internal"
 
-    # OpenBLAS is a repleacement for GOTO BLAS. It is multi-threading and
-    # if has specific optimized kernels for some architecture. It also
-    # include LAPACK.
-    if test "$use_openblas" -eq 1 && test "$use_openmp" -eq 1
-    then
-	openblas_switch=1
-	blas_libs="$topdir/OpenBLAS/libopenblas_qe.a"
-	# workaround?
-	use_internal_lapack=1
-    else
-    	blas_libs="$topdir/BLAS/blas.a"
-    	openblas_switch=0
-    fi
+if test "$have_blas" -eq 0 -o "$use_internal_blas" -eq 1 ; then
+    blas_libs="$topdir/BLAS/blas.a"
+    blas_libs_switch="internal"
 else
     blas_libs_switch="external"
-    openblas_switch=0
 fi
 
 # no lapack library found, or incomplete lapack found (atlas, essl),
@@ -2407,20 +2374,6 @@ then
 	        try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS" 
 	    fi
 	    
-		# Enable Open ACC (now only for card with compute capaility 2.x)
-		if test "$use_openacc" -eq 1 ; then
-		    case "$arch:$f90_version" in
-		    ia32:pgf* | ia64:pgf* | x86_64:pgf* | cray*:pgf )
-		        if  test "$cuda_arch" = "20" ; then
-		            try_dflags="$try_dflags -D__OPENACC"
-		            fflags="$fflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		            f90flags="$f90flags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		            ldflags="$ldflags -ta=host,nvidia:cc$cuda_arch -Minfo"
-		        fi      
-		        ;;
-		    esac
-		fi  
-	    
 	    try_iflags="$try_iflags $magma_include $phigemm_include $cuda_include"
 	    
 	    lapack_libs="$magma_libs $lapack_libs"
@@ -2544,7 +2497,6 @@ AC_SUBST(blas_libs)
 AC_SUBST(blas_libs_switch)
 AC_SUBST(lapack_libs)
 AC_SUBST(lapack_libs_switch)
-AC_SUBST(openblas_switch)
 AC_SUBST(fft_libs)
 AC_SUBST(mpi_libs)
 AC_SUBST(mass_libs)

@@ -116,11 +116,7 @@ bindir :
 # Targets for external libraries
 #############################################################
 libblas : touch-dummy
-ifeq ($(OPENBLAS_ENABLED),1) 
-	cd GPU/install ; $(MAKE) $(MFLAGS) -f extlibs_GPU_makefile libOpenBLAS
-else
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@
-endif
 
 liblapack: touch-dummy
 	cd install ; $(MAKE) $(MFLAGS) -f extlibs_makefile $@

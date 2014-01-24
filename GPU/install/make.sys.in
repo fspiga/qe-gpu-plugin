@@ -110,10 +110,6 @@ LD_LIBS        = @ld_libs@
 BLAS_LIBS      = @blas_libs@
 BLAS_LIBS_SWITCH = @blas_libs_switch@
 
-# OpenBLAS is used to exploit multi-core CPU if a multi-threaded BLAS
-# is not used or installed in the system (i.e. MKL is missing)
-OPENBLAS_INTERNAL = @openblas_switch@
-
 # If you have nothing better, use the local copy :
 # LAPACK_LIBS = /your/path/to/espresso/lapack-3.2/lapack.a
 # LAPACK_LIBS_SWITCH = internal
