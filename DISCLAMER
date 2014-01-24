@@ -1,0 +1,38 @@
+GPU-Accelerated Quantum ESPRESSO
+
+Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
+
+Written by:
+Filippo Spiga (Quantum ESPRESSO Foundation, University of Cambridge
+Ivan Girotto (Abdus Salam International Centre for Theoretical Physics - ICTP)
+Levi Barnes (NVIDIA)
+
+
+QE-GPU is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option)
+any later version.
+
+QE-GPU is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along
+with QE-GPU; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
+
+The precise terms and conditions for copying, distribution and modification 
+is provided in the file named "LICENSE" in this directory.
+
+                               * * * * *
+
+[2011-2012] The first phase of this work has been supported by the PRACE 1st 
+Implementation Phase project, WP 7.5e "Programming Techniques for High 
+Performance Applications - Accelerator". The Irish Centre for High-End 
+Computing (ICHEC) has been directly responsible to extend the Quantum ESPRESSO
+suite in order to support GPU calculation using the NVIDIA CUDA environment.
+- Filippo Spiga (ICHEC, Ireland)
+- Ivan Girotto  (ICHEC, Ireland)
+
+

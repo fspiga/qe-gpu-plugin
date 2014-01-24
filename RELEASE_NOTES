@@ -1,2 +1,7 @@
-RELEASE NOTES FOR QE-GPU VERSION 14.01
+RELEASE NOTES FOR QE-GPU VERSION 14.01.0
 26 January 2014
+
+ -- General cleaning of the package, repository moved to git
+ -- Checked compatibility with CUDA 6.0
+ -- Incorporated MAGMA 1.4.1
+ -- Corrected typos in few CUDA kernels

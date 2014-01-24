@@ -16,10 +16,19 @@ under the GNU General Public License, please see the files LICENSE and
 DISCLAIMER for details. This README presents an introduction to compiling, 
 installing, and using QE-GPU.
 
-
+                               * * * * *
 
 How to compile
 --------------
+
+The package includes a directory called "GPU" that has to be copied under the
+Quantum ESPRESSO main directory.
+
+$ rsync -aurvp --exclude=.git ./GPU <path-to-espresso>/
+
+If a version older than 5.0.2 is used, please first apply the appropriate patch
+located under "qe-patches/" 
+
 
 ## Serial:
 
@@ -43,7 +52,7 @@ $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
 Notes:
-- specify ALWAYS the right GPU compute capability.
+- specify always the right GPU compute capability.
 - specify the correct PATH of CUDA (where CUDA is installed). Usually HPC 
   systems have the env variable $CUDA_HOME or $CUDA_ROOT
 - "pw-gpu.x" will be placed under "bin/" (and also under "GPU/PW/")
@@ -144,20 +153,3 @@ References
     Quantum ESPRESSO on hybrid systems.", 20th Euromicro International 
     Conference on Parallel, Distributed and Network-Based Processing 
     (PDP), 2012
-
-                               * * * * *
-
-Acknowledgments
----------------
-
-[2011-2012] The first phase of this work has been supported by the PRACE 1st 
-Implementation Phase project, WP 7.5e "Programming Techniques for High 
-Performance Applications - Accelerator". The Irish Centre for High-End 
-Computing (ICHEC) has been directly responsible to extend the Quantum ESPRESSO
-suite in order to support GPU calculation using the NVIDIA CUDA environment.
-- Filippo Spiga (ICHEC, Ireland)
-- Ivan Girotto  (ICHEC, Ireland)
-
-[2012-2014]
-- Filippo Spiga (University of Cambridge, Quantum ESPRESSO Foundation)
-- Ivan Girotto  (ICTP)
