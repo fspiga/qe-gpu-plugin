@@ -1,0 +1,163 @@
+QE-GPU: GPU-Accelerated Quantum ESPRESSO
+----------------------------------------
+
+Quantum ESPRESSO is an integrated suite of Open-Source computer codes for 
+electronic-structure calculations and materials modeling at the nanoscale. 
+
+The aim of QE-GPU is to create a "plugin-like" component for the standard 
+Quantum ESPRESSO package that allows to exploit the capabilities of NVIDIA 
+GPU graphics cards in order to allow materials scientists to do better and 
+fast science. GPU acceleration is currently available for the Plane-Wave 
+Self-Consistent Field (PWscf) code and the energy barriers and reaction 
+pathways through the Nudged Elastic Band method (NEB) package.
+
+QE-GPU is provided "as is" and with no warranty. This software is distributed 
+under the GNU General Public License, please see the files LICENSE and 
+DISCLAIMER for details. This README presents an introduction to compiling, 
+installing, and using QE-GPU.
+
+
+
+How to compile
+--------------
+
+## Serial:
+
+$ cd GPU
+$ ./configure --disable-parallel --enable-openmp \
+  --enable-cuda --with-gpu-arch=35 \
+  --with-cuda-dir=<full-path-where-CUDA-is-installed> \
+  --without-magma --with-phigemm
+$ cd ..
+$ make -f Makefile.gpu pw-gpu
+
+
+## Parallel:
+
+$ cd GPU
+$ ./configure --enable-parallel --enable-openmp --with-scalapack \
+  --enable-cuda --with-gpu-arch=35 \
+  --with-cuda-dir=<full-path-where-CUDA-is-installed> \
+  --disable-magma --with-phigemm
+$ cd ..
+$ make -f Makefile.gpu pw-gpu
+
+Notes:
+- specify ALWAYS the right GPU compute capability.
+- specify the correct PATH of CUDA (where CUDA is installed). Usually HPC 
+  systems have the env variable $CUDA_HOME or $CUDA_ROOT
+- "pw-gpu.x" will be placed under "bin/" (and also under "GPU/PW/")
+
+For additional options for QE-GPU see "./configure --help"
+
+                               * * * * *
+
+How to run
+----------
+
+Nothing has changed. If the support to the GPU is enables you MUST remember to 
+specify few additional environmental variables required by the phiGEMM library 
+used by Quantum EPSRESSO.
+
+There are 2 recognized variables, one for each *GEMM routine implemented. This 
+factor, a value strictly between 0 and 1, tells to the library how much of the 
+calculation has to be performed on the CPU and how much on the GPU. In detail, 
+if PHI_DGEMM_SPLIT is 0.9 it means that the 95% of the computation will be 
+performed by the GPU, the 5% by the CPU.
+
+Here an example:
+
+export PHI_DGEMM_SPLIT=0.975
+export PHI_ZGEMM_SPLIT=0.975
+
+IMPORTANT NOTE (1): suggested values are between 0.925 and 0.975
+
+IMPORTANT NOTE (2): some system are equipped with different cards. For 
+                    example, you may have 2 Tesla Cxxxx and another card, that 
+                    you use for the video output. The video card may have not 
+                    enough CUDA capabilities for computation (below 1.3) or 
+                    different technical specs. There is a way to hide a 
+                    specific GPU card, using the environmental variable 
+                    "CUDA_VISIBLE_DEVICES".
+                
+IMPORTANT NOTE (3): the library auto-tune the split factor at runtime. You just 
+                    have to declare a initial good guess. If you are not sure 
+                    about the guess value leave the default.      
+
+                               * * * * *
+
+Best Practices
+--------------
+
+- NEVER over-subscribe the GPU! The best is 1 MPI process per card. 
+
+- PHI_{D,Z,C,S}GEMM_SPLIT should be different from system to system BUT for 
+  long execution it does not really matter because the phiGEMM library is able
+  to self-adjust this parameter by "analyzing" the performance of previous
+  GEMM calls
+
+- the best configuration include MPI + OpenMP + GPU. Remember to set 
+  OMP_NUM_THREADS and MKL_NUM_THREADS accordingly to your system
+
+- Performance is very sensitive of input type and (physical) system under 
+  study. It might happen that some inputs perform bad. The developers cannot 
+  face this kind of problem if they cannot test THAT specific input.
+
+                               * * * * *
+
+Trouble-makers. inconsistencies, etc. 
+-------------------------------------
+
+- if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
+  ignore MPI C++ bindings.
+
+                               * * * * *
+
+In case of CUDA/GPU code errors...
+----------------------------------
+        
+It may happen that some ported routines fail. If this happen you can easily
+decide to run the code skipping that specific "GPU" section that may produce 
+some issues. To do that it is possible to compile the code with few additional
+flags that exclude the GPU code related to ADDUSDENS, NEWD or VLOC_PSI. 
+
+These flags are: 
+-D__DISABLE_CUDA_ADDUSDENS 
+-D__DISABLE_CUDA_VLOCPSI 
+-D__DISABLE_CUDA_NEWD
+
+Without editing the make.sys, you can run make in this way:
+$ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
+
+You can also specify more of these flags together.
+
+                               * * * * *
+
+References
+----------
+
+[1] P. Giannozzi et al., "QUANTUM ESPRESSO: a modular and open-source software 
+    project for quantum simulations of materials", J. Phys. 
+    Condens. Matter 21 395502 (2009)
+[2] URL: http://www.quantum-espresso.org 
+[3] F. Spiga and I. Girotto, "phiGEMM: a CPU-GPU library for porting 
+    Quantum ESPRESSO on hybrid systems.", 20th Euromicro International 
+    Conference on Parallel, Distributed and Network-Based Processing 
+    (PDP), 2012
+
+                               * * * * *
+
+Acknowledgments
+---------------
+
+[2011-2012] The first phase of this work has been supported by the PRACE 1st 
+Implementation Phase project, WP 7.5e "Programming Techniques for High 
+Performance Applications - Accelerator". The Irish Centre for High-End 
+Computing (ICHEC) has been directly responsible to extend the Quantum ESPRESSO
+suite in order to support GPU calculation using the NVIDIA CUDA environment.
+- Filippo Spiga (ICHEC, Ireland)
+- Ivan Girotto  (ICHEC, Ireland)
+
+[2012-2014]
+- Filippo Spiga (University of Cambridge, Quantum ESPRESSO Foundation)
+- Ivan Girotto  (ICTP)
