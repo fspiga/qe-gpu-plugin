@@ -1,0 +1,265 @@
+diff -uNr espresso-5.0.2/Modules/mp.f90 espresso-5.0.2-GPU/Modules/mp.f90
+--- espresso-5.0.2/Modules/mp.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/Modules/mp.f90	2013-05-31 14:24:52.054367809 +0100
+@@ -159,6 +159,10 @@
+         IF (ierr/=0) CALL mp_stop( 8006 )
+ #  endif
+ 
++#if defined(__CUDA) || defined(__PHIGEMM )
++        CALL InitCudaEnv()
++#endif
++
+         RETURN
+       END SUBROUTINE mp_start
+ !
+@@ -172,6 +176,10 @@
+         ierr = 0
+         taskid = 0
+ 
++#if defined(__CUDA) || defined(__PHIGEMM )
++		CALL CloseCudaEnv()
++#endif
++
+ #if defined __HPM
+ 
+         !   terminate the IBM Harware performance monitor
+diff -uNr espresso-5.0.2/PW/src/addusdens.f90 espresso-5.0.2-GPU/PW/src/addusdens.f90
+--- espresso-5.0.2/PW/src/addusdens.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/addusdens.f90	2013-05-31 14:30:03.720305082 +0100
+@@ -1,5 +1,5 @@
+ !
+-! Copyright (C) 2001-2006 Quantum ESPRESSO group
++! Copyright (C) 2001-2013 Quantum ESPRESSO group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+@@ -24,7 +24,11 @@
+   IF ( tqr ) THEN
+      CALL addusdens_r(rho,.true.)
+   ELSE
++#if defined(__CUDA) && !defined(__DISABLE_CUDA_ADDUSDENS)
++     CALL addusdens_g_gpu(rho)
++#else
+      CALL addusdens_g(rho)
++#endif
+   END IF
+   !
+   RETURN
+diff -uNr espresso-5.0.2/PW/src/cdiaghg.f90 espresso-5.0.2-GPU/PW/src/cdiaghg.f90
+--- espresso-5.0.2/PW/src/cdiaghg.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/cdiaghg.f90	2013-05-31 14:29:38.584367860 +0100
+@@ -1,5 +1,5 @@
+ !
+-! Copyright (C) 2001-2006 Quantum ESPRESSO group
++! Copyright (C) 2001-2013 Quantum ESPRESSO group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+@@ -17,6 +17,33 @@
+   ! ... Hv=eSv, with H hermitean matrix, S overlap matrix.
+   ! ... On output both matrix are unchanged
+   !
++  USE kinds,            ONLY : DP
++  !
++  IMPLICIT NONE
++  !
++  INTEGER, INTENT(IN) :: n, m, ldh
++  COMPLEX(DP), INTENT(INOUT) :: h(ldh,n), s(ldh,n)
++  REAL(DP), INTENT(OUT) :: e(n)
++  COMPLEX(DP), INTENT(OUT) :: v(ldh,m)
++  !
++#if defined(__CUDA) && defined(__MAGMA)
++  CALL cdiaghg_gpu( n, m, h, s, ldh, e, v )
++#else
++  CALL cdiaghg_compute( n, m, h, s, ldh, e, v )
++#endif
++  !
++  RETURN
++  !
++END SUBROUTINE cdiaghg
++
++!----------------------------------------------------------------------------
++SUBROUTINE cdiaghg_compute( n, m, h, s, ldh, e, v )
++  !----------------------------------------------------------------------------
++  !
++  ! ... calculates eigenvalues and eigenvectors of the generalized problem
++  ! ... Hv=eSv, with H hermitean matrix, S overlap matrix.
++  ! ... On output both matrix are unchanged
++  !
+   ! ... LAPACK version - uses both ZHEGV and ZHEGVX
+   !
+   USE kinds,            ONLY : DP
+@@ -187,7 +214,7 @@
+   !
+   RETURN
+   !
+-END SUBROUTINE cdiaghg
++END SUBROUTINE cdiaghg_compute
+ !
+ !----------------------------------------------------------------------------
+ SUBROUTINE pcdiaghg( n, h, s, ldh, e, v, desc )
+diff -uNr espresso-5.0.2/PW/src/newd.f90 espresso-5.0.2-GPU/PW/src/newd.f90
+--- espresso-5.0.2/PW/src/newd.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/newd.f90	2013-05-31 14:28:51.751391724 +0100
+@@ -1,5 +1,5 @@
+ !
+-! Copyright (C) 2001-2010 Quantum ESPRESSO group
++! Copyright (C) 2001-2013 Quantum ESPRESSO group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+@@ -10,12 +10,41 @@
+ 
+ CONTAINS
+ !---------------------------------------
++
+ SUBROUTINE newq(vr,deeq,skip_vltot) 
+   !
+   !   This routine computes the integral of the perturbed potential with
+   !   the Q function 
+   !
+   USE kinds,                ONLY : DP
++  USE fft_base,             ONLY : dfftp
++  USE ions_base,            ONLY : nat
++  USE lsda_mod,             ONLY : nspin
++  USE uspp_param,           ONLY : nhm
++  !
++  IMPLICIT NONE
++  !
++  ! Input: potential , output: contribution to integral
++  REAL(kind=dp), intent(in)  :: vr(dfftp%nnr,nspin)
++  REAL(kind=dp), intent(inout) :: deeq( nhm, nhm, nat, nspin )
++  LOGICAL, intent(in) :: skip_vltot
++  !
++#if defined(__CUDA) && !defined(__DISABLE_CUDA_NEWD)
++  CALL newq_compute_gpu(vr,deeq,skip_vltot)
++#else
++  CALL newq_compute(vr,deeq,skip_vltot)
++#endif
++  !
++  RETURN
++
++END SUBROUTINE newq
++
++SUBROUTINE newq_compute(vr,deeq,skip_vltot)
++  !
++  !   This routine computes the integral of the perturbed potential with
++  !   the Q function
++  !
++  USE kinds,                ONLY : DP
+   USE ions_base,            ONLY : nat, ntyp => nsp, ityp
+   USE cell_base,            ONLY : omega
+   USE fft_base,             ONLY : dfftp
+@@ -176,7 +205,7 @@
+   !
+   DEALLOCATE( aux, qgm, qmod, ylmk0 )
+   !
+-END SUBROUTINE newq
++END SUBROUTINE newq_compute
+ !---------------------------------------
+ SUBROUTINE newd()
+   USE uspp,          ONLY : deeq
+diff -uNr espresso-5.0.2/PW/src/pwscf.f90 espresso-5.0.2-GPU/PW/src/pwscf.f90
+--- espresso-5.0.2/PW/src/pwscf.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/pwscf.f90	2013-05-31 14:25:31.013375854 +0100
+@@ -36,13 +36,13 @@
+   !
+   CHARACTER(len=256) :: dirname
+   !
+-#ifdef __MPI
+-  !
++
+   CALL mp_startup ( )
+   ! reset IO nodes
+   ! (do this to make each "image head node" an ionode)
+   ! Has to be used ONLY to run nimage copies of pwscf
+   !
++#ifdef __MPI
+   IF ( nimage > 1 ) CALL io_image_start( )
+ #endif
+   CALL environment_start ( 'PWSCF' )
+diff -uNr espresso-5.0.2/PW/src/rdiaghg.f90 espresso-5.0.2-GPU/PW/src/rdiaghg.f90
+--- espresso-5.0.2/PW/src/rdiaghg.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/rdiaghg.f90	2013-05-31 14:27:59.078331418 +0100
+@@ -1,5 +1,5 @@
+ !
+-! Copyright (C) 2003-2006 Quantum ESPRESSO group
++! Copyright (C) 2003-2013 Quantum ESPRESSO group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+@@ -14,6 +14,33 @@
+   ! ... Hv=eSv, with H symmetric matrix, S overlap matrix.
+   ! ... On output both matrix are unchanged
+   !
++  USE kinds,            ONLY : DP
++  !
++  IMPLICIT NONE
++  !
++  INTEGER, INTENT(IN) :: n, m, ldh
++  REAL(DP), INTENT(INOUT) :: h(ldh,n), s(ldh,n)
++  REAL(DP), INTENT(OUT) :: e(n)
++  REAL(DP), INTENT(OUT) :: v(ldh,m)
++  !
++#if defined(__CUDA) && defined(__MAGMA)
++  CALL rdiaghg_gpu( n, m, h, s, ldh, e, v )
++#else
++  CALL rdiaghg_compute( n, m, h, s, ldh, e, v )
++#endif
++  !
++  RETURN
++  !
++END SUBROUTINE rdiaghg
++
++!----------------------------------------------------------------------------
++SUBROUTINE rdiaghg_compute( n, m, h, s, ldh, e, v )
++  !----------------------------------------------------------------------------
++  !
++  ! ... calculates eigenvalues and eigenvectors of the generalized problem
++  ! ... Hv=eSv, with H symmetric matrix, S overlap matrix.
++  ! ... On output both matrix are unchanged
++  !
+   ! ... LAPACK version - uses both DSYGV and DSYGVX
+   !
+   USE kinds,            ONLY : DP
+@@ -169,7 +196,7 @@
+   !
+   RETURN
+   !
+-END SUBROUTINE rdiaghg
++END SUBROUTINE rdiaghg_compute
+ !
+ !----------------------------------------------------------------------------
+ SUBROUTINE prdiaghg( n, h, s, ldh, e, v, desc )
+diff -uNr espresso-5.0.2/PW/src/vloc_psi.f90 espresso-5.0.2-GPU/PW/src/vloc_psi.f90
+--- espresso-5.0.2/PW/src/vloc_psi.f90	2013-05-31 14:19:32.000000000 +0100
++++ espresso-5.0.2-GPU/PW/src/vloc_psi.f90	2013-05-31 14:27:27.759367967 +0100
+@@ -1,5 +1,5 @@
+ !
+-! Copyright (C) 2003-2009 PWSCF group
++! Copyright (C) 2003-2013 PWSCF group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+@@ -37,6 +37,10 @@
+   COMPLEX(DP), ALLOCATABLE :: tg_psic(:)
+   INTEGER :: v_siz, idx, ioff
+   !
++#if (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA)) || (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && defined(__PARA) && defined(__USE_3D_FFT))
++  CALL vloc_psi_gamma_gpu ( lda, n, m, psi, v, hpsi )
++  RETURN
++#endif
+   !
+   incr = 2
+   !
+@@ -222,6 +226,10 @@
+   COMPLEX(DP), ALLOCATABLE :: tg_psic(:)
+   INTEGER :: v_siz, idx, ioff
+   !
++#if (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && !defined(__PARA)) || (defined(__CUDA) && !defined(__DISABLE_CUDA_VLOCPSI) && defined(__PARA) && defined(__USE_3D_FFT))
++  CALL vloc_psi_k_gpu ( lda, n, m, psi, v, hpsi )
++  RETURN
++#endif
+   !
+   ! The following is dirty trick to prevent usage of task groups if
+   ! the number of bands is smaller than the number of task groups 
