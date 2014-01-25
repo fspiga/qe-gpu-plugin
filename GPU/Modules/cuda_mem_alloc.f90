@@ -1,13 +1,13 @@
-!
-! Copyright (C) 2001-2013 Quantum ESPRESSO group
+! Copyright (C) 2001-2014 Quantum ESPRESSO Foundation
 !
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-
+!
 #if defined(__CUDA) && (defined(__CUDA_MEM_PINNED) || defined(__MAGMA))
+!
 ! Interface to cudaMallocHost and cudaFree
 MODULE cuda_mem_alloc
 

@@ -1,4 +1,12 @@
-subroutine qvan2_gpu(ngy, ih, jh, np, qmod, qg, ylmk0)
+! Copyright (C) 2001-2014 Quantum ESPRESSO Foundation
+!
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+!
+SUBROUTINE qvan2_gpu(ngy, ih, jh, np, qmod, qg, ylmk0)
    USE kinds, ONLY: DP
    USE us, ONLY: dq, qrad
    USE uspp_param, ONLY: lmaxq, nbetam
@@ -30,4 +38,4 @@ subroutine qvan2_gpu(ngy, ih, jh, np, qmod, qg, ylmk0)
                size(lpx,1), lpl, size(lpl,1), size(lpl,2), ap, size(ap,1), &
                size(ap,2) )  
    
-end subroutine
+END SUBROUTINE

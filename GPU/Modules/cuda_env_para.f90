@@ -1,13 +1,12 @@
-!
-! Copyright (C) 2001-2013 Quantum ESPRESSO group
+! Copyright (C) 2001-2014 Quantum ESPRESSO Foundation
 !
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-
-subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
+!
+SUBROUTINE paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 
 #if defined(__MPI)
 	USE parallel_include
@@ -67,7 +66,7 @@ subroutine paralleldetect(lRankThisNode, lSizeThisNode, lRank)
 	! destroy MPI communicator
 #endif
 
-end subroutine
+END SUBROUTINE
 
 #if defined(__MPI)
 subroutine myBarrier()
@@ -76,5 +75,5 @@ subroutine myBarrier()
 
 	integer :: ierr
 	CALL  mpi_barrier(mpi_comm_world , ierr)
-end subroutine
+END SUBROUTINE
 #endif

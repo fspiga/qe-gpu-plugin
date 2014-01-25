@@ -1,12 +1,10 @@
-# Copyright (C) 2001-2006 Quantum ESPRESSO group
+# Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
+#
 # This file is distributed under the terms of the
 # GNU General Public License. See the file `License'
 # in the root directory of the present distribution,
 # or http://www.gnu.org/copyleft/gpl.txt .
-#
-# Author: Filippo Spiga
-# Date: September 15, 2013
-# Version: 1.5
+
 
 import os
 import os.path

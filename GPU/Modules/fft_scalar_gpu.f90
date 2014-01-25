@@ -1,19 +1,11 @@
+! Copyright (C) 2001-2014 Quantum ESPRESSO Foundation
 !
-! Copyright (C) 2001-2013 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-!--------------------------------------------------------------------------!
-! FFT scalar drivers Module - contains machine-dependent routines for:     !
-! FFTW, FFTW3, ESSL, LINUX_ESSL, SCSL, SUNPERF, NEC ASL, CUFFT libraries   !
-! (both 3d for serial execution and 1d+2d FFTs for parallel execution,     !
-! excepted NEC ASL, 3d only, no parallel execution)                        !
-! Written by Carlo Cavazzoni, modified by P. Giannozzi, contributions      !
-! by Martin Hilgemans, Guido Roma, Pascal Thibaudeau, Stephane Lefranc,    !
-! Nicolas Lacorne, Ivan Girotto, Filippo Spiga - Last update Dic 2012      !
-!--------------------------------------------------------------------------!
+!
 
 #define CUFFT_FORWARD_EQUIVALENT -1
 #define CUFFT_INVERSE_EQUIVALENT  1

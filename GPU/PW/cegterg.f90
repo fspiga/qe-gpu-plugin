@@ -1,3 +1,11 @@
+! Copyright (C) 2001-2014 Quantum ESPRESSO Foundation
+!
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+!
 #if defined(__CUDA) && defined(__PHIGEMM)
 #define dgemm UDGEMM  
 #define zgemm UZGEMM  
@@ -14,13 +22,6 @@
 #define UZGEMM phizgemm
 #endif
 #endif
-!
-! Copyright (C) 2001-2013 Quantum ESPRESSO group
-!
-! This file is distributed under the terms of the
-! GNU General Public License. See the file `License'
-! in the root directory of the present distribution,
-! or http://www.gnu.org/copyleft/gpl.txt .
 !
 #define ZERO ( 0.D0, 0.D0 )
 #define ONE  ( 1.D0, 0.D0 )
