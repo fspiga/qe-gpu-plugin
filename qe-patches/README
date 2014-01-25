@@ -1,0 +1,22 @@
+# Last update: 26 January 2014
+
+.
+├── espresso-5.0
+│   └── espresso-5.0_GPU-14.01.patch
+├── espresso-5.0.1
+│   └── espresso-5.0.1_GPU-14.01.patch
+├── espresso-5.0.2
+│   └── espresso-5.0.2_GPU-14.01.patch
+└── README
+
+To apply the patch first copy the appropriate file (according to the version 
+of both QE and QE-GPU) in the main espresso directory and run the command:
+
+$ patch -p1 < name-of-the-patch.patch
+
+
+IMPORTANT NOTE: 
+if the patch does not work or it produces errors at compile time that are not 
+expected or a weird behavior is obtained at run-time _PLEASE_ upgrade
+your espresso to the latest stable version or try to compile espresso from
+the SVN repository. 
