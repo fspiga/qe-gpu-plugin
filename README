@@ -21,12 +21,28 @@ installing, and using QE-GPU.
 How to compile
 --------------
 
+1. Copy QE-GPU in espresso directory
+
 The package includes a directory called "GPU" that has to be copied under the
-Quantum ESPRESSO main directory. Run a command like:
-$ rsync -aurvp --exclude=.git ./GPU <path-to-espresso>/
+Quantum ESPRESSO main directory. 
+
+Run a command like:
+$ rsync -r --exclude=.git ./GPU <path-to-espresso>/
 
 
-SERIAL:
+2. Apply QE-GPU patch to espresso
+
+To apply the patch first copy the appropriate file
+(according to the version of both QE and QE-GPU) in the main espresso directory
+and run the command:
+$ patch -p1 < name-of-the-patch.patch
+
+Please refer to "qe-patches/README" for further information.
+
+
+3. Run QE-GPU configure
+
+3.1 SERIAL
 
 $ cd GPU
 $ ./configure --disable-parallel --enable-openmp \
@@ -37,7 +53,7 @@ $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
 
-PARALLEL:
+3.2 PARALLEL
 
 $ cd GPU
 $ ./configure --enable-parallel --enable-openmp --with-scalapack \
@@ -47,6 +63,7 @@ $ ./configure --enable-parallel --enable-openmp --with-scalapack \
 $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
+
 For additional options for QE-GPU see "./configure --help"
 
 IMPORTANT NOTE (1):
@@ -55,14 +72,6 @@ IMPORTANT NOTE (1):
   systems have the env variable $CUDA_HOME or $CUDA_ROOT
 - "pw-gpu.x" will be placed under "bin/" (and also under "GPU/PW/")
 
-IMPORTANT NOTE (2):
-If a version older than 5.0.3 is used, please first apply the appropriate patch
-located under "qe-patches/". To apply the patch first copy the appropriate file
-(according to the version of both QE and QE-GPU) in the main espresso directory
-and run the command:
-$ patch -p1 < name-of-the-patch.patch
-
-Please refer to "qe-patches/README" for further information.
 
                                * * * * *
 
