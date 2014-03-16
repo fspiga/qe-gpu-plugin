@@ -40,7 +40,7 @@
 #define __SCALING_MEM_FACTOR__ 0.95
 #endif
 
-#define MAX_QE_GPUS 8
+#define MAX_QE_GPUS 4
 
 typedef void* qeCudaMemDevPtr[MAX_QE_GPUS];
 typedef size_t qeCudaMemSizes[MAX_QE_GPUS];
