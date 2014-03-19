@@ -87,7 +87,7 @@ extern "C" int newd_cuda_( int * ptr_nr1, int * ptr_nr2, int * ptr_nr3, int * pt
 
 	double * qgm_na, * qgm;
 
-    int ih, jh, jjh, iih, is, number_of_block;
+    int ih, jh, jjh, iih, is;
 	double fact = (* ptr_fact);
 	int nt = (* ptr_nt);
 	int na = (* ptr_na);
