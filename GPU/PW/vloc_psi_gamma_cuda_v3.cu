@@ -1,18 +1,27 @@
 /*****************************************************************************\
- * Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
+ * Copyright (C) 2011-2014 Quantum ESPRESSO Foundation
  *
  * This file is distributed under the terms of the
  * GNU General Public License. See the file `License'
  * in the root directory of the present distribution,
  * or http://www.gnu.org/copyleft/gpl.txt .
+ *
+ * Filippo Spiga (filippo.spiga@quantum-espresso.org)
+ *
+ * NOTES: it works only if __CUDA_NOALLOC
+ *
 \*****************************************************************************/
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "cuda_env.h"
 
 extern "C" void start_clock_(char * label, unsigned int length_arg );
 extern "C" void stop_clock_(char * label, unsigned int length_arg );
+
+extern "C" int nls_precompute_gamma_( int * ptr_n, int * igk, int * nls,  int * nlsm, int * ptr_ngms, int * ptr_ngm);
+extern "C" int nls_precompute_gamma_cleanup_();
 
 
 __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int dimx )
@@ -24,24 +33,6 @@ __global__ void kernel_vec_prod( double *a, const  double * __restrict b, int di
 	if( ix < ( dimx * 2 ) ){
 		sup = a[ix] * b[ii];
 		a[ix] = sup;
-	}
-}
-
-
-__global__ void build_psic_index(const  int * __restrict nls, const  int * __restrict nlsm, const  int * __restrict igk, int * psic_index_nls, int * psic_index_nlsm, const int n ){
-
-	register int ix = blockDim.x * blockIdx.x + threadIdx.x;
-
-	if ( ix < n ) {
-
-		// TODO: Fetch in shared memory igk[ ix ]
-		// TODO: In-place index calculation
-
-		psic_index_nls[ix] = ( nls[ igk[ ix ] - 1 ] - 1 ) * 2;
-		psic_index_nlsm[ix] = ( nlsm[ igk[ ix ] - 1 ] - 1 ) * 2;
-
-		// TODO: Copy from shared to global memory
-
 	}
 }
 
@@ -123,11 +114,10 @@ __global__ void kernel_save_hpsi(  const  int * __restrict psic_index_nls, const
 
 extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, int * ptr_nr2s, int * ptr_nr3s, int * ptr_n, int * ptr_m, void * psi, double * v, void * hpsi, int * igk, int * nls, int * nlsm, int * ptr_ngms, int * ptr_ngm)
 {
-//	cufftHandle p_global;
+	cufftHandle p_global;
 
     void * psic_D, * psi_D, * hpsi_D; // cufftDoubleComplex*
 	void * v_D; // double*
-	void * igk_D, * nls_D, * nlsm_D, * psic_index_nls_D, *psic_index_nlsm_D; // int*
 	int blocksPerGrid, ibnd;
 
 	double tscale;
@@ -142,13 +132,14 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	int ngms = (* ptr_ngms);
 	int ngm = (* ptr_ngm);
 	int lda = (* ptr_lda);
-#if defined(__CUDA_NOALLOC)
-    int ierr;
-#endif
-    int size_psic = nr1s * nr2s * nr3s;
+
+	int size_psic = nr1s * nr2s * nr3s;
+
+	bool precomp_psic_indexes = false;
+	int ierr;
 
 #if defined(__CUDA_DEBUG)
-	printf("[CUDA DEBUG] VLOC_PSI_GAMMA] n=%d\n",n); fflush(stdout);
+	printf("[VLOC_PSI_GAMMA_OPT2] Enter (n=%d, m=%d, ngms=%d, ngm=%d)\n", n, m, ngms, ngm); fflush(stdout);
 #endif
 
 	/* Padding -- really necessary?*/
@@ -159,28 +150,37 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
 	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
-		fprintf( stderr, "\n[VLOC_PSI_GAMMA_OPT] kernel_init_psic cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
+		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_init_psic cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( (nrxxs * 2) + __CUDA_TxB_VLOCPSI_PROD__  - 1) / __CUDA_TxB_VLOCPSI_PROD__ ;
 	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
-		fprintf( stderr, "\n[VLOC_PSI_GAMMA_OPT] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
+		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_vec_prod cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
 	if ( blocksPerGrid > __CUDA_MAXNUMBLOCKS__) {
-		fprintf( stderr, "\n[VLOC_PSI_GAMMA_OPT] kernel_save_hpsi cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
+		fprintf( stderr, "\n[VLOC_PSI_GAMMA] kernel_save_hpsi cannot run, blocks requested ( %d ) > blocks allowed!!!", blocksPerGrid );
 		return 1;
 	}
 
 	cudaSetDevice(qe_gpu_bonded[0]);
 
 #if defined(__CUDA_NOALLOC)
+	// If preloaded_nls_D is NULL, calculate preloaded_nls_D/preloaded_nlsm_D on-the-fly
+	if (preloaded_nls_D == NULL){
+#if defined(__CUDA_DEBUG)
+		printf("[VLOC_PSI_GAMMA_OPT2] Perform nls_precompute_gamma_ on the fly...\n");
+#endif
+		precomp_psic_indexes = true;
+		ierr = nls_precompute_gamma_ ( ptr_n, igk, nls, nlsm, ptr_ngms, ptr_ngm);
+	}
+
 	/* Do real allocation */
 	ierr = cudaMalloc ( (void**) &(qe_dev_scratch[0]), (size_t) qe_gpu_mem_unused[0] );
-    qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT", "error memory allocation (qe_dev_scratch)");
+	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT2", "error in memory allocation");
 
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
@@ -196,24 +196,18 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	shift += ( lda * m_fake )*sizeof( cufftDoubleComplex );
 	v_D = (char*) qe_dev_scratch[0] + shift;
 	shift += ( nrxxs )*sizeof( double );
-	nls_D = (char*) qe_dev_scratch[0] + shift;
-	shift += ( (ngms % 2 == 0)? ngms : ngms + 1 )*sizeof(int);
-	nlsm_D = (char*) qe_dev_scratch[0] + shift;
-	shift += ( (ngm % 2 == 0)? ngm : ngm + 1 )*sizeof(int);
-	igk_D = (char*) qe_dev_scratch[0] + shift;
-	shift += ( (ngm % 2 == 0)? ngm : ngm + 1 )*sizeof(int);
-	psic_index_nls_D = (char*) qe_dev_scratch[0] + shift;
-	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
-	psic_index_nlsm_D = (char*) qe_dev_scratch[0] + shift;
-	shift += ( (n % 2 == 0)? n : n + 1 )*sizeof(int);
+	// now	shift contains the amount of byte required on the GPU to compute
 
-	// now shift contains the amount of byte required on the GPU to compute
 	if ( shift > qe_gpu_mem_unused[0] ) {
-		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+		fprintf( stderr, "[VLOC_PSI_GAMMA_OPT2] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
 #if defined(__CUDA_NOALLOC)
-		/* Deallocating... */
+		if (precomp_psic_indexes) {
+			ierr = nls_precompute_gamma_cleanup_();
+			precomp_psic_indexes = false;
+		}
+
 		ierr = cudaFree ( qe_dev_scratch[0] );
-	    qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT", "error memory deallocation (qe_dev_scratch)");
+		qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT2", "error in memory release");
 #endif
 		return 1;
 	}
@@ -223,21 +217,6 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	qecudaSafeCall( cudaMemset( psic_index_nls_D , 0, sizeof( int ) * n ) );
 	qecudaSafeCall( cudaMemset( psic_index_nlsm_D , 0, sizeof( int ) * n ) );
 #endif
-	qecudaSafeCall( cudaMemcpy( nls_D, nls,  sizeof( int ) * ngms, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( nlsm_D, nlsm,  sizeof( int ) * ngm, cudaMemcpyHostToDevice ) );
-	qecudaSafeCall( cudaMemcpy( igk_D, igk,  sizeof( int ) * n, cudaMemcpyHostToDevice ) );
-
-
-	blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_BUILD_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_BUILD_PSIC__ ;
-	dim3 dimGrid(blocksPerGrid);
-	dim3 dimBlock(__CUDA_TxB_VLOCPSI_BUILD_PSIC__);
-	build_psic_index<<< dimGrid, dimBlock >>>( (int *) nls_D, (int *) nlsm_D, (int *) igk_D, (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, n );
-	qecudaGetLastError("kernel launch failure");
-
-#if defined(__CUDA_DEBUG)
-	printf("[VLOC_PSI_GAMMA_OPT] psic_index_nls_D psic_index_nlsm_D computed\n"); fflush(stdout);
-#endif
-
 	qecudaSafeCall( cudaMemcpy( psi_D, psi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 #if defined(__CUDA_KERNEL_MEMSET)
 	if (m_fake > m) {
@@ -247,46 +226,56 @@ extern "C"  int vloc_psi_cuda_(int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s, i
 	qecudaSafeCall( cudaMemcpy( hpsi_D, hpsi,  sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyHostToDevice ) );
 	qecudaSafeCall( cudaMemcpy( v_D, v,  sizeof( double ) * nrxxs, cudaMemcpyHostToDevice ) );
 
-//	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
-    qecheck_cufft_call( cufftSetStream(qeCudaFFT_dffts,qecudaStreams[ 0 ]) );
+	qecheck_cufft_call( cufftPlan3d( &p_global, nr3s, nr2s,  nr1s, CUFFT_Z2Z ) );
+    qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
 
 	for( ibnd =  0; ibnd < m_fake; ibnd = ibnd + 2 )
 	{
 		qecudaSafeCall( cudaMemset( psic_D , 0, size_psic * sizeof( cufftDoubleComplex ) ) );
 
 		blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_PSIC__ - 1) / __CUDA_TxB_VLOCPSI_PSIC__ ;
-		kernel_init_psic<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PSIC__ >>>( (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, (double *) psi_D, (double *) psic_D, n, m, lda, ibnd );
+		kernel_init_psic<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PSIC__ >>>( (int *) preloaded_nls_D, (int *) preloaded_nlsm_D, (double *) psi_D, (double *) psic_D, n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
-		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
+		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_INVERSE ) );
 
 		blocksPerGrid = ( (nrxxs * 2) + __CUDA_TxB_VLOCPSI_PROD__  - 1) / __CUDA_TxB_VLOCPSI_PROD__ ;
 		kernel_vec_prod<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_PROD__ >>>( (double *) psic_D, (double *) v_D , nrxxs );
 		qecudaGetLastError("kernel launch failure");
 
-		qecheck_cufft_call( cufftExecZ2Z( qeCudaFFT_dffts, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_FORWARD ) );
+		qecheck_cufft_call( cufftExecZ2Z( p_global, (cufftDoubleComplex *) psic_D, (cufftDoubleComplex *) psic_D, CUFFT_FORWARD ) );
 
 		tscale = 1.0 / (double) ( size_psic );
 		cublasZdscal(qecudaHandles[ 0 ] , size_psic, &tscale, (cufftDoubleComplex *) psic_D, 1);
 
 		blocksPerGrid = ( n + __CUDA_TxB_VLOCPSI_HPSI__ - 1) / __CUDA_TxB_VLOCPSI_HPSI__ ;
-		kernel_save_hpsi<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_HPSI__ >>>( (int *) psic_index_nls_D, (int *) psic_index_nlsm_D, (double *) hpsi_D, (double *) psic_D, n, m, lda, ibnd );
+		kernel_save_hpsi<<<blocksPerGrid, __CUDA_TxB_VLOCPSI_HPSI__ >>>( (int *) preloaded_nls_D, (int *) preloaded_nlsm_D, (double *) hpsi_D, (double *) psic_D, n, m, lda, ibnd );
 		qecudaGetLastError("kernel launch failure");
 
 	}
 
 	qecudaSafeCall( cudaMemcpy( hpsi, (cufftDoubleComplex *) hpsi_D, sizeof( cufftDoubleComplex ) * lda * m, cudaMemcpyDeviceToHost ) );
 
-//	qecheck_cufft_call( cufftDestroy(p_global) );
+	qecheck_cufft_call( cufftDestroy(p_global) );
 
 #if defined(__CUDA_NOALLOC)
-	/* Deallocating... */
+	if (precomp_psic_indexes) {
+		ierr = nls_precompute_gamma_cleanup_();
+		precomp_psic_indexes = false;
+	}
+
 	ierr = cudaFree ( qe_dev_scratch[0] );
-    qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT", "error memory allocation (qe_dev_scratch)");
+	qecudaGenericErr((cudaError_t) ierr, "VLOC_PSI_GAMMA_OPT2", "error in memory release");
 #else
+
 #if defined(__CUDA_KERNEL_MEMSET)
 	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
 #endif
+
+#endif
+
+#if defined(__CUDA_DEBUG)
+	printf("[VLOC_PSI_GAMMA_OPT2] Exit\n"); fflush(stdout);
 #endif
 
 	return 0;
@@ -313,7 +302,7 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 	int ngm = (* ptr_ngm);
 	int lda = (* ptr_lda);
 	int size_psic = nr1s * nr2s * nr3s;
-    int ierr;
+
 	int array[3];
 	int dim_multiplepsic, n_singlepsic, n_multiplepsic, size_multiplepsic, v_size;
 	int m_fake, m_buf, blocksPerGrid, i, j;
@@ -355,12 +344,12 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 
 	// now	shift contains the amount of byte required on the GPU to compute
 
-	if ( shift > qe_gpu_mem_unused[0] ) {
-		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_unused[0] );
+	if ( shift > qe_gpu_mem_tot[0] ) {
+		fprintf( stderr, "\n[VLOC_PSI_GAMMA] Problem don't fit in GPU memory --- memory requested ( %lu ) > memory allocated  (%lu )!!!", shift, qe_gpu_mem_tot[0] );
 		exit(EXIT_FAILURE);
 	}
 
-	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
+	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_tot[0] ) );
 
 	qecudaSafeCall( cudaMemcpy( psi_D, psi,  sizeof( cufftDoubleComplex ) * n * m_buf, cudaMemcpyHostToDevice ) );
 	shift = ( n * m )*sizeof( cufftDoubleComplex );
@@ -381,7 +370,12 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 	if ( n_multiplepsic > 0 ) {
 
 		qecheck_cufft_call( cufftPlanMany( &p_global, 3, array, NULL, 1, 0, NULL,1,0,CUFFT_Z2Z,dim_multiplepsic ) );
-        qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
+
+		if( cufftSetStream(p_global,qecudaStreams[ 0 ]) != CUFFT_SUCCESS ) {
+			printf("\n*** CUDA VLOC_PSI_GAMMA *** ERROR *** cufftSetStream for device %d failed!",qe_gpu_bonded[0]);
+			fflush(stdout);
+			exit( EXIT_FAILURE );
+		}
 
 		for(j = 0; j< (m_fake-n_singlepsic); j+=dim_multiplepsic ) {
 
@@ -426,7 +420,12 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 		qecudaSafeCall( cudaMemset( psic_D , 0, n_singlepsic * size_psic * sizeof( cufftDoubleComplex ) ) );
 
 		qecheck_cufft_call( cufftPlanMany( &p_global, 3, array, NULL, 1, 0, NULL,1,0,CUFFT_Z2Z,n_singlepsic ) );
-        qecheck_cufft_call( cufftSetStream(p_global,qecudaStreams[ 0 ]) );
+
+		if( cufftSetStream(p_global,qecudaStreams[ 0 ]) != CUFFT_SUCCESS ) {
+			printf("\n*** CUDA VLOC_PSI_GAMMA *** ERROR *** cufftSetStream for device %d failed!",qe_gpu_bonded[0]);
+			fflush(stdout);
+			exit( EXIT_FAILURE );
+		}
 
 		blocksPerGrid = ( ( n * 2) + __CUDA_THREADPERBLOCK__ - 1) / __CUDA_THREADPERBLOCK__ ;
 		for (i = 0; i < n_singlepsic; i++  )
@@ -462,7 +461,7 @@ extern "C" void vloc_psi_multiplan_cuda_(int * ptr_lda, int * ptr_nrxxs, int * p
 	}
 
 	qecudaSafeCall( cudaMemcpy( hpsi, hpsi_D, sizeof( cufftDoubleComplex ) * n * m, cudaMemcpyDeviceToHost ) );
-	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_unused[0] ) );
+	qecudaSafeCall( cudaMemset( qe_dev_scratch[0], 0, (size_t) qe_gpu_mem_tot[0] ) );
 
 }
 #endif
