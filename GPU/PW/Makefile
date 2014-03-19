@@ -1,8 +1,20 @@
-# Copyright (C) 2011-2013 Quantum ESPRESSO Foundation
+# Copyright (C) 2011-2014 Quantum ESPRESSO Foundation
 #
-# Makefile for PW-GPU (Filippo Spiga)
+# This file is distributed under the terms of the
+# GNU General Public License. See the file `License'
+# in the root directory of the present distribution,
+# or http://www.gnu.org/copyleft/gpl.txt .
+#
+# Filippo Spiga (filippo.spiga@quantum-espresso.org)
 
 include ../../make.sys
+
+# **EDIT ME** Which version?
+ADDUSDENS_version=1
+NEWD_version=1
+QVAN2_version=1
+VLOCPSI_GAMMA_version=1
+VLOCPSI_K_version=1
 
 # location of needed modules
 MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../Modules $(MOD_FLAG). 
@@ -12,20 +24,19 @@ addusdens_gpu.o \
 newq_compute_gpu.o \
 cdiaghg_gpu.o \
 vloc_psi_gpu.o \
-rdiaghg_gpu.o
-#qvan2_gpu.o \
-#add_vuspsi.o \
-#cegterg.o \
-#regterg.o \
-#data_structure.o
+rdiaghg_gpu.o \
+qvan2_gpu.o \
+add_vuspsi.o \
+cegterg.o \
+regterg.o 
+#\data_structure.o
 
-# Original, well tested
 CUGPUOBJS = \
-addusdens_cuda.o \
-vloc_psi_k_cuda.o \
-vloc_psi_gamma_cuda.o \
-newd_cuda.o \
-qvan2_cuda.o
+addusdens_cuda_v$(ADDUSDENS_version).o \
+vloc_psi_k_cuda_v$(VLOCPSI_K_version).o \
+vloc_psi_gamma_cuda_v$(VLOCPSI_GAMMA_version).o \
+newd_cuda_v$(NEWD_version).o \
+qvan2_cuda_v$(QVAN2_version).o
 
 # Optimized, experimental (opt : -D__CUDA_NOALLOC needed)
 #                         (opt2: -D__CUDA_PRELOAD -D__CUDA_NOALLOC needed)
@@ -51,6 +62,8 @@ pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	 pwscf.o $(PWOBJS) ../../PW/src/libpw.a libpwgpu.a $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin; ln -fs ../GPU/PW/$@ . )
 
+# This does not work unless you are using espresso from SVN. Ignore
+# of comment this to have a clean build (NdFilippo)
 manypw-gpu.x : ../../PW/src/manypw.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	if [ ! -f ./manypw.o ]; then cp ../../PW/src/manypw.o . ; fi
 	$(LD) $(LDFLAGS) -o $@ \
