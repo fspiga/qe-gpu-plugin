@@ -9,8 +9,8 @@
 
 include ../../make.sys
 
-# **EDIT ME**
-ADDUSDENS_version=1 #2
+# **EDIT ME** (opt: ADDUSDENS_version=2)
+ADDUSDENS_version=1
 NEWD_version=1
 QVAN2_version=1
 VLOCPSI_GAMMA_version=1
