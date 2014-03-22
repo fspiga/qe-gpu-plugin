@@ -77,15 +77,15 @@ AC_ARG_ENABLE(signals,
 
 AC_ARG_WITH(cuda_dir, 
    [AS_HELP_STRING([--with-cuda-dir=<path>],
-    [specify CUDA installation directory (default is /usr/local/cuda/)])],
+    [specify CUDA installation directory (default is /usr/local/cuda/ - MANDATORY)])],
     [cuda_path="$withval"], 
     [cuda_path="/usr/local/cuda/"])
         
 AC_ARG_WITH(gpu_arch,
    [AS_HELP_STRING([--with-gpu-arch=<arch>],
-	[specify the GPU target architecture (default: 20)])],
+	[(sm_13|sm_20|sm_21|sm_30|sm_35) Specify the GPU target architecture (default: all)])],
 	[cuda_arch="$withval"],
-	[cuda_arch=20])
+	[cuda_arch=all])
     
 AC_ARG_WITH(scalapack,
    [AS_HELP_STRING([--with-scalapack],
@@ -101,7 +101,7 @@ AC_ARG_WITH(scalapack,
 
 AC_ARG_WITH(elpa,
    [AS_HELP_STRING([--with-elpa],
-       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE|<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
+       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
    [if  test "$withval" = "yes" ; then
       with_elpa=1
       with_elpa_flavor=0
@@ -2137,6 +2137,14 @@ echo setting SCALAPACK_LIBS... $scalapack_libs
 # CUDA
 if test "$use_cuda" -eq 1 
 then 
+
+	case "$cuda_arch" in
+		all | sm_13 | sm_20 | sm_21 | sm_30 | sm_35) ;;
+		*)
+  			AC_MSG_ERROR([ GPU arch must be one of: sm_13, sm_20, sm_21, sm_30, or sm_35 ])
+  		;;
+	esac
+
     have_valid_cuda_compiler=1    
     AC_ARG_VAR([NVCC], [nvcc compiler to use])
     
@@ -2182,10 +2190,36 @@ then
 	    else
 	       nvccflags="-O3"
 	    fi
-	    
-	    # All in one ...
-	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_30,code=sm_35 "
-	    
+	    	    
+	    # GPU architecture -- if not specified compiles for everything!
+		magma_gpu_target="Tesla Fermi kepler"
+		case "$cuda_arch" in
+		    sm_35 )
+			    nvccflags="$nvccflags -gencode arch=compute_35,code=sm_35"
+			    magma_gpu_target="Kepler"
+		        ;;
+		    sm_30 )
+			    nvccflags="$nvccflags -gencode arch=compute_30,code=sm_30"
+			    magma_gpu_target="Kepler"
+		        ;;
+		    sm_21 )
+			    nvccflags="$nvccflag -gencode arch=compute_20,code=sm_21"
+		        magma_gpu_target="Fermi"
+		        ;;
+		    sm_20 )
+			    nvccflags="$nvccflag -gencode arch=compute_20,code=sm_20"
+		        magma_gpu_target="Fermi"
+		        ;;
+		    sm_13 )
+		   	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13"
+		        magma_gpu_target="Tesla"
+		        ;;
+			all )
+				nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35"
+		        magma_gpu_target="Kepler Fermi Tesla"				
+		        ;;        
+		esac        
+		
 	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
 	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"	    
 	    if test "$use_fastcuda" -eq 1 ; then
@@ -2297,21 +2331,7 @@ then
 		then
 			magma_dflags="-DMAGMA_WITH_MKL -DCUBLAS_GFORTRAN -DHAVE_CUBLAS"
 		fi
-	       
-		# GPU architecture -- if not specified compiles for everything!
-		magma_gpu_target="Tesla Fermi kepler"
-		case "$cuda_arch" in
-		    35 | 30 )
-		        magma_gpu_target="Kepler"
-		        ;;
-		    20 | 21 )
-		        magma_gpu_target="Fermi"
-		        ;;
-		    13 )
-		        magma_gpu_target="Tesla"
-		        ;;        
-		esac        
- 
+ 	
 		# CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
 	        # This does not work on CRAY
 		    have_cblas=0
