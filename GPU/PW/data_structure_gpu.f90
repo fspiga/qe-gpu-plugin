@@ -7,7 +7,7 @@
 !
 !
 !-----------------------------------------------------------------------
-SUBROUTINE data_structure( gamma_only )
+SUBROUTINE data_structure_gpu( gamma_only )
   !-----------------------------------------------------------------------
   ! this routine sets the data structure for the fft arrays
   ! (both the smooth and the dense grid)
@@ -75,5 +75,5 @@ SUBROUTINE data_structure( gamma_only )
   ierr = cuda_dffts_plan_create( dffts%nr1x, dffts%nr2x, dffts%nr3x)
 #endif
   !
-END SUBROUTINE data_structure
+END SUBROUTINE data_structure_gpu
 
