@@ -2317,8 +2317,8 @@ then
 	    # MAGMA - INTERNAL, self-compiled        
 	    if test "$with_magma" -eq 1 ; then
 	        magma_switch=1
-	        magma_include="-I$topdir/magma/include -I$topdir/quark/include"
-	        magma_libs="$topdir/magma/lib/libmagma.a " 
+	        magma_include="-I$topdir/qe-magma/include -I$topdir/quark/include"
+	        magma_libs="$topdir/qe-magma/lib/libmagma.a " 
 	        
 		try_dflags="$try_dflags -D__MAGMA -DHAVE_CUBLAS"
 

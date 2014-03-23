@@ -32,11 +32,11 @@ ifeq ($(CBLAS_INTERNAL),1)
 	cd ../../CBLAS; $(MAKE) alllib;
 endif
 ifeq ($(MAGMA_INTERNAL),1) 
-	if test ! -d ../../magma ; then \
-	( gzip -dc ../archive/magma.tar.gz | \
-		(cd ../../; tar -xvf ./GPU/archive/magma.tar.gz; )); fi
-	cp make_magma.inc ../../magma/make.inc;
-	cd ../../magma; $(MAKE) lib;
+	if test ! -d ../../qe-magma ; then \
+	( gzip -dc ../archive/qe-magma.tar.gz | \
+		(cd ../../; tar -xvf ./GPU/archive/qe-magma.tar.gz; )); fi
+	cp make_magma.inc ../../qe-magma/make.inc;
+	cd ../../qe-magma; $(MAKE) lib;
 endif
 
 ###################################
