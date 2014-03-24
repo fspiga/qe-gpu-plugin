@@ -15,6 +15,7 @@ NEWD_version=1
 QVAN2_version=1
 VLOCPSI_GAMMA_version=1
 VLOCPSI_K_version=1
+FFT_PLAN_MNG_version=1
 
 # location of needed modules
 MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../Modules $(MOD_FLAG). 
@@ -29,14 +30,16 @@ qvan2_gpu.o \
 add_vuspsi.o \
 cegterg.o \
 regterg.o \
-data_structure_gpu.o
+data_structure_gpu.o \
+fft_plans_mgn.o
 
 CUGPUOBJS = \
 addusdens_cuda_v$(ADDUSDENS_version).o \
 vloc_psi_k_cuda_v$(VLOCPSI_K_version).o \
 vloc_psi_gamma_cuda_v$(VLOCPSI_GAMMA_version).o \
 newd_cuda_v$(NEWD_version).o \
-qvan2_cuda_v$(QVAN2_version).o
+qvan2_cuda_v$(QVAN2_version).o \
+fft_plans_mgn_v$(FFT_PLAN_MNG_version).o
 
 # Optimized, experimental (opt : -D__CUDA_NOALLOC needed)
 #                         (opt2: -D__CUDA_PRELOAD -D__CUDA_NOALLOC needed)
@@ -46,7 +49,7 @@ newd_cuda.o \
 vloc_psi_k_cuda_opt2.o \
 vloc_psi_gamma_cuda_opt2.o \
 nls_precompute.o \
-fft_plans_mgn.o
+
 
 QEMODS=../../Modules/libqemod.a ../Modules/libqemodgpu.a
 
