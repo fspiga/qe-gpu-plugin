@@ -56,7 +56,7 @@ TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviro
 
 LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
-all : tldeps pw-gpu.x manypw-gpu.x
+all : tldeps pw-gpu.x
 
 pw-gpu.x : ../../PW/src/pwscf.o libpwgpu.a $(LIBOBJS) $(QEMODS)
 	if [ ! -f ./pwscf.o ]; then cp ../../PW/src/pwscf.o . ; fi
