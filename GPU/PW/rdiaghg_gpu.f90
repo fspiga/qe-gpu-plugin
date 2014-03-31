@@ -163,18 +163,9 @@ SUBROUTINE rdiaghg_gpu( n, m, h, s, ldh, e, v )
   !
   ! ... broadcast eigenvectors and eigenvalues to all other processors
   !
-  ! ... if OpenMP is enabled then the GPU memory is re-allocated in
-  ! ... parallel during the data broadcasting
-  !
-!$OMP PARALLEL DEFAULT(SHARED)
-  !
-!$OMP MASTER
   CALL mp_bcast( e, root_bgrp, intra_bgrp_comm )
   CALL mp_bcast( v, root_bgrp, intra_bgrp_comm )
-!$OMP END MASTER
   !
-!$OMP SECTIONS
-!$OMP SECTION
   IF ( me_bgrp == root_bgrp ) THEN
      ! Reinizialize the GPU memory
      call allocateDeviceMemory()
@@ -182,9 +173,6 @@ SUBROUTINE rdiaghg_gpu( n, m, h, s, ldh, e, v )
      call initPhigemm()
 #endif
   END IF
-!$OMP END SECTIONS
-  !
-!$OMP END PARALLEL
   !
   CALL stop_clock( 'rdiaghg' )
   !
