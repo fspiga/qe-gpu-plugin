@@ -46,9 +46,9 @@ Please refer to "qe-patches/README" for further information.
 
 $ cd GPU
 $ ./configure --disable-parallel --enable-openmp \
-  --enable-cuda --with-gpu-arch=35 \
+  --enable-cuda --with-gpu-arch=sm_35 \
   --with-cuda-dir=<full-path-where-CUDA-is-installed> \
-  --without-magma --with-phigemm
+  --with-magma --with-phigemm
 $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
@@ -57,9 +57,9 @@ $ make -f Makefile.gpu pw-gpu
 
 $ cd GPU
 $ ./configure --enable-parallel --enable-openmp --with-scalapack \
-  --enable-cuda --with-gpu-arch=35 \
+  --enable-cuda --with-gpu-arch=sm_35 \
   --with-cuda-dir=<full-path-where-CUDA-is-installed> \
-  --disable-magma --with-phigemm
+  --without-magma --with-phigemm
 $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
@@ -109,32 +109,18 @@ IMPORTANT NOTE (3): the library auto-tune the split factor at runtime. You just
 
                                * * * * *
 
-Best Practices
---------------
 
-- NEVER over-subscribe the GPU! The best is 1 MPI process per card. 
-
-- PHI_{D,Z,C,S}GEMM_SPLIT should be different from system to system BUT for 
-  long execution it does not really matter because the phiGEMM library is able
-  to self-adjust this parameter by "analyzing" the performance of previous
-  GEMM calls
-
-- the best configuration include MPI + OpenMP + GPU. Remember to set 
-  OMP_NUM_THREADS and MKL_NUM_THREADS accordingly to your system
-
-- Performance is very sensitive of input type and (physical) system under 
-  study. It might happen that some inputs perform bad. The developers cannot 
-  face this kind of problem if they cannot test THAT specific input.
-
-                               * * * * *
-
-Trouble-makers. inconsistencies, etc. 
--------------------------------------
+Trouble-makers, inconsistencies, Known bugs, etc. 
+-------------------------------------------------
 
 - if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
   ignore MPI C++ bindings.
-
+  
+- if the calculation fail due to "S non definite positive" or other errors
+  related to MAGMA then recompile by disabling MAGMA support.
+   
                                * * * * *
+
 
 In case of CUDA/GPU code errors...
 ----------------------------------
