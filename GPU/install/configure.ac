@@ -101,7 +101,7 @@ AC_ARG_WITH(scalapack,
 
 AC_ARG_WITH(elpa,
    [AS_HELP_STRING([--with-elpa],
-       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
+       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE|<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
    [if  test "$withval" = "yes" ; then
       with_elpa=1
       with_elpa_flavor=0
@@ -185,16 +185,6 @@ AC_ARG_ENABLE(debug_cuda,
       use_debugcuda=0
    fi],
    [use_debugcuda=0])
-
-AC_ARG_ENABLE(pinned_mem,
-   [AS_HELP_STRING([--enable-pinned-mem],
-       [enable non-pageable memory allocations (default: no)])],
-   [if   test "$enableval" = "yes" ; then
-      use_pinnedmem=1
-   else
-      use_pinnedmem=0
-   fi],
-   [use_pinnedmem=0])
    
 AC_ARG_WITH(magma,
    [AS_HELP_STRING([--with-magma],
@@ -226,16 +216,6 @@ AC_ARG_WITH(phigemm,
       with_phigemm_path="$withval"
    fi],
    [with_phigemm=1])
-   
-AC_ARG_ENABLE(fast_cuda,
-	[AS_HELP_STRING([--enable-fast-cuda],
-       [enable special CUDA optimizations for fast executions (default: no)])],
-   [if   test "$enableval" = "yes" ; then
-      use_fastcuda=1
-   else
-      use_fastcuda=0
-   fi],
-   [use_fastcuda=0])
    
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
@@ -2218,17 +2198,7 @@ then
 				nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35"
 		        magma_gpu_target="Kepler Fermi Tesla"				
 		        ;;        
-		esac        
-		
-	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
-	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"	    
-	    if test "$use_fastcuda" -eq 1 ; then
-	    	nvccflags="$nvccflags--fmad=false"   
-	    fi
-	    
-        if test "$use_pinnedmem" -eq 1  ; then
-            try_dflags="$try_dflags -D__CUDA_PINNED"
-        fi   
+		esac 
 		
 	    cuda_include="-I$cuda_path/include"
 	    
@@ -2241,7 +2211,7 @@ then
 	        phigemm_switch=1
 	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
-	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
+	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE -D__PHIGEMM_ENABLE_SPECIALK"        
 	        phigemm_include="-I$topdir/phiGEMM/include"
 	        phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
 			
@@ -2286,14 +2256,10 @@ then
                 	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
 		fi
 	        
-	        if test "$use_fastcuda" -eq 1 ; then
-	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
-	    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
-	    	fi
-        
-			if test "$use_pinnedmem" -eq 1  ; then
-	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-	        fi  
+
+			#if test "$use_pinnedmem" -eq 1  ; then
+	        # 	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+	        #fi  
 	        	
 	        if test "$phigemm_profiling" -eq 1; then
                 phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
@@ -2306,7 +2272,6 @@ then
 	        phigemm_switch=0
 	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
-	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"        
 	        phigemm_include="-I$with_phigemm_path/include"
 	        phigemm_libs="$with_phigemm_path/lib/libphigemm.a "    
 	    fi

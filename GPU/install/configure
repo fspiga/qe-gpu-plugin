@@ -782,10 +782,8 @@ with_internal_lapack
 enable_environment
 enable_cuda
 enable_debug_cuda
-enable_pinned_mem
 with_magma
 with_phigemm
-enable_fast_cuda
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1438,9 +1436,6 @@ Optional Features:
   --enable-environment    compile solvent-related stuff (default: no)
   --enable-cuda           enable CUDA (default: no)
   --enable-debug-cuda     enable CUDA debug (default: no)
-  --enable-pinned-mem     enable non-pageable memory allocations (default: no)
-  --enable-fast-cuda      enable special CUDA optimizations for fast
-                          executions (default: no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1452,7 +1447,7 @@ Optional Packages:
   --with-scalapack        (yes|no|intel) Use scalapack if available. Set to
                           "intel" to use Intel MPI and blacs (default: use
                           openMPI)
-  --with-elpa             (yes|no|SSE|BULLDOZER|SANDYBRIDGE<path>) Use ELPA.
+  --with-elpa             (yes|no|SSE|BULLDOZER|SANDYBRIDGE|<path>) Use ELPA.
                           Self-compile or a <path> can be specified (default:
                           no)
   --with-internal-blas    compile with internal blas (default: no)
@@ -2155,18 +2150,6 @@ else
 fi
 
 
-# Check whether --enable-pinned_mem was given.
-if test "${enable_pinned_mem+set}" = set; then
-  enableval=$enable_pinned_mem; if   test "$enableval" = "yes" ; then
-      use_pinnedmem=1
-   else
-      use_pinnedmem=0
-   fi
-else
-  use_pinnedmem=0
-fi
-
-
 
 # Check whether --with-magma was given.
 if test "${with_magma+set}" = set; then
@@ -2201,18 +2184,6 @@ if test "${with_phigemm+set}" = set; then
    fi
 else
   with_phigemm=1
-fi
-
-
-# Check whether --enable-fast_cuda was given.
-if test "${enable_fast_cuda+set}" = set; then
-  enableval=$enable_fast_cuda; if   test "$enableval" = "yes" ; then
-      use_fastcuda=1
-   else
-      use_fastcuda=0
-   fi
-else
-  use_fastcuda=0
 fi
 
 
@@ -11590,16 +11561,6 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 		        ;;
 		esac
 
-	    #try_dflags="$try_dflags -D__GPU_NVIDIA_$cuda_arch"
-	    #nvccflags="$nvccflags -m64 -arch=sm_$cuda_arch --ptxas-options=-v"
-	    if test "$use_fastcuda" -eq 1 ; then
-	    	nvccflags="$nvccflags--fmad=false"
-	    fi
-
-        if test "$use_pinnedmem" -eq 1  ; then
-            try_dflags="$try_dflags -D__CUDA_PINNED"
-        fi
-
 	    cuda_include="-I$cuda_path/include"
 
 	    if test "$use_debugcuda" -eq 1 ; then
@@ -11611,7 +11572,7 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	        phigemm_switch=1
 	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
-	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"
+	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE -D__PHIGEMM_ENABLE_SPECIALK"
 	        phigemm_include="-I$topdir/phiGEMM/include"
 	        phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "
 
@@ -11656,14 +11617,10 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
                 	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
 		fi
 
-	        if test "$use_fastcuda" -eq 1 ; then
-	            try_dflags="$try_dflags -D__PHIGEMM_ENABLE_SPECIALK"
-	    		phigemm_opts="$phigemm_opts -D__PHIGEMM_ENABLE_SPECIALK "
-	    	fi
 
-			if test "$use_pinnedmem" -eq 1  ; then
-	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-	        fi
+			#if test "$use_pinnedmem" -eq 1  ; then
+	        # 	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+	        #fi
 
 	        if test "$phigemm_profiling" -eq 1; then
                 phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
@@ -11676,7 +11633,6 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	        phigemm_switch=0
 	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
-	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE"
 	        phigemm_include="-I$with_phigemm_path/include"
 	        phigemm_libs="$with_phigemm_path/lib/libphigemm.a "
 	    fi
