@@ -51,10 +51,10 @@ libphiGEMM_veryclean:
 	rm -f make_phiGEMM.inc
 libMAGMA_clean:
 	if test -d ../../CBLAS; then (cd ../../CBLAS; $(MAKE) clean); fi
-	if test -d ../../magma; then (cd ../../magma; $(MAKE) cleanall); fi
+	if test -d ../../qe-magma; then (cd ../../qe-magma; $(MAKE) cleanall); fi
 libMAGMA_veryclean:
 	if test -d ../../CBLAS; then (rm -R -f ../../CBLAS); fi
-	if test -d ../../magma; then (rm -R -f ../../magma); fi
+	if test -d ../../qe-magma; then (rm -R -f ../../qe-magma); fi
 	rm -f make_cblas.inc
 	rm -f make_magma.inc
 
