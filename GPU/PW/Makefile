@@ -29,8 +29,8 @@ rdiaghg_gpu.o \
 qvan2_gpu.o \
 add_vuspsi.o \
 cegterg.o \
-regterg.o \
-data_structure_gpu.o
+regterg.o
+#data_structure_gpu.o
 
 CUGPUOBJS = \
 addusdens_cuda_v$(ADDUSDENS_version).o \
