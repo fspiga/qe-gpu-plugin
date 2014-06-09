@@ -18,7 +18,7 @@ SUBROUTINE rdiaghg_gpu( n, m, h, s, ldh, e, v )
   !
   USE kinds,            ONLY : DP
   USE mp,               ONLY : mp_bcast
-  USE mp_global,        ONLY : me_bgrp, root_bgrp, intra_bgrp_comm
+  USE mp_bands,         ONLY : me_bgrp, root_bgrp, intra_bgrp_comm
   !
   USE iso_c_binding
   USE cuda_mem_alloc

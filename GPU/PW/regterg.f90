@@ -42,7 +42,7 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
   !
   USE kinds,         ONLY : DP
   USE io_global,     ONLY : stdout
-  USE mp_global,     ONLY : intra_bgrp_comm
+  USE mp_bands,      ONLY : intra_bgrp_comm
   USE mp,            ONLY : mp_sum 
   !
 #if defined(__CUDA) && defined(__CUDA_MEM_PINNED)
@@ -167,7 +167,7 @@ SUBROUTINE regterg( npw, npwx, nvec, nvecx, evc, ethr, &
 #else
     ALLOCATE( spsi( npwx, nvecx ), STAT=ierr )
     IF( ierr /= 0 ) &
-       CALL errore( ' cegterg ',' cannot allocate spsi ', ABS(ierr) )
+       CALL errore( ' regterg ',' cannot allocate spsi ', ABS(ierr) )
 #endif
   END IF
   !
@@ -661,9 +661,8 @@ SUBROUTINE pregterg( npw, npwx, nvec, nvecx, evc, ethr, &
   !
   USE kinds,     ONLY : DP
   USE io_global, ONLY : stdout
-  USE mp_global,        ONLY : intra_bgrp_comm,&
-                               nbgrp, nproc_bgrp, me_bgrp, root_bgrp, &
-                               ortho_comm, np_ortho, me_ortho, ortho_comm_id, leg_ortho
+  USE mp_bands,  ONLY : intra_bgrp_comm
+  USE mp_diag,   ONLY : ortho_comm, np_ortho, me_ortho, ortho_comm_id, leg_ortho
   USE descriptors,      ONLY : la_descriptor, descla_init, descla_local_dims
   USE parallel_toolkit, ONLY : dsqmdst, dsqmcll, dsqmred, dsqmsym
   USE mp,               ONLY : mp_bcast, mp_root_sum, mp_sum

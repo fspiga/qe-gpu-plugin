@@ -21,7 +21,7 @@ SUBROUTINE cdiaghg_gpu( n, m, h, s, ldh, e, v )
   !
   USE kinds,            ONLY : DP
   USE mp,               ONLY : mp_bcast, mp_sum, mp_barrier, mp_max
-  USE mp_global,        ONLY : me_bgrp, root_bgrp, intra_bgrp_comm
+  USE mp_bands,         ONLY : me_bgrp, root_bgrp, intra_bgrp_comm
   !
   IMPLICIT NONE
   !
