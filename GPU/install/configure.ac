@@ -101,24 +101,14 @@ AC_ARG_WITH(scalapack,
 
 AC_ARG_WITH(elpa,
    [AS_HELP_STRING([--with-elpa],
-       [(yes|no|SSE|BULLDOZER|SANDYBRIDGE|<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
+       [(yes|no|<path>) Use ELPA. Self-compile or a <path> can be specified (default: no)])],
    [if  test "$withval" = "yes" ; then
       with_elpa=1
-      with_elpa_flavor=0
-   elif  test "$withval" = "SSE" ; then
-      with_magma=0
-      with_elpa_flavor=1
-   elif  test "$withval" = "BULLDOZER" ; then
-      with_magma=0
-      with_elpa_flavor=2
-   elif  test "$withval" = "SANDYBRIDGE" ; then
-      with_magma=0
-      with_elpa_flavor=3
    elif  test "$withval" = "no" ; then
       with_elpa=0
    else
       with_elpa=2
-      with_elpa_path="$withval"   
+      with_elpa_path="$withval"
    fi],
    [with_elpa=0])
 
@@ -2096,21 +2086,27 @@ fi
         try_dflags="$try_dflags -D__SCALAPACK"
     fi   
 done
-
-# ELPA iff SCALAPACK
+  
+# ELPA iff SCALAPACK (statically linked)
 elpa_libs_switch="disabled"
 if test "$with_elpa" -eq 2 && test "$have_scalapack" -eq 1; then
-    scalapack_libs="-L$with_elpa_path/lib -lelpa $scalapack_libs"
-    # ELPA includes are version-dependent. This works with 2013.08
-    try_iflags="$try_iflags -I$with_elpa_path/include -I$with_elpa_path/include/elpa/modules " 
-    try_dflags="$try_dflags -D__ELPA"
+    if test "$use_openmp" -eq 1 ; then
+        scalapack_libs="$with_elpa_path/lib/libelpa_mt.a $scalapack_libs"
+        try_iflags="$try_iflags -I$with_elpa_path/include/elpa/modules "
+        try_dflags="$try_dflags -D__ELPA"
+    else
+        scalapack_libs="$with_elpa_path/libelpa.a $scalapack_libs"
+        try_iflags="$try_iflags -I$with_elpa_path/include/elpa/modules "
+        try_dflags="$try_dflags -D__ELPA"
+    fi
 fi
+
 if test "$with_elpa" -eq 1 && test "$have_scalapack" -eq 1; then
     scalapack_libs="\$(TOPDIR)/ELPA/libelpa.a $scalapack_libs"
     try_dflags="$try_dflags -D__ELPA"
-    elpa_libs_switch="enabled"    
+    elpa_libs_switch="enabled"
 fi
-    
+ 
 echo setting SCALAPACK_LIBS... $scalapack_libs
 
 
