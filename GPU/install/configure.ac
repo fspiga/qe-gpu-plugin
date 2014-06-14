@@ -207,6 +207,16 @@ AC_ARG_WITH(phigemm,
    fi],
    [with_phigemm=1])
    
+AC_ARG_WITH(pinned_mem,
+   [AS_HELP_STRING([--with-pinned-mem],
+       [(yes|no) Use pinned memory for accelerated BLAS (default: no )])],
+   [if  test "$enableval" = "yes" ; then
+      with_pinnedmem=1
+   else
+      with_pinnedmem=0
+   fi],
+   [with_pinnedmem=0])
+
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
 # If set, they take precedence over configure internal choice.
@@ -2114,11 +2124,12 @@ echo setting SCALAPACK_LIBS... $scalapack_libs
 if test "$use_cuda" -eq 1 
 then 
 
+	# Checking if something weird has been specified ...
 	case "$cuda_arch" in
-		all | sm_13 | sm_20 | sm_21 | sm_30 | sm_35) ;;
-		*)
-  			AC_MSG_ERROR([ GPU arch must be one of: sm_13, sm_20, sm_21, sm_30, or sm_35 ])
-  		;;
+	all | sm_13 | sm_20 | sm_21 | sm_30 | sm_35) ;;
+	*)
+  		AC_MSG_ERROR([ GPU arch must be one of: sm_13, sm_20, sm_21, sm_30, or sm_35 ])
+ 	;;
 	esac
 
     have_valid_cuda_compiler=1    
@@ -2167,31 +2178,31 @@ then
 	       nvccflags="-O3"
 	    fi
 	    	    
-	    # GPU architecture -- if not specified compiles for everything!
+	    # GPU architecture -- if not specified compiles for everything, (not ideal)!
 		magma_gpu_target="Tesla Fermi kepler"
 		case "$cuda_arch" in
 		    sm_35 )
-			    nvccflags="$nvccflags -gencode arch=compute_35,code=sm_35"
-			    magma_gpu_target="Kepler"
+			nvccflags="$nvccflags -gencode arch=compute_35,code=sm_35"
+			magma_gpu_target="Kepler"
 		        ;;
 		    sm_30 )
-			    nvccflags="$nvccflags -gencode arch=compute_30,code=sm_30"
-			    magma_gpu_target="Kepler"
+			nvccflags="$nvccflags -gencode arch=compute_30,code=sm_30"
+			magma_gpu_target="Kepler"
 		        ;;
 		    sm_21 )
-			    nvccflags="$nvccflag -gencode arch=compute_20,code=sm_21"
+			nvccflags="$nvccflag -gencode arch=compute_20,code=sm_21"
 		        magma_gpu_target="Fermi"
 		        ;;
 		    sm_20 )
-			    nvccflags="$nvccflag -gencode arch=compute_20,code=sm_20"
+			nvccflags="$nvccflag -gencode arch=compute_20,code=sm_20"
 		        magma_gpu_target="Fermi"
 		        ;;
 		    sm_13 )
-		   	    nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13"
+		   	nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13"
 		        magma_gpu_target="Tesla"
 		        ;;
-			all )
-				nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35"
+		    all )
+			nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35"
 		        magma_gpu_target="Kepler Fermi Tesla"				
 		        ;;        
 		esac 
@@ -2207,44 +2218,45 @@ then
 	        phigemm_switch=1
 	        phigemm_symbols=1
 	        try_dflags="$try_dflags -D__PHIGEMM"
-	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_SELFTUNE -D__PHIGEMM_ENABLE_SPECIALK"        
+	        phigemm_opts="-D__PHIGEMM_WEAK_INTERFACES -D__PHIGEMM_ENABLE_SPECIALK"        
 	        phigemm_include="-I$topdir/phiGEMM/include"
 	        phigemm_libs="$topdir/phiGEMM/lib/libphigemm.a "    
 			
-			phigemm_cc=$cc
-			phigemm_fc=$f90
-			if test "$use_debug" -eq 1; then
-			    phigemm_ccflags="-g -O0 $try_fflags_openmp -fPIC"
+		phigemm_cc=$cc
+		phigemm_fc=$f90
+		
+		if test "$use_debug" -eq 1; then
+			phigemm_ccflags="-g -O0 $try_fflags_openmp -fPIC"
 		        phigemm_ldflags="-g -O0 $try_fflags_openmp -fPIC"
 	        else
-			    phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
+			phigemm_ccflags="-O3 $try_fflags_openmp -fPIC"
 		        phigemm_ldflags="-O3 $try_fflags_openmp -fPIC"            
 	        fi
 	
 	        # NVCC HOST-side compiler options
 	        case "$arch:$f90_version" in
-			*:ifort* )
+		*:ifort* )
 		        phigemm_ldsharedflag="--shared"
 	            	phigemm_fflags="-module ../include/"
 	            	phigemm_ldflags="$phigemm_ldflags -zmuldefs"
-			    ;;
-			*:pgf90 | cray*:pgf )
+		    	;;
+		*:pgf90 | cray*:pgf )
 		        phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-module ../include/" 
 		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"     
 		        ;;
-		    crayxt*:cray* )
-				phigemm_ldsharedflag="-shared"
-				phigemm_fflags="-em -J../include/"
-				phigemm_ccflags="$phigemm_ccflags -shared"
+		crayxt*:cray* )
+			phigemm_ldsharedflag="-shared"
+			phigemm_fflags="-em -J../include/"
+			phigemm_ccflags="$phigemm_ccflags -shared"
 		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"				
-				;;		    
-		    *:gfortran )
+			;;		    
+		*:gfortran )
 		        #phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-J../include/"     
 		        phigemm_ldflags="$phigemm_ldflags -z muldefs" 
 		        ;;
-			esac
+		esac
 	    
 	        if test "$use_openmp" -eq 1 ; then	        
 	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
@@ -2253,13 +2265,14 @@ then
 		fi
 	        
 
-			#if test "$use_pinnedmem" -eq 1  ; then
-	        # 	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-	        #fi  
+		if test "$with_pinnedmem" -eq 1  ; then
+	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+			try_dflags="$try_dflags -D__CUDA_MEM_PINNED"
+	        fi  
 	        	
 	        if test "$phigemm_profiling" -eq 1; then
-                phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-                try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
+                	phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
+                	try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
 	        fi
 	    fi
 	    
