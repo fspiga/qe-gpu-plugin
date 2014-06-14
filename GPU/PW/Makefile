@@ -28,8 +28,8 @@ vloc_psi_gpu.o \
 rdiaghg_gpu.o \
 qvan2_gpu.o \
 add_vuspsi.o \
-cegterg.o \
-regterg.o
+cegterg_gpu.o \
+regterg_gpu.o
 #data_structure_gpu.o
 
 CUGPUOBJS = \
