@@ -2169,7 +2169,7 @@ then
 	    phigemm_libs=""
 	    magma_switch=0
 	    phigemm_switch=0
-		phigemm_symbols=0
+	    phigemm_symbols=0
 	    cblas_switch=0
 	    
 	    if test "$use_debug" -eq 1; then
@@ -2252,7 +2252,7 @@ then
 		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"				
 			;;		    
 		*:gfortran )
-		        #phigemm_ldsharedflag="-shared"  
+		        phigemm_ldsharedflag="-shared"  
 		        phigemm_fflags="-J../include/"     
 		        phigemm_ldflags="$phigemm_ldflags -z muldefs" 
 		        ;;
@@ -2343,9 +2343,9 @@ then
 		        	cblas_switch=1
 		        	have_cblas=1
 		        	case "$arch:$f90_version" in
-				        *:gfortran )
-	           				extlib_flags="$extlib_flags -fPIC"
-				            ;;
+					*:gfortran )
+	           			extlib_flags="$extlib_flags -fPIC"
+					;;
 			        esac
 	            fi
 	        fi							        

@@ -11535,7 +11535,7 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	    phigemm_libs=""
 	    magma_switch=0
 	    phigemm_switch=0
-		phigemm_symbols=0
+	    phigemm_symbols=0
 	    cblas_switch=0
 
 	    if test "$use_debug" -eq 1; then
@@ -11618,7 +11618,7 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 		        phigemm_ldflags="$phigemm_ldflags -Wl,-z,muldefs"
 			;;
 		*:gfortran )
-		        #phigemm_ldsharedflag="-shared"
+		        phigemm_ldsharedflag="-shared"
 		        phigemm_fflags="-J../include/"
 		        phigemm_ldflags="$phigemm_ldflags -z muldefs"
 		        ;;
@@ -11633,6 +11633,7 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 
 		if test "$with_pinnedmem" -eq 1  ; then
 	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
+			try_dflags="$try_dflags -D__CUDA_MEM_PINNED"
 	        fi
 
 	        if test "$phigemm_profiling" -eq 1; then
@@ -11776,9 +11777,9 @@ fi
 		        	cblas_switch=1
 		        	have_cblas=1
 		        	case "$arch:$f90_version" in
-				        *:gfortran )
-	           				extlib_flags="$extlib_flags -fPIC"
-				            ;;
+					*:gfortran )
+	           			extlib_flags="$extlib_flags -fPIC"
+					;;
 			        esac
 	            fi
 	        fi
