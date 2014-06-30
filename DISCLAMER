@@ -2,9 +2,11 @@ GPU-Accelerated Quantum ESPRESSO
 
 Copyright (C) 2001-2013 Quantum ESPRESSO Foundation
 
-Written by:
-Filippo Spiga (Quantum ESPRESSO Foundation, University of Cambridge
-Ivan Girotto (Abdus Salam International Centre for Theoretical Physics - ICTP)
+Written and maintained by:
+Filippo Spiga (Quantum ESPRESSO Foundation, University of Cambridge)
+Ivan Girotto (ICTP)
+
+Contributions from:
 Levi Barnes (NVIDIA)
 
 

@@ -107,17 +107,21 @@ IMPORTANT NOTE (3): the library auto-tune the split factor at runtime. You just
                     have to declare a initial good guess. If you are not sure 
                     about the guess value leave the default.      
 
+
                                * * * * *
 
 
 Trouble-makers, inconsistencies, Known bugs, etc. 
 -------------------------------------------------
 
+- The current version of MAGMA provided with QE-GPU does not support CUDA 6.0
+
 - if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
   ignore MPI C++ bindings.
   
 - if the calculation fail due to "S non definite positive" or other errors
   related to MAGMA then recompile by disabling MAGMA support.
+
    
                                * * * * *
 
@@ -140,7 +144,9 @@ $ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 
 You can also specify more of these flags together.
 
+
                                * * * * *
+
 
 References
 ----------
