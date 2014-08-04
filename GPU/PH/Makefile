@@ -13,13 +13,12 @@ QEMODS = ../../Modules/libqemod.a ../Modules/libqemodgpu.a
 
 LIBOBJS        = ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
-TLDEPS= bindir mods libs pw
+TLDEPS= bindir mods libs pw-gpu
 
 all : tldeps ph-gpu.x
 
-ph-gpu.x : ../../PHonon/PH/phonon.o ../../PHonon/PH/libph.a $(PWMODS) $(LIBOBJS)
-	if [ ! -f ./phonon.o ]; then cp ../../PHonon/PH/phonon.o . ; fi
-	$(LD) $(LDFLAGS) -o $@ ../../PHonon/PH/phonon.o ../../PHonon/PH/libph.a \
+ph-gpu.x : phonon.o ../../PHonon/PH/libph.a $(PWMODS) $(LIBOBJS)
+	$(LD) $(LDFLAGS) -o $@ phonon.o ../../PHonon/PH/libph.a \
 		 $(PWMODS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
 

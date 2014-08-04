@@ -25,13 +25,15 @@ default :
 # Redirect to GPU build
 pw	: pw-gpu
 
-pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron  
-ifeq ($(PHIGEMM_SYMBOLS),1) 
+pw-lib : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron
+ifeq ($(PHIGEMM_SYMBOLS),1)
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
 	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libpw.a ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= libpw.a ; fi ) ; fi
+
+pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron pw-lib
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
@@ -55,7 +57,7 @@ endif
 ph	: ph-gpu
 
 ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
-	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile phonon
+	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-phonon
 ifeq ($(PHIGEMM_SYMBOLS),1) 
 	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
@@ -224,7 +226,7 @@ clean-gpu :
 	touch make.sys
 ifeq ($(PHIGEMM_SYMBOLS),1)
 	for dir in \
-        CPV/src Modules PW/src PH/src NEB/src \
+        CPV/src Modules PW/src PHonon/PH NEB/src \
 	; do \
 		grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
 	done
