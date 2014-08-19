@@ -2301,9 +2301,11 @@ then
                         magma_openmp="-fopenmp"
                 fi
 
+		magma_dflags="-DMAGMA_SETAFFINITY"
+		
 		if test "$have_mkl" -eq 1
 		then
-			magma_dflags="-DMAGMA_WITH_MKL -DCUBLAS_GFORTRAN -DHAVE_CUBLAS"
+			magma_dflags="$magma_dflags -DMAGMA_WITH_MKL"
 		fi
  	
 		# CBLAS  (usually MKL and AMCL have CBLAS interfaces natively)
