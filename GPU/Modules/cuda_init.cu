@@ -98,6 +98,25 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 
 #if defined(__PARA)
 
+#if defined(__NVIDIA_MPS)
+	
+	char *value = NULL;
+	int envar;
+		
+	ngpus_per_process = 0;
+	qe_gpu_bonded[0] = 0;
+		
+	value = getenv("QEGPU_GPU_PER_NODE");
+	if (value != NULL)
+	{
+		envar = atoi(value);
+	} else {
+		envar = 2;
+	}
+	lNumDevicesThisNode = envar;
+			
+#else
+	
 	/* Attach all MPI processes on this node to the available GPUs
 	 * in round-robin fashion
 	 */
@@ -140,7 +159,7 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 	}
 
 	procs_per_gpu = (lSizeThisNode < lNumDevicesThisNode) ? lSizeThisNode : lSizeThisNode / lNumDevicesThisNode;
-
+	
 	for (i = 0; i < ngpus_per_process; i++) {
 
 		qe_gpu_bonded[i] = lRankThisNode % lNumDevicesThisNode;
@@ -148,8 +167,9 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 #if defined(__CUDA_DEBUG)
 		printf("Binding GPU %d on node of rank: %d (internal rank:%d)\n", qe_gpu_bonded[i], lRank, lRankThisNode); fflush(stdout);
 #endif
-
 	}
+
+#endif
 
 #else
 
