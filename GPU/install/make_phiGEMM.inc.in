@@ -21,35 +21,34 @@
 # remember the tabulator in the first column !!!
 
 .c.o:
-	$(NVCC) $(NVCC_FLAGS) $(GEMM_OPT) $(EXT_INC) -I../include/ -c $< -o $*.o 
+	$(PHIGEMM_NVCC) $(PHIGEMM_NVCC_FLAGS) $(PHIGEMM_GEMM_OPT) $(PHIGEMM_EXT_INC) -I../include/ -c $< -o $*.o 
 
 PHIGEMM_TOP = .
 
+PHIGEMM_AR          = @ar@
+PHIGEMM_ARFLAGS     = @arflags@
 
-AR          = @ar@
-ARFLAGS     = @arflags@
+PHIGEMM_CC          = @phigemm_cc@
+PHIGEMM_CFLAGS      = @phigemm_ccflags@
 
-CC          = @phigemm_cc@
-CFLAGS      = @phigemm_ccflags@
+PHIGEMM_FC          = @phigemm_fc@
+PHIGEMM_FFLAGS      = @phigemm_fflags@
 
-FC          = @phigemm_fc@
-FFLAGS      = @phigemm_fflags@
+PHIGEMM_CPP         = @cpp@
+PHIGEMM_CPPFLAGS    = @cppflags@
 
-CPP         = @cpp@
-CPPFLAGS    = @cppflags@
+PHIGEMM_LD              = @phigemm_cc@
+PHIGEMM_LD_FLAGS        = @phigemm_ldflags@
+PHIGEMM_LD_SHARED_FLAGS = @phigemm_ldsharedflag@
+PHIGEMM_FC_PREPROC_FLAG = @phigemm_fflags@
 
-LD              = @phigemm_cc@
-LD_FLAGS        = @phigemm_ldflags@
-LD_SHARED_FLAGS = @phigemm_ldsharedflag@
-FC_PREPROC_FLAG = @phigemm_fflags@
+PHIGEMM_NVCC        = @nvcc@
+PHIGEMM_NVCC_FLAGS  = @phigemm_nvccflags@
 
-NVCC        = @nvcc@
-NVCC_FLAGS  = @phigemm_nvccflags@
+PHIGEMM_EXT_INC     = @phigemm_include@ @cuda_include@
+PHIGEMM_CUDA_LIB    = @cuda_libs@
+PHIGEMM_LD_LIB      = @blas_libs@ @ld_libs@
 
-EXT_INC     = @phigemm_include@ @cuda_include@
-CUDA_LIB    = @cuda_libs@
-LD_LIB      = @blas_libs@ @ld_libs@
+PHIGEMM_CUDA_PATH   = @cuda_path@
 
-CUDA_PATH   = @cuda_path@
-
-GEMM_OPT    = @phigemm_opts@ $(MANUAL_DFLAGS)
+PHIGEMM_GEMM_OPT    = @phigemm_opts@ $(MANUAL_DFLAGS)
