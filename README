@@ -18,6 +18,30 @@ installing, and using QE-GPU.
 
                                * * * * *
 
+Note from the project maintainer
+--------------------------------
+
+I do not earn a salary for my work on QE-GPU which is pro bono and performed
+during my spare time. If you have benefited from this project or you are simply
+interested to leave a feedback, please consider to get in contact with me by
+filling this form (it does not require a google account):
+
+   http://goo.gl/forms/xCyW5WesJe
+   
+QE-GPU 14.10.0 is the last version scheduled this year, it includes very few
+changes and it has been tested extensively using CUDA 5.5. It is not guarantee
+that compiles and run with more recent version of CUDA. Please read the file
+RELEASE_NOTES for few additional details.
+
+Since mid October I am working on a completely new version, build from scratch
+based on strenghts and weakness of QE-GPU. This version will be based on QE 
+5.1.1, will not work with previous version of QE and it will be released 
+immediately after the next GPU Technology Conference (late March 2015)
+
+ -- Filippo
+
+                               * * * * *
+
 How to compile
 --------------
 
