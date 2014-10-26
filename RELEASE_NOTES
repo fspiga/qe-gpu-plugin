@@ -1,3 +1,11 @@
+RELEASE NOTES FOR QE-GPU VERSION 14.10.0
+
+ -- added -D__NVIDIA_MPS flag that has to be added if QE-GPU runs 
+ 	on top of nvidia-cuda-proxy. A environment variable called
+	"QEGPU_GPU_PER_NODE" has to be set to specify the number of 
+	physical GPU installed on a node (default is 2)
+ 
+
 RELEASE NOTES FOR QE-GPU VERSION 14.06.0
 30 June 2014
 
