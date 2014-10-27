@@ -103,7 +103,7 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 	char *value = NULL;
 	int envar;
 		
-	ngpus_per_process = 0;
+	ngpus_per_process = 1;
 	qe_gpu_bonded[0] = 0;
 		
 	value = getenv("QEGPU_GPU_PER_NODE");
@@ -114,7 +114,9 @@ extern "C" void gpubinding_(int lRankThisNode, int lSizeThisNode){
 		envar = 2;
 	}
 	lNumDevicesThisNode = envar;
-			
+	
+        procs_per_gpu = (lSizeThisNode < lNumDevicesThisNode) ? lSizeThisNode : lSizeThisNode / lNumDevicesThisNode;
+		
 #else
 	
 	/* Attach all MPI processes on this node to the available GPUs
