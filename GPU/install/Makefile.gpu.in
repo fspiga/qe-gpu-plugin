@@ -90,7 +90,11 @@ all-gpu   : pwall-gpu cp-gpu
 # Auxiliary targets used by main targets:
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
-mods : libiotk libelpa
+
+libfft : touch-dummy
+	( cd FFTXlib ; $(MAKE) TLDEPS= all || exit 1 )
+
+mods : libiotk libelpa libfft
 ifeq ($(PHIGEMM_SYMBOLS),1) 
 	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif

@@ -18,7 +18,7 @@ VLOCPSI_K_version=1
 FFT_PLAN_MNG_version=1
 
 # location of needed modules
-MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../Modules $(MOD_FLAG). 
+MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../../FFTXlib $(MOD_FLAG)../Modules $(MOD_FLAG). 
 
 PWGPUOBJS = \
 addusdens_gpu.o \
@@ -50,7 +50,7 @@ vloc_psi_gamma_cuda_opt2.o \
 nls_precompute.o \
 
 
-QEMODS=../../Modules/libqemod.a ../Modules/libqemodgpu.a
+QEMODS=../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviron
 

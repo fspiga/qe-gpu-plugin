@@ -3,10 +3,10 @@
 include	../../make.sys
 
 # location of needed modules
-MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../Modules \
+MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../FFTXlib $(MOD_FLAG)../../Modules \
 	$(MOD_FLAG)../../CPV/src $(MOD_FLAG).
 
-QEMODS=../../Modules/libqemod.a ../Modules/libqemodgpu.a
+QEMODS=../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
 
 TLDEPS= bindir mods libs libiotk
 

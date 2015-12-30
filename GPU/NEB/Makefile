@@ -4,7 +4,7 @@ include ../../make.sys
 
 # location of needed modules
 MODFLAGS= $(MOD_FLAG)../../iotk/src \
-	  $(MOD_FLAG)../../Modules $(MOD_FLAG)../Modules \
+	  $(MOD_FLAG)../../Modules $(MOD_FLAG)../../FFTXlib $(MOD_FLAG)../Modules \
 	  $(MOD_FLAG)../../NEB/src $(MOD_FLAG)../../PW/src $(MOD_FLAG).
 
 #location of needed libraries
@@ -14,7 +14,7 @@ LIBOBJS= ../../iotk/src/libiotk.a ../../flib/flib.a \
 # Still empty...
 #NEBGPUOBJS =  
 
-QEGPUMODS=../../Modules/libqemod.a  ../Modules/libqemodgpu.a
+QEGPUMODS=../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
 PWMODS=../../PW/src/libpw.a ../PW/libpwgpu.a
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas pw-gpu

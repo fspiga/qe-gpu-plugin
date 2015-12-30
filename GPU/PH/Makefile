@@ -3,13 +3,13 @@
 include ../../make.sys
 
 # location of needed modules
-MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../Modules \
+MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../../FFTXlib \
           $(MOD_FLAG)../GPU/PW $(MOD_FLAG)../GPU/Modules \
           $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../PHonon/PH \
           $(MOD_FLAG). 
 
 PWMODS = ../../PW/src/libpw.a ../PW/libpwgpu.a
-QEMODS = ../../Modules/libqemod.a ../Modules/libqemodgpu.a
+QEMODS = ../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
 
 LIBOBJS        = ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
 
