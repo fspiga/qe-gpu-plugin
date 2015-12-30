@@ -244,7 +244,11 @@ extern "C" int vloc_psi_cuda_k_( int * ptr_lda, int * ptr_nrxxs, int * ptr_nr1s,
 #endif
 
 	for (int q=0;q<n_streams;q++) qecheck_cufft_call( cufftDestroy(p_global[q]) );
-        cudaFreeHost(psic);
+  
+  cudaFreeHost(psic);
+
+  for ( int q = 0; q < MAX_STREAMS; q++ )
+    cudaStreamDestroy( vlocpsiStreams[q] );
 
 #if defined(__CUDA_NOALLOC)
 	/* Deallocating... */
