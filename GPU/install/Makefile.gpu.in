@@ -208,7 +208,7 @@ links : bindir
 clean : clean-gpu
 	touch make.sys
 	for dir in \
-		CPV Modules PW PH NEB \
+		CPV FFTXlib Modules PW PH NEB \
 		clib flib upftools \
 		dev-tools extlibs Environ \
 	; do \
