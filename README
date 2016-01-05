@@ -16,31 +16,9 @@ under the GNU General Public License, please see the files LICENSE and
 DISCLAIMER for details. This README presents an introduction to compiling, 
 installing, and using QE-GPU.
 
-                               * * * * *
-
-Note from the project maintainer
---------------------------------
-
-I do not earn a salary for my work on QE-GPU which is pro bono and performed
-during my spare time. If you have benefited from this project or you are simply
-interested to leave a feedback, please consider to get in contact with me by
-filling this form (it does not require a google account):
-
-   http://goo.gl/forms/xCyW5WesJe
-   
-QE-GPU 14.10.0 is the last version scheduled this year, it includes very few
-changes and it has been tested extensively using CUDA 5.5. It is not guarantee
-that compiles and run with more recent version of CUDA. Please read the file
-RELEASE_NOTES for few additional details.
-
-Since mid October I am working on a completely new version, build from scratch
-based on strenghts and weakness of QE-GPU. This version will be based on QE 
-5.1.1, will not work with previous version of QE and it will be released 
-immediately after the next GPU Technology Conference (late March 2015)
-
- -- Filippo
 
                                * * * * *
+
 
 How to compile
 --------------
@@ -54,19 +32,10 @@ Run a command like:
 $ rsync -r --exclude=.git ./GPU <path-to-espresso>/
 
 
-2. Apply QE-GPU patch to espresso
+2. Run QE-GPU configure
 
-To apply the patch first copy the appropriate file
-(according to the version of both QE and QE-GPU) in the main espresso directory
-and run the command:
-$ patch -p1 < name-of-the-patch.patch
-
-Please refer to "qe-patches/README" for further information.
-
-
-3. Run QE-GPU configure
-
-3.1 SERIAL
+The QE-GPU configure is located in the GPU directory. An example of serial
+configuration is the following:
 
 $ cd GPU
 $ ./configure --disable-parallel --enable-openmp \
@@ -77,8 +46,7 @@ $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
 
-3.2 PARALLEL
-
+An example for parallel execution:
 $ cd GPU
 $ ./configure --enable-parallel --enable-openmp --with-scalapack \
   --enable-cuda --with-gpu-arch=sm_35 \
@@ -88,10 +56,31 @@ $ cd ..
 $ make -f Makefile.gpu pw-gpu
 
 
-For additional options for QE-GPU see "./configure --help"
+For additional options for QE-GPU see "./configure --help". Here a summary
+of all GPU-related options
 
-IMPORTANT NOTE (1):
-- specify always the right GPU compute capability.
+  --enable-cuda           enable CUDA (default: no)
+
+  --enable-debug-cuda     enable CUDA debug (default: no)
+
+  --with-cuda-dir=<path>  specify CUDA installation directory (default is
+                          /usr/local/cuda/ - MANDATORY)
+
+  --with-gpu-arch=<arch>  (sm_13|sm_20|sm_21|sm_30|sm_35) Specify the GPU
+                          target architecture (default: all)
+
+  --with-magma            (yes|no|<path>) Use MAGMA. Self-compile or a <path>
+                          can be specified (default: no)
+
+  --with-phigemm          (yes|no|<path>|profile) Use PHIGEMM. Self-compile or
+                          a <path> can be specified (default: yes)
+
+  --with-pinned-mem       (yes|no) Use pinned memory for accelerated BLAS
+                          (default: no )
+
+IMPORTANT NOTES:
+- specify always the right GPU compute capability or leave the make to 
+  compile for all possible compute capabilities which support Double Precision
 - specify the correct PATH of CUDA (where CUDA is installed). Usually HPC 
   systems have the env variable $CUDA_HOME or $CUDA_ROOT
 - "pw-gpu.x" will be placed under "bin/" (and also under "GPU/PW/")
@@ -99,46 +88,9 @@ IMPORTANT NOTE (1):
 
                                * * * * *
 
-How to run
-----------
-
-Nothing has changed. If the support to the GPU is enables you MUST remember to 
-specify few additional environmental variables required by the phiGEMM library 
-used by Quantum EPSRESSO.
-
-There are 2 recognized variables, one for each *GEMM routine implemented. This 
-factor, a value strictly between 0 and 1, tells to the library how much of the 
-calculation has to be performed on the CPU and how much on the GPU. In detail, 
-if PHI_DGEMM_SPLIT is 0.9 it means that the 95% of the computation will be 
-performed by the GPU, the 5% by the CPU.
-
-Here an example:
-
-export PHI_DGEMM_SPLIT=0.975
-export PHI_ZGEMM_SPLIT=0.975
-
-IMPORTANT NOTE (1): suggested values are between 0.925 and 0.975
-
-IMPORTANT NOTE (2): some system are equipped with different cards. For 
-                    example, you may have 2 Tesla Cxxxx and another card, that 
-                    you use for the video output. The video card may have not 
-                    enough CUDA capabilities for computation (below 1.3) or 
-                    different technical specs. There is a way to hide a 
-                    specific GPU card, using the environmental variable 
-                    "CUDA_VISIBLE_DEVICES".
-                
-IMPORTANT NOTE (3): the library auto-tune the split factor at runtime. You just 
-                    have to declare a initial good guess. If you are not sure 
-                    about the guess value leave the default.      
-
-
-                               * * * * *
-
 
 Trouble-makers, inconsistencies, Known bugs, etc. 
 -------------------------------------------------
-
-- The current version of MAGMA provided with QE-GPU does not support CUDA 6.0
 
 - if you are using Intel MPI, please add to DFLAGS "-DMPICH_SKIP_MPICXX" to 
   ignore MPI C++ bindings.
@@ -167,19 +119,3 @@ Without editing the make.sys, you can run make in this way:
 $ make -f Makefile.gpu MANUAL_DFLAGS="-D__DISABLE_CUDA_ADDUSDENS" pw-gpu
 
 You can also specify more of these flags together.
-
-
-                               * * * * *
-
-
-References
-----------
-
-[1] P. Giannozzi et al., "QUANTUM ESPRESSO: a modular and open-source software 
-    project for quantum simulations of materials", J. Phys. 
-    Condens. Matter 21 395502 (2009)
-[2] URL: http://www.quantum-espresso.org 
-[3] F. Spiga and I. Girotto, "phiGEMM: a CPU-GPU library for porting 
-    Quantum ESPRESSO on hybrid systems.", 20th Euromicro International 
-    Conference on Parallel, Distributed and Network-Based Processing 
-    (PDP), 2012
