@@ -19,7 +19,9 @@ installing, and using QE-GPU.
 
                                * * * * *
 
-  !!! THIS VERSION IS COMPATIBLE ONLY WITH QE 5.3.0 AND FORWARD !!!
+   !!! THIS VERSION IS COMPATIBLE ONLY WITH QE 5.3 AND FORWARD !!!
+   
+     !!! QE-GPU NOW FOLLOWS QUANTUM ESPRESSO RELEASE ROADMAP !!!
 
                                * * * * *
 
