@@ -19,17 +19,22 @@ installing, and using QE-GPU.
 
                                * * * * *
 
+  !!! THIS VERSION IS COMPATIBLE ONLY WITH QE 5.3.0 AND FORWARD !!!
+
+                               * * * * *
 
 How to compile
 --------------
 
 1. Copy QE-GPU in espresso directory
 
-The package includes a directory called "GPU" that has to be copied under the
-Quantum ESPRESSO main directory. 
+Move to the espresso root directory, uncompress the archive
+$ tar zxvf QE-GPU-<TAG-NAME>.tar.gz 
 
-Run a command like:
-$ rsync -r --exclude=.git ./GPU <path-to-espresso>/
+and create a symbolic link with the name GPU
+$ ln -s QE-GPU-<TAG-NAME> GPU
+
+Replace <TAG-GPU> with the corred TAG name/id
 
 
 2. Run QE-GPU configure
