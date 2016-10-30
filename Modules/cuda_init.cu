@@ -418,6 +418,10 @@ extern "C" void query_gpu_specs_(int lRankThisNode)
 				update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
 						deviceProp.maxThreadsPerBlock, 65535, 4, 128, 128, 256, 512, 256, 512, 512);
 				break;
+      case 60:
+        update_gpu_kernel_specs( &(qe_gpu_kernel_launch[i]), cc,
+            deviceProp.maxThreadsPerBlock, 65535, 4, 128, 128, 256, 512, 256, 512, 512);
+        break;
 			default:
 				printf("*** ERROR *** something went wrong inside query_gpu_specs! (rank %d)",lRankThisNode ); fflush(stdout);
 				exit(EXIT_FAILURE);

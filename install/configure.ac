@@ -83,9 +83,9 @@ AC_ARG_WITH(cuda_dir,
         
 AC_ARG_WITH(gpu_arch,
    [AS_HELP_STRING([--with-gpu-arch=<arch>],
-	[(sm_13|sm_20|sm_21|sm_30|sm_35) Specify the GPU target architecture (default: all)])],
+	[(fermi|kepler|pascal) Specify the GPU target architecture (default: kepler)])],
 	[cuda_arch="$withval"],
-	[cuda_arch=all])
+	[cuda_arch=kepler])
     
 AC_ARG_WITH(scalapack,
    [AS_HELP_STRING([--with-scalapack],
@@ -166,16 +166,6 @@ AC_ARG_ENABLE(cuda,
    fi],
    [use_cuda=0])
    
-AC_ARG_ENABLE(debug_cuda, 
-   [AS_HELP_STRING([--enable-debug-cuda],
-       [enable CUDA debug (default: no)])],
-   [if  test "$enableval" = "yes" ; then
-      use_debugcuda=1
-   else
-      use_debugcuda=0
-   fi],
-   [use_debugcuda=0])
-   
 AC_ARG_WITH(magma,
    [AS_HELP_STRING([--with-magma],
        [(yes|no|<path>) Use MAGMA. Self-compile or a <path> can be specified (default: no)])],
@@ -191,7 +181,7 @@ AC_ARG_WITH(magma,
 
 AC_ARG_WITH(phigemm,
    [AS_HELP_STRING([--with-phigemm],
-       [(yes|no|<path>|profile) Use PHIGEMM. Self-compile or a <path> can be specified (default: yes)])],
+       [(yes|no|<path>) Use PHIGEMM. Self-compile or a <path> can be specified (default: yes)])],
    [if  test "$withval" = "yes" ; then
       with_phigemm=1
       phigemm_profiling=0
@@ -207,16 +197,6 @@ AC_ARG_WITH(phigemm,
    fi],
    [with_phigemm=1])
    
-AC_ARG_WITH(pinned_mem,
-   [AS_HELP_STRING([--with-pinned-mem],
-       [(yes|no) Use pinned memory for accelerated BLAS (default: no )])],
-   [if  test "$enableval" = "yes" ; then
-      with_pinnedmem=1
-   else
-      with_pinnedmem=0
-   fi],
-   [with_pinnedmem=0])
-
 # -----------------------------
 # store variables from the environment, if set (may be or not be set)
 # If set, they take precedence over configure internal choice.
@@ -2197,9 +2177,9 @@ then
 
 	# Checking if something weird has been specified ...
 	case "$cuda_arch" in
-	all | sm_13 | sm_20 | sm_21 | sm_30 | sm_35) ;;
+	fermi | kepler | pascal) ;;
 	*)
-  		AC_MSG_ERROR([ GPU arch must be one of: sm_13, sm_20, sm_21, sm_30, or sm_35 ])
+  		AC_MSG_ERROR([ GPU arch must be one of: fermi, kepler, pascal ])
  	;;
 	esac
 
@@ -2249,40 +2229,25 @@ then
 	       nvccflags="-O3"
 	    fi
 	    	    
-	    # GPU architecture -- if not specified compiles for everything, (not ideal)!
+	  # GPU architecture -- if not specified compiles for everything, (not ideal)!
 		magma_gpu_target="Tesla Fermi kepler"
 		case "$cuda_arch" in
-		    sm_35 )
-			nvccflags="$nvccflags -gencode arch=compute_35,code=sm_35"
-			magma_gpu_target="Kepler"
+		    kepler )
+			      nvccflags="$nvccflags -gencode arch=compute_37,code=sm_37 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_30,code=sm_30"
+			      magma_gpu_target="Kepler"
 		        ;;
-		    sm_30 )
-			nvccflags="$nvccflags -gencode arch=compute_30,code=sm_30"
-			magma_gpu_target="Kepler"
-		        ;;
-		    sm_21 )
-			nvccflags="$nvccflag -gencode arch=compute_20,code=sm_21"
+		    fermi )
+			      nvccflags="$nvccflag -gencode arch=compute_20,code=sm_21 -gencode arch=compute_20,code=sm_20"
 		        magma_gpu_target="Fermi"
 		        ;;
-		    sm_20 )
-			nvccflags="$nvccflag -gencode arch=compute_20,code=sm_20"
-		        magma_gpu_target="Fermi"
+		    pascal )
+			      nvccflags="$nvccflag -gencode arch=compute_60,code=sm_60"
+            # Sub-optimal
+		        magma_gpu_target="kepler"
 		        ;;
-		    sm_13 )
-		   	nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13"
-		        magma_gpu_target="Tesla"
-		        ;;
-		    all )
-			nvccflags="$nvccflags -gencode arch=compute_13,code=sm_13 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=sm_21 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35"
-		        magma_gpu_target="Kepler Fermi Tesla"				
-		        ;;        
 		esac 
 		
 	    cuda_include="-I$cuda_path/include"
-	    
-	    if test "$use_debugcuda" -eq 1 ; then
-	        try_dflags="$try_dflags -D__CUDA_DEBUG"
-	    fi 
 	    
 	    # phiGEMM - INTERNAL, self-compiled  (with or without profiling)
 	    if test "$with_phigemm" -eq 1  ; then 
@@ -2329,24 +2294,13 @@ then
 		        ;;
 		esac
 	    
-	        if test "$use_openmp" -eq 1 ; then	        
-	        	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
-	        else
-                	phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
+	  if test "$use_openmp" -eq 1 ; then	        
+	          phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC -fopenmp'"
+	  else
+            phigemm_nvccflags="-ccbin gcc -O3 --compiler-options '-c -fPIC'"
 		fi
 	        
-
-		if test "$with_pinnedmem" -eq 1  ; then
-	        	phigemm_opts="$phigemm_opts -D__PHIGEMM_PINNED"
-			try_dflags="$try_dflags -D__CUDA_MEM_PINNED"
-	        fi  
-	        	
-	        if test "$phigemm_profiling" -eq 1; then
-                	phigemm_opts="$phigemm_opts -D__PHIGEMM_PROFILE"
-                	try_dflags="$try_dflags -D__PHIGEMM_PROFILE"
-	        fi
-	    fi
-	    
+   fi
 	    # phiGEMM - EXTERNAL, assumed well-compiled (no profiling)     
 	    if test "$with_phigemm" -eq 2  ; then 
 	        phigemm_switch=0
