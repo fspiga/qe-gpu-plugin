@@ -15,11 +15,9 @@ under the GNU General Public License, please see the files LICENSE and
 DISCLAIMER for details. This README presents an introduction to compiling,
 installing, and using QE-GPU.
 
-**This version is compatible only with Quantum ESPRESSO 5.4** 
-
 ## Supported GPU Architectures
 
- GPU | gpu-arch |
+ GPU | gpu-arch | 
 :---:|:---:|
  M2070 | Fermi |
  M2070Q | Fermi |
@@ -30,11 +28,19 @@ installing, and using QE-GPU.
  K40 | Kepler |
  K40c | Kepler |
  K80 | Kepler |
- P100 (PCIe) | Pascal |
- P100 (SMX2) | Pascal |
+ P100 (PCIe) | Pascal (CUDA 8.0 mandatory) |
+ P100 (SMX2) | Pascal (CUDA 8.0 mandatory)|
 
 
 Any other GPU not listed in this table is **not** officially supported. The code may work but due to lack of proper double precision support or ECC the performance will not be ideal.
+
+for more information about NVIDIA GPU, see [Wikipedia](https://en.wikipedia.org/wiki/Nvidia_Tesla)
+
+## Requirements
+
+* Quantum ESPRESSO 5.4
+* Kepler GPU: (minimum) CUDA SDK 6.5
+* Pascal GPU: (minimum) CUDA SDK 8.0
 
 
 ## How to compile
