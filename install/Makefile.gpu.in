@@ -25,15 +25,13 @@ default :
 # Redirect to GPU build
 pw	: pw-gpu
 
-pw-lib : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron
+pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron
 ifeq ($(PHIGEMM_SYMBOLS),1)
 	grep -rl -E 'gemm|GEMM' ./PW/src/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	if test -d PW ; then \
 	( cd PW/src ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= libpw.a ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= libpw.a ; fi ) ; fi
-
-pw-gpu : bindir mods liblapack libblas libphiGEMM libMAGMA gpu-mods libs libiotk libenviron pw-lib
+  else $(MAKE) $(MFLAGS) TLDEPS= libpw.a ; fi ) ; fi
 	if test -d GPU/PW ; then \
 	( cd GPU/PW ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ) ; fi
@@ -91,12 +89,16 @@ all-gpu   : pwall-gpu cp-gpu
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 
+libla : touch-dummy libelpa
+	( cd LAXlib ; $(MAKE) TLDEPS= all || exit 1 )
+
 libfft : touch-dummy
 	( cd FFTXlib ; $(MAKE) TLDEPS= all || exit 1 )
 
-mods : libiotk libelpa libfft
+mods : libiotk libelpa libfft libla
 ifeq ($(PHIGEMM_SYMBOLS),1) 
 	grep -rl -E 'gemm|GEMM' ./Modules/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
+	grep -rl -E 'gemm|GEMM' ./LAXlib/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
 endif
 	( cd Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
@@ -104,8 +106,6 @@ endif
 libs : mods
 	( cd clib ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
 	else $(MAKE) $(MFLAGS) TLDEPS= all ; fi )
-	( cd flib ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; \
-	else $(MAKE) $(MFLAGS) TLDEPS= $(FLIB_TARGETS) ; fi )
 
 gpu-mods : mods
 	( cd GPU/Modules ; if test "$(MAKE)" = "" ; then make $(MFLAGS) TLDEPS= all ; \
@@ -208,8 +208,8 @@ links : bindir
 clean : clean-gpu
 	touch make.sys
 	for dir in \
-		CPV FFTXlib Modules PW PH NEB \
-		clib flib upftools \
+		CPV LAXlib FFTXlib Modules PW PH NEB \
+		clib upftools \
 		dev-tools extlibs Environ \
 	; do \
 	    if test -d $$dir ; then \
@@ -230,7 +230,7 @@ clean-gpu :
 	touch make.sys
 ifeq ($(PHIGEMM_SYMBOLS),1)
 	for dir in \
-        CPV/src Modules PW/src PHonon/PH NEB/src \
+        LAXlib CPV/src Modules PW/src PHonon/PH NEB/src \
 	; do \
 		grep -rl -E 'gemm|GEMM' $$dir/*.f90 | python ./GPU/scripts/remPhigemmSymbs.py ; \
 	done

@@ -243,6 +243,15 @@ if test "$topdir" = "" ; then topdir="`pwd`/../" ; fi
 # check system type (no cross-compilation for now)
 AC_CANONICAL_BUILD
 
+# Extract version
+AC_MSG_CHECKING([Quantum ESPRESSO version])
+version=`grep version_number ${topdir}/Modules/version.f90 | cut -d\' -f2`
+AC_MSG_RESULT([$version])
+case $version in
+  5.4.0   ) ;;
+  *) AC_MSG_ERROR([Cannot compile against this version of Quantum ESPRESSO. Use v5.4]) ;;
+esac
+
 # many HPC systems are configured so that running parallel programs
 # interactively is disabled: on those systems, AC_PROG_FC / _F77 / _CC
 # would fail because they can't run the compiled executables.
@@ -2204,7 +2213,7 @@ then
 	    cuda_path=`dirname $NVCC`
 	    cuda_path=`dirname $cuda_path`
 	    	
-	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
+	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart -lstdc++"
 		
 	    try_dflags="$try_dflags -D__CUDA"    
         have_cuda=1

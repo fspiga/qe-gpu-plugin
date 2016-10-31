@@ -161,7 +161,7 @@ PHIGEMM_INTERNAL = @phigemm_switch@
 PHIGEMM_SYMBOLS  = @phigemm_symbols@
 MAGMA_INTERNAL   = @magma_switch@
 
-LIBOBJS        = ../flib/ptools.a ../flib/flib.a ../clib/clib.a ../iotk/src/libiotk.a 
+LIBOBJS        = ../flib/ptools.a ../clib/clib.a ../iotk/src/libiotk.a 
 LIBS           = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(FFT_LIBS) $(BLAS_LIBS) $(MPI_LIBS) $(MASS_LIBS) $(LD_LIBS)
 
 # wget or curl - useful to download from network

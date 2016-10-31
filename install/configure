@@ -2879,6 +2879,17 @@ case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
 
 
 
+# Extract version
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Quantum ESPRESSO version" >&5
+$as_echo_n "checking Quantum ESPRESSO version... " >&6; }
+version=`grep version_number ${topdir}/Modules/version.f90 | cut -d\' -f2`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $version" >&5
+$as_echo "$version" >&6; }
+case $version in
+  5.4.0   ) ;;
+  *) as_fn_error $? "Cannot compile against this version of Quantum ESPRESSO. Use v5.4" "$LINENO" 5 ;;
+esac
+
 # many HPC systems are configured so that running parallel programs
 # interactively is disabled: on those systems, AC_PROG_FC / _F77 / _CC
 # would fail because they can't run the compiled executables.
@@ -9751,7 +9762,7 @@ $as_echo "$as_me: WARNING: CUDA has not been detected" >&2;}
 	    cuda_path=`dirname $NVCC`
 	    cuda_path=`dirname $cuda_path`
 
-	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart"
+	    cuda_libs="-L$cuda_path/lib64 -lcublas  -lcufft -lcudart -lstdc++"
 
 	    try_dflags="$try_dflags -D__CUDA"
         have_cuda=1

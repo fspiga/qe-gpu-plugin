@@ -50,11 +50,11 @@ vloc_psi_gamma_cuda_opt2.o \
 nls_precompute.o \
 
 
-QEMODS=../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
+QEMODS=../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../../LAXlib/libqela.a ../Modules/libqemodgpu.a
 
 TLDEPS=bindir gpu-mods mods libs libphiGEMM libMAGMA liblapack libblas libenviron
 
-LIBOBJS	= ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
+LIBOBJS	= ../../clib/clib.a ../../iotk/src/libiotk.a
 
 all : tldeps pw-gpu.x
 
