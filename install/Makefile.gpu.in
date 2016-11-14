@@ -54,7 +54,7 @@ endif
 # Redirect to GPU build
 ph	: ph-gpu
 
-ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu
+ph-gpu : bindir  mods libphiGEMM libMAGMA gpu-mods libs pw-gpu lrmods 
 	cd install ; $(MAKE) $(MFLAGS) -f plugins_makefile uncompress-phonon
 ifeq ($(PHIGEMM_SYMBOLS),1) 
 	grep -rl -E 'gemm|GEMM' ./PHonon/PH/*.f90 | python ./GPU/scripts/addPhigemmSymbs.py
@@ -114,6 +114,9 @@ gpu-mods : mods
 libenviron :  mods
 	( if test -d Environ ; then cd Environ ; if test "$(MAKE)" = "" ;  \
 	then make $(MFLAGS) TLDEPS= all; else $(MAKE) $(MFLAGS) TLDEPS= all ; fi ; fi )
+
+lrmods :
+	( cd LR_Modules ; $(MAKE) TLDEPS=lr-lib || exit 1 )
 
 bindir :
 	test -d bin || mkdir bin

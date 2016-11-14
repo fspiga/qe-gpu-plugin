@@ -8,10 +8,10 @@ MODFLAGS= $(MOD_FLAG)../../iotk/src $(MOD_FLAG)../../Modules $(MOD_FLAG)../../FF
           $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../PHonon/PH \
           $(MOD_FLAG). 
 
-PWMODS = ../../PW/src/libpw.a ../PW/libpwgpu.a
-QEMODS = ../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../Modules/libqemodgpu.a
+PWMODS = ../../LR_Modules/liblrmod.a ../../PW/src/libpw.a ../PW/libpwgpu.a
+QEMODS = ../../Modules/libqemod.a ../../FFTXlib/libqefft.a ../../LAXlib/libqela.a ../Modules/libqemodgpu.a
 
-LIBOBJS        = ../../flib/ptools.a ../../flib/flib.a ../../clib/clib.a ../../iotk/src/libiotk.a
+LIBOBJS        = ../../clib/clib.a ../../iotk/src/libiotk.a
 
 TLDEPS= bindir mods libs pw-gpu
 
