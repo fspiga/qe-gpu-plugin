@@ -45,7 +45,9 @@ PROGRAM phonon
   USE ph_restart,      ONLY : ph_writefile
   USE mp_global,       ONLY : mp_startup
   USE environment,     ONLY : environment_start
-
+  USE fft_base,        ONLY : dffts
+  USE omp_lib
+  USE io_global, ONLY : stdout
   !
   IMPLICIT NONE
   !
@@ -53,6 +55,26 @@ PROGRAM phonon
   LOGICAL :: do_band, do_iq, setup_pw
   CHARACTER (LEN=9)   :: code = 'PHONON'
   CHARACTER (LEN=256) :: auxdyn
+  external :: h_psiq_cuda_k_cufftplan_init, h_psiq_cuda_k_cufftplan_destroy
+
+
+#ifdef __CUDA_DEBUG
+  double precision :: start_time, end_time, h_psiq_time
+  double precision, external ::  get_h_psiq_time_init_1, get_h_psiq_time_init_2, get_h_psiq_time_init_3, get_h_psiq_time_init_4, get_h_psiq_time_init_5, get_h_psiq_time_core, get_h_psiq_time_down
+  external :: h_psiq_cuda_k_time_init
+  
+  
+  common h_psiq_time
+  
+  h_psiq_time = 0.d0
+
+
+  call h_psiq_cuda_k_time_init()
+  
+  start_time=omp_get_wtime()
+#endif
+
+
   !
   ! Initialize MPI, clocks, print initial messages
   !
@@ -72,7 +94,9 @@ PROGRAM phonon
   !
   ! ... Do the loop over the q points and irreps.
   !
+  call h_psiq_cuda_k_cufftplan_init(dffts%nr1x, dffts%nr2x, dffts%nr3x)
   CALL do_phonon(auxdyn)
+  call h_psiq_cuda_k_cufftplan_destroy()
   !
   !  reset the status of the recover files
   !
@@ -81,6 +105,24 @@ PROGRAM phonon
   IF (qplot) CALL write_qplot_data(auxdyn)
   !
   IF (bands_computed) CALL print_clock_pw()
+
+
+#ifdef __CUDA_DEBUG
+  end_time=omp_get_wtime()
+  
+  write(stdout,*)
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_init_1 Running Time : ', get_h_psiq_time_init_1()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_init_2 Running Time : ', get_h_psiq_time_init_2()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_init_3 Running Time : ', get_h_psiq_time_init_3()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_init_4 Running Time : ', get_h_psiq_time_init_4()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_init_5 Running Time : ', get_h_psiq_time_init_5()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_core Running Time : ', get_h_psiq_time_core()
+  write(stdout,*) 'Total H_PSIQ::h_psiq_time_down Running Time : ', get_h_psiq_time_down()
+  write(stdout,*) 'Total H_PSIQ Running Time : ', h_psiq_time
+  write(stdout,*) 'Total Phonon Running Time : ', end_time - start_time
+  write(stdout,*)
+#endif
+
   !
   CALL stop_smoothly_ph( .TRUE. )
   !
