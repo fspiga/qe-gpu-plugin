@@ -15,12 +15,23 @@ LIBOBJS        = ../../clib/clib.a ../../iotk/src/libiotk.a
 
 TLDEPS= bindir mods libs pw-gpu
 
+
+PHGPUOBJS = \
+h_psiq_gpu.o
+
+CUGPUOBJS = \
+h_psiq_k_cuda.o
+
 all : tldeps ph-gpu.x
 
-ph-gpu.x : phonon.o ../../PHonon/PH/libph.a $(PWMODS) $(LIBOBJS)
-	$(LD) $(LDFLAGS) -o $@ phonon.o ../../PHonon/PH/libph.a \
+ph-gpu.x : phonon.o ../../PHonon/PH/libph.a libphgpu.a $(PWMODS) $(LIBOBJS)
+	$(LD) $(LDFLAGS) -o $@ phonon.o ../../PHonon/PH/libph.a libphgpu.a \
 		 $(PWMODS) $(QEMODS) $(LIBOBJS) $(LIBS)
 	- ( cd ../../bin ; ln -fs ../GPU/PH/$@ . )
+
+libphgpu.a : $(PHGPUOBJS) $(CUGPUOBJS)
+	$(AR) $(ARFLAGS) $@ $?
+	$(RANLIB) $@
 
 tldeps:
 	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
